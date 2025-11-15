@@ -17,7 +17,7 @@ GlassBridgeConfig.GapBetweenRows = 0.5 -- Espacio entre filas
 GlassBridgeConfig.SafePanelColor = Color3.fromRGB(100, 200, 255) -- Azul (inicialmente transparente)
 GlassBridgeConfig.FakePanelColor = Color3.fromRGB(255, 100, 100) -- Rojo (inicialmente transparente)
 GlassBridgeConfig.InitialTransparency = 0.3 -- Transparencia inicial (0.3 = semi-transparente)
-GlassBridgeConfig.GlassMaterial = Enum.Material.Glass
+GlassBridgeConfig.GlassMaterial = Enum.Material.Neon -- Material brillante que mantiene transparencia
 
 -- EFECTOS DE ROTURA
 GlassBridgeConfig.BreakDelay = 0.3 -- Segundos antes de que el panel se rompa
