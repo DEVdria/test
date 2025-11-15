@@ -65,27 +65,27 @@ end
 function BuildBridge()
 	print("Construyendo puente...")
 
-	local currentZ = Config.StartPosition.Z
+	local currentX = Config.StartPosition.X
 
 	for row = 1, Config.NumberOfRows do
-		-- Avanzar en Z
-		currentZ = currentZ + Config.PanelSize.Z + Config.GapBetweenRows
+		-- Avanzar en X
+		currentX = currentX + Config.PanelSize.X + Config.GapBetweenRows
 
 		-- Determinar qué panel es seguro
 		local safeSide = CorrectPath[row]
 
-		-- Posición del panel izquierdo
+		-- Posición del panel izquierdo (ahora en -Z)
 		local leftPosition = Vector3.new(
-			Config.StartPosition.X - (Config.PanelSize.X / 2 + Config.GapBetweenPanels / 2),
+			currentX,
 			Config.StartPosition.Y,
-			currentZ
+			Config.StartPosition.Z - (Config.PanelSize.Z / 2 + Config.GapBetweenPanels / 2)
 		)
 
-		-- Posición del panel derecho
+		-- Posición del panel derecho (ahora en +Z)
 		local rightPosition = Vector3.new(
-			Config.StartPosition.X + (Config.PanelSize.X / 2 + Config.GapBetweenPanels / 2),
+			currentX,
 			Config.StartPosition.Y,
-			currentZ
+			Config.StartPosition.Z + (Config.PanelSize.Z / 2 + Config.GapBetweenPanels / 2)
 		)
 
 		-- Crear panel izquierdo
@@ -114,14 +114,14 @@ end
 function CreatePlatforms()
 	print("Creando plataformas...")
 
-	-- Plataforma de inicio
-	local startPos = Config.StartPosition - Vector3.new(0, 0, 10)
-	Effects.CreateStartPlatform(startPos, Vector3.new(20, 1, 10))
+	-- Plataforma de inicio (ahora antes en X)
+	local startPos = Config.StartPosition - Vector3.new(10, 0, 0)
+	Effects.CreateStartPlatform(startPos, Vector3.new(10, 1, 20))
 
-	-- Plataforma de victoria
-	local winZ = Config.StartPosition.Z + (Config.NumberOfRows * (Config.PanelSize.Z + Config.GapBetweenRows)) + 15
-	local winPos = Vector3.new(Config.StartPosition.X, Config.StartPosition.Y, winZ)
-	Effects.CreateWinPlatform(winPos, Vector3.new(20, 1, 10))
+	-- Plataforma de victoria (ahora después en X)
+	local winX = Config.StartPosition.X + (Config.NumberOfRows * (Config.PanelSize.X + Config.GapBetweenRows)) + 15
+	local winPos = Vector3.new(winX, Config.StartPosition.Y, Config.StartPosition.Z)
+	Effects.CreateWinPlatform(winPos, Vector3.new(10, 1, 20))
 
 	print("Plataformas creadas")
 end

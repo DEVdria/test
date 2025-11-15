@@ -8,8 +8,8 @@
 local GlassBridgeConfig = {}
 
 -- CONFIGURACIÓN DEL PUENTE
-GlassBridgeConfig.NumberOfRows = 18 -- Número de filas del puente
-GlassBridgeConfig.PanelSize = Vector3.new(6, 0.5, 6) -- Tamaño de cada panel
+GlassBridgeConfig.NumberOfRows = 25 -- Número de filas del puente
+GlassBridgeConfig.PanelSize = Vector3.new(10, 0.5, 10) -- Tamaño de cada panel
 GlassBridgeConfig.GapBetweenPanels = 1 -- Espacio entre paneles (horizontal)
 GlassBridgeConfig.GapBetweenRows = 0.5 -- Espacio entre filas
 
