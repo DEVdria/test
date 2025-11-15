@@ -26,7 +26,11 @@ GlassBridgeConfig.ShatterSound = true -- Activar sonido de rotura
 
 -- NUEVOS EFECTOS (ACTUALIZADOS)
 GlassBridgeConfig.UseDecals = true -- Agregar Decals a los paneles para mejor apariencia
-GlassBridgeConfig.DecalTexture = "rbxassetid://6372755229" -- ID de textura para Decal (vidrio agrietado)
+GlassBridgeConfig.DecalTextures = { -- 3 texturas diferentes para los Decals
+	"rbxassetid://6372755229", -- Textura 1 (vidrio agrietado)
+	"rbxassetid://6372755229", -- Textura 2 (puedes cambiar este ID)
+	"rbxassetid://6372755229"  -- Textura 3 (puedes cambiar este ID)
+}
 GlassBridgeConfig.ExplosionEnabled = true -- Activar explosión en paneles falsos
 GlassBridgeConfig.ExplosionForce = 100 -- Fuerza de la explosión
 GlassBridgeConfig.ExplosionRadius = 10 -- Radio de la explosión

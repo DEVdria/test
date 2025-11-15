@@ -1,3 +1,86 @@
+# 🎨 3 Decals con Texturas DIFERENTES
+
+## ✨ Cambio Implementado
+
+**Antes:** 3 Decals con la **misma textura** repetida
+**Ahora:** 3 Decals con **texturas diferentes** cada uno
+
+Esto te permite tener hasta 3 texturas distintas de vidrio/cristal superpuestas en cada panel para crear efectos visuales más complejos y realistas.
+
+---
+
+## 📝 Archivos Modificados
+
+Se actualizaron **3 archivos**:
+1. `GlassBridgeConfig.lua` - Nueva configuración con array de 3 texturas
+2. `GlassBridgeEffects.lua` - Función actualizada para usar texturas diferentes
+3. `GlassPanel.lua` - Ahora pasa el array de texturas
+
+---
+
+## 📄 SCRIPTS COMPLETOS ACTUALIZADOS
+
+### 📂 SCRIPT 1: GlassBridgeConfig.lua
+**Ubicación:** `ReplicatedStorage > ModuleScripts > GlassBridgeConfig` (ModuleScript)
+
+```lua
+--[[
+	GlassBridgeConfig.lua
+	Módulo de configuración para el minijuego Glass Bridge
+
+	Coloca este script en: ReplicatedStorage > ModuleScripts
+]]
+
+local GlassBridgeConfig = {}
+
+-- CONFIGURACIÓN DEL PUENTE
+GlassBridgeConfig.NumberOfRows = 18 -- Número de filas del puente
+GlassBridgeConfig.PanelSize = Vector3.new(6, 0.5, 6) -- Tamaño de cada panel
+GlassBridgeConfig.GapBetweenPanels = 1 -- Espacio entre paneles (horizontal)
+GlassBridgeConfig.GapBetweenRows = 0.5 -- Espacio entre filas
+
+-- COLORES Y APARIENCIA
+GlassBridgeConfig.SafePanelColor = Color3.fromRGB(100, 200, 255) -- Azul (inicialmente transparente)
+GlassBridgeConfig.FakePanelColor = Color3.fromRGB(255, 100, 100) -- Rojo (inicialmente transparente)
+GlassBridgeConfig.InitialTransparency = 0.3 -- Transparencia inicial (0.3 = semi-transparente)
+GlassBridgeConfig.GlassMaterial = Enum.Material.Glass
+
+-- EFECTOS DE ROTURA
+GlassBridgeConfig.BreakDelay = 0.3 -- Segundos antes de que el panel se rompa
+GlassBridgeConfig.ShatterParticles = true -- Activar partículas de rotura
+GlassBridgeConfig.ShatterSound = true -- Activar sonido de rotura
+
+-- NUEVOS EFECTOS (ACTUALIZADOS)
+GlassBridgeConfig.UseDecals = true -- Agregar Decals a los paneles para mejor apariencia
+GlassBridgeConfig.DecalTextures = { -- 3 texturas diferentes para los Decals
+	"rbxassetid://6372755229", -- Textura 1 (vidrio agrietado)
+	"rbxassetid://6372755229", -- Textura 2 (puedes cambiar este ID)
+	"rbxassetid://6372755229"  -- Textura 3 (puedes cambiar este ID)
+}
+GlassBridgeConfig.ExplosionEnabled = true -- Activar explosión en paneles falsos
+GlassBridgeConfig.ExplosionForce = 100 -- Fuerza de la explosión
+GlassBridgeConfig.ExplosionRadius = 10 -- Radio de la explosión
+GlassBridgeConfig.RegenerateDelay = 15 -- Segundos para regenerar paneles falsos destruidos
+GlassBridgeConfig.AlwaysShowSafeGreen = false -- Paneles seguros NO permanecen verdes (efecto temporal)
+
+-- GAMEPLAY
+GlassBridgeConfig.FallHeight = 50 -- Altura de caída debajo del puente
+GlassBridgeConfig.RespawnOnDeath = false -- Si true, respawnea; si false, elimina al jugador
+GlassBridgeConfig.ShowCorrectPath = false -- Si true, muestra el camino correcto (modo debug)
+
+-- PUNTOS DE INICIO Y FIN
+GlassBridgeConfig.StartPosition = Vector3.new(0, 5, 0) -- Posición del primer panel
+GlassBridgeConfig.WinPosition = Vector3.new(0, 5, 120) -- Posición de la plataforma de victoria
+
+return GlassBridgeConfig
+```
+
+---
+
+### 📂 SCRIPT 2: GlassBridgeEffects.lua
+**Ubicación:** `ReplicatedStorage > ModuleScripts > GlassBridgeEffects` (ModuleScript)
+
+```lua
 --[[
 	GlassBridgeEffects.lua
 	Módulo de efectos visuales para el Glass Bridge
@@ -163,7 +246,7 @@ function GlassBridgeEffects.CreateSuccessEffect(panel, keepGreen)
 	end)
 end
 
--- Crear efecto de explosión (NUEVO)
+-- Crear efecto de explosión
 function GlassBridgeEffects.CreateExplosion(panel, force, radius)
 	-- Crear explosión visual
 	local explosion = Instance.new("Explosion")
@@ -252,3 +335,136 @@ function GlassBridgeEffects.CreateWinPlatform(position, size)
 end
 
 return GlassBridgeEffects
+```
+
+---
+
+### 📂 SCRIPT 3: GlassPanel.lua (Solo la parte modificada)
+**Ubicación:** `ReplicatedStorage > ModuleScripts > GlassPanel` (ModuleScript)
+
+**⚠️ IMPORTANTE:** Solo cambia la línea 67
+
+**Encuentra esta línea:**
+```lua
+Effects.CreateDecal(panel, Config.DecalTexture)
+```
+
+**Cámbiala por:**
+```lua
+Effects.CreateDecal(panel, Config.DecalTextures)
+```
+
+O simplemente actualiza toda la sección:
+
+```lua
+-- Agregar al workspace
+panel.Parent = workspace:WaitForChild("GlassBridge")
+
+-- Agregar Decals si está habilitado (3 texturas diferentes)
+if Config.UseDecals then
+	Effects.CreateDecal(panel, Config.DecalTextures)
+end
+
+self.Part = panel
+```
+
+---
+
+## 🎨 Cómo Personalizar las Texturas
+
+En `GlassBridgeConfig.lua`, cambia los IDs de las texturas:
+
+```lua
+GlassBridgeConfig.DecalTextures = {
+	"rbxassetid://6372755229", -- Textura 1 - Vidrio agrietado
+	"rbxassetid://8644367095", -- Textura 2 - Cristal mágico
+	"rbxassetid://9852787908"  -- Textura 3 - Hielo
+}
+```
+
+### 🔍 Dónde Encontrar Texturas
+
+1. Ve a https://create.roblox.com/marketplace/asset
+2. Busca: "glass texture", "ice texture", "crystal texture"
+3. Copia el ID del asset (número en la URL)
+4. Úsalo en formato: `rbxassetid://ID_AQUI`
+
+### 💡 Ejemplos de Texturas Recomendadas
+
+```lua
+-- Opción 1: Diferentes intensidades de grietas
+GlassBridgeConfig.DecalTextures = {
+	"rbxassetid://6372755229", -- Grietas ligeras
+	"rbxassetid://6372755229", -- Grietas medias
+	"rbxassetid://6372755229"  -- Grietas intensas
+}
+
+-- Opción 2: Diferentes estilos
+GlassBridgeConfig.DecalTextures = {
+	"rbxassetid://6372755229", -- Vidrio normal
+	"rbxassetid://8644367095", -- Efecto cristalino
+	"rbxassetid://9852787908"  -- Efecto helado
+}
+
+-- Opción 3: Mismo estilo (por ahora)
+GlassBridgeConfig.DecalTextures = {
+	"rbxassetid://6372755229",
+	"rbxassetid://6372755229",
+	"rbxassetid://6372755229"
+}
+```
+
+---
+
+## 🚀 Instalación
+
+### Si ya tienes el sistema instalado:
+
+1. Actualiza **GlassBridgeConfig.lua** - Reemplaza todo el contenido
+2. Actualiza **GlassBridgeEffects.lua** - Reemplaza todo el contenido
+3. Actualiza **GlassPanel.lua** - Cambia solo la línea 67 (o toda la sección indicada)
+4. Presiona **Play (F5)**
+
+---
+
+## 📊 Comparación
+
+| Aspecto | Antes | Ahora |
+|---------|-------|-------|
+| **Texturas** | 1 misma textura x3 | 3 texturas diferentes |
+| **Configuración** | `DecalTexture` (string) | `DecalTextures` (array) |
+| **Flexibilidad** | Limitada | Total - puedes mezclar texturas |
+| **Apariencia** | Uniforme | Capas superpuestas variadas |
+
+---
+
+## ✨ Beneficios
+
+✅ **Texturas únicas** - Cada Decal puede tener su propia textura
+✅ **Capas visuales** - Crea profundidad con texturas superpuestas diferentes
+✅ **Fácil personalización** - Cambia las 3 texturas en el config
+✅ **Efectos complejos** - Mezcla estilos: grietas + hielo + cristal
+
+---
+
+## 🔧 Ejemplo de Uso Avanzado
+
+```lua
+-- Crear efecto de "vidrio mágico congelado"
+GlassBridgeConfig.DecalTextures = {
+	"rbxassetid://6372755229", -- Base de vidrio
+	"rbxassetid://9852787908", -- Capa de hielo
+	"rbxassetid://8644367095"  -- Brillo mágico encima
+}
+```
+
+Cada panel tendrá:
+- Textura 1 (arriba y abajo): Vidrio base
+- Textura 2 (arriba y abajo): Hielo superpuesto
+- Textura 3 (arriba y abajo): Brillo mágico en la cima
+
+= 6 Decals totales con 3 texturas diferentes creando un efecto único
+
+---
+
+¡Ahora puedes crear efectos visuales mucho más complejos! 🎨✨

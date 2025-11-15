@@ -62,9 +62,9 @@ function GlassPanel:CreatePart()
 	-- Agregar al workspace
 	panel.Parent = workspace:WaitForChild("GlassBridge")
 
-	-- NUEVO: Agregar Decals si está habilitado
+	-- Agregar Decals si está habilitado (3 texturas diferentes)
 	if Config.UseDecals then
-		Effects.CreateDecal(panel, Config.DecalTexture)
+		Effects.CreateDecal(panel, Config.DecalTextures)
 	end
 
 	self.Part = panel
