@@ -1,3 +1,22 @@
+# 🎨 Actualización: 3 Decals por Panel
+
+## 📝 Cambio Implementado
+
+**Antes:** 1 Decal en la parte superior y 1 en la parte inferior (2 total)
+**Ahora:** 3 Decals en la parte superior y 3 en la parte inferior (6 total)
+
+Esto mejora significativamente la apariencia visual de los paneles, dándoles un aspecto más detallado y realista.
+
+---
+
+## 🔧 Script Actualizado
+
+**Solo necesitas actualizar 1 archivo:** `GlassBridgeEffects.lua`
+
+### 📂 SCRIPT COMPLETO: GlassBridgeEffects.lua
+**Ubicación:** `ReplicatedStorage > ModuleScripts > GlassBridgeEffects` (ModuleScript)
+
+```lua
 --[[
 	GlassBridgeEffects.lua
 	Módulo de efectos visuales para el Glass Bridge
@@ -156,7 +175,7 @@ function GlassBridgeEffects.CreateSuccessEffect(panel, keepGreen)
 	end)
 end
 
--- Crear efecto de explosión (NUEVO)
+-- Crear efecto de explosión
 function GlassBridgeEffects.CreateExplosion(panel, force, radius)
 	-- Crear explosión visual
 	local explosion = Instance.new("Explosion")
@@ -245,3 +264,37 @@ function GlassBridgeEffects.CreateWinPlatform(position, size)
 end
 
 return GlassBridgeEffects
+```
+
+---
+
+## 🚀 Instalación
+
+1. Abre **Roblox Studio**
+2. Ve a `ReplicatedStorage > ModuleScripts`
+3. Abre el ModuleScript **"GlassBridgeEffects"**
+4. **Reemplaza TODO el contenido** con el código de arriba
+5. Presiona **Play (F5)**
+
+---
+
+## 📊 Comparación
+
+| Aspecto | Antes | Ahora |
+|---------|-------|-------|
+| **Decals por panel** | 2 (1 arriba, 1 abajo) | 6 (3 arriba, 3 abajo) |
+| **Detalle visual** | Básico | Mejorado |
+| **Nombres de Decals** | GlassDecalTop, GlassDecalBottom | GlassDecalTop1/2/3, GlassDecalBottom1/2/3 |
+
+---
+
+## ✨ Beneficios
+
+✅ **Mayor detalle visual** - Los paneles se ven más complejos y realistas
+✅ **Mejor apariencia** - Más capas de textura crean profundidad
+✅ **Fácil identificación** - Cada Decal tiene nombre único (Top1, Top2, Top3)
+✅ **Rendimiento optimizado** - Los Decals son ligeros, no afectan FPS
+
+---
+
+¡Ahora tus paneles tendrán 3x más detalle visual! 🎨✨
