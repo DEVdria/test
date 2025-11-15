@@ -24,6 +24,15 @@ GlassBridgeConfig.BreakDelay = 0.3 -- Segundos antes de que el panel se rompa
 GlassBridgeConfig.ShatterParticles = true -- Activar partículas de rotura
 GlassBridgeConfig.ShatterSound = true -- Activar sonido de rotura
 
+-- NUEVOS EFECTOS (ACTUALIZADOS)
+GlassBridgeConfig.UseDecals = true -- Agregar Decals a los paneles para mejor apariencia
+GlassBridgeConfig.DecalTexture = "rbxassetid://6372755229" -- ID de textura para Decal (vidrio agrietado)
+GlassBridgeConfig.ExplosionEnabled = true -- Activar explosión en paneles falsos
+GlassBridgeConfig.ExplosionForce = 100 -- Fuerza de la explosión
+GlassBridgeConfig.ExplosionRadius = 10 -- Radio de la explosión
+GlassBridgeConfig.RegenerateDelay = 15 -- Segundos para regenerar paneles falsos destruidos
+GlassBridgeConfig.AlwaysShowSafeGreen = true -- Paneles seguros siempre se ponen verdes al pisarlos
+
 -- GAMEPLAY
 GlassBridgeConfig.FallHeight = 50 -- Altura de caída debajo del puente
 GlassBridgeConfig.RespawnOnDeath = false -- Si true, respawnea; si false, elimina al jugador

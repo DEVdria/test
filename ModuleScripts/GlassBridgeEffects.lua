@@ -7,6 +7,27 @@
 
 local GlassBridgeEffects = {}
 
+-- Crear Decal en el panel para mejor apariencia visual
+function GlassBridgeEffects.CreateDecal(panel, textureId)
+	-- Crear Decal en la parte superior del panel
+	local decalTop = Instance.new("Decal")
+	decalTop.Name = "GlassDecalTop"
+	decalTop.Face = Enum.NormalId.Top
+	decalTop.Texture = textureId or "rbxassetid://6372755229"
+	decalTop.Transparency = 0.5
+	decalTop.Parent = panel
+
+	-- Crear Decal en la parte inferior del panel
+	local decalBottom = Instance.new("Decal")
+	decalBottom.Name = "GlassDecalBottom"
+	decalBottom.Face = Enum.NormalId.Bottom
+	decalBottom.Texture = textureId or "rbxassetid://6372755229"
+	decalBottom.Transparency = 0.5
+	decalBottom.Parent = panel
+
+	return {decalTop, decalBottom}
+end
+
 -- Crear efecto de partículas de vidrio roto
 function GlassBridgeEffects.CreateShatterEffect(panel)
 	local particleEmitter = Instance.new("ParticleEmitter")
@@ -101,8 +122,8 @@ function GlassBridgeEffects.ShatterPanel(panel, delay)
 end
 
 -- Crear efecto de éxito al pisar panel correcto
-function GlassBridgeEffects.CreateSuccessEffect(panel)
-	-- Cambiar brevemente a verde
+function GlassBridgeEffects.CreateSuccessEffect(panel, keepGreen)
+	-- Cambiar a verde
 	local originalColor = panel.Color
 	panel.Color = Color3.fromRGB(100, 255, 100)
 	panel.Transparency = 0.2
@@ -114,11 +135,67 @@ function GlassBridgeEffects.CreateSuccessEffect(panel)
 	highlight.Color3 = Color3.fromRGB(100, 255, 100)
 	highlight.LineThickness = 0.1
 
-	-- Volver al color original
+	-- Si keepGreen es true, mantener el verde; si no, volver al color original
 	task.delay(0.3, function()
-		panel.Color = originalColor
-		panel.Transparency = 0.3
+		if not keepGreen then
+			panel.Color = originalColor
+			panel.Transparency = 0.3
+		else
+			-- Mantener verde pero ajustar transparencia
+			panel.Transparency = 0.2
+		end
 		highlight:Destroy()
+	end)
+end
+
+-- Crear efecto de explosión (NUEVO)
+function GlassBridgeEffects.CreateExplosion(panel, force, radius)
+	-- Crear explosión visual
+	local explosion = Instance.new("Explosion")
+	explosion.Position = panel.Position
+	explosion.BlastRadius = radius or 10
+	explosion.BlastPressure = force or 100000
+	explosion.DestroyJointRadiusPercent = 0 -- No destruir articulaciones del personaje
+	explosion.Parent = workspace
+
+	-- Crear efecto de partículas de explosión
+	local explosionEffect = Instance.new("ParticleEmitter")
+	explosionEffect.Parent = panel
+	explosionEffect.Name = "ExplosionParticles"
+
+	explosionEffect.Texture = "rbxasset://textures/particles/fire_main.dds"
+	explosionEffect.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 100)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 100))
+	})
+	explosionEffect.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 2),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	explosionEffect.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(1, 1)
+	})
+
+	explosionEffect.Lifetime = NumberRange.new(0.3, 0.8)
+	explosionEffect.Rate = 200
+	explosionEffect.Speed = NumberRange.new(20, 40)
+	explosionEffect.SpreadAngle = Vector2.new(180, 180)
+
+	explosionEffect:Emit(80)
+
+	-- Sonido de explosión
+	local explosionSound = Instance.new("Sound")
+	explosionSound.Parent = panel
+	explosionSound.SoundId = "rbxassetid://3802269531" -- Sonido de explosión
+	explosionSound.Volume = 0.8
+	explosionSound.PlaybackSpeed = 1
+	explosionSound:Play()
+
+	-- Limpiar efectos
+	task.delay(2, function()
+		if explosionEffect then explosionEffect:Destroy() end
+		if explosionSound then explosionSound:Destroy() end
 	end)
 end
 

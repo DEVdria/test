@@ -2,12 +2,18 @@
 
 Sistema completo de Glass Bridge inspirado en Squid Game para Roblox Studio. Los jugadores deben atravesar un puente de cristal donde cada fila tiene dos paneles: uno seguro y uno que se rompe al pisarlo.
 
+> **🆕 ACTUALIZADO** - Ver [ACTUALIZACION.md](ACTUALIZACION.md) para las nuevas características
+
 ## 📋 Características
 
 ✅ Generación aleatoria del camino correcto en cada partida
 ✅ Dos paneles por fila (izquierda y derecha)
+✅ **NUEVO:** Decals/Texturas en los paneles para mejor apariencia
+✅ **NUEVO:** Explosiones que lanzan a los jugadores por los aires
+✅ **NUEVO:** Regeneración automática de paneles falsos (15 segundos)
+✅ **NUEVO:** Paneles seguros se mantienen verdes permanentemente
 ✅ Efectos visuales de rotura con partículas
-✅ Sonidos de vidrio rompiéndose
+✅ Sonidos de vidrio rompiéndose y explosiones
 ✅ Animación de caída de paneles
 ✅ Sistema modular y configurable
 ✅ Fácil de personalizar
