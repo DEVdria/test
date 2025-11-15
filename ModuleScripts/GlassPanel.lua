@@ -49,11 +49,11 @@ function GlassPanel:CreatePart()
 	if Config.ShowCorrectPath then
 		panel.Color = self.IsSafe and Config.SafePanelColor or Config.FakePanelColor
 	else
-		-- Color por columna: izquierda azul, derecha rosa
+		-- Color por columna: izquierda azul, derecha rosa (más brillantes)
 		if self.Side == "Left" then
-			panel.Color = Color3.fromRGB(100, 150, 255) -- Azul
+			panel.Color = Color3.fromRGB(120, 180, 255) -- Azul más brillante
 		else
-			panel.Color = Color3.fromRGB(255, 150, 200) -- Rosa
+			panel.Color = Color3.fromRGB(255, 180, 220) -- Rosa más brillante
 		end
 	end
 
@@ -66,14 +66,30 @@ function GlassPanel:CreatePart()
 	-- Agregar al workspace
 	panel.Parent = workspace:WaitForChild("GlassBridge")
 
+	-- NUEVO: Agregar luz para hacer los cristales más atractivos
+	local surfaceLight = Instance.new("SurfaceLight")
+	surfaceLight.Name = "GlassLight"
+	surfaceLight.Face = Enum.NormalId.Top
+	surfaceLight.Brightness = 1.5
+	surfaceLight.Range = 15
+
+	-- Color de la luz según la columna
+	if self.Side == "Left" then
+		surfaceLight.Color = Color3.fromRGB(120, 180, 255) -- Luz azul
+	else
+		surfaceLight.Color = Color3.fromRGB(255, 180, 220) -- Luz rosa
+	end
+
+	surfaceLight.Parent = panel
+
 	-- Agregar Decals si está habilitado (3 texturas diferentes con color según columna)
 	if Config.UseDecals then
-		-- Determinar color según la columna
+		-- Determinar color según la columna (más brillante)
 		local decalColor
 		if self.Side == "Left" then
-			decalColor = Color3.fromRGB(100, 150, 255) -- Azul
+			decalColor = Color3.fromRGB(120, 180, 255) -- Azul más brillante
 		else
-			decalColor = Color3.fromRGB(255, 150, 200) -- Rosa
+			decalColor = Color3.fromRGB(255, 180, 220) -- Rosa más brillante
 		end
 		Effects.CreateDecal(panel, Config.DecalTextures, decalColor)
 	end
