@@ -66,9 +66,16 @@ function GlassPanel:CreatePart()
 	-- Agregar al workspace
 	panel.Parent = workspace:WaitForChild("GlassBridge")
 
-	-- Agregar Decals si está habilitado (3 texturas diferentes)
+	-- Agregar Decals si está habilitado (3 texturas diferentes con color según columna)
 	if Config.UseDecals then
-		Effects.CreateDecal(panel, Config.DecalTextures)
+		-- Determinar color según la columna
+		local decalColor
+		if self.Side == "Left" then
+			decalColor = Color3.fromRGB(100, 150, 255) -- Azul
+		else
+			decalColor = Color3.fromRGB(255, 150, 200) -- Rosa
+		end
+		Effects.CreateDecal(panel, Config.DecalTextures, decalColor)
 	end
 
 	self.Part = panel

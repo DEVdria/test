@@ -8,7 +8,7 @@
 local GlassBridgeEffects = {}
 
 -- Crear Decal en el panel para mejor apariencia visual
-function GlassBridgeEffects.CreateDecal(panel, textures)
+function GlassBridgeEffects.CreateDecal(panel, textures, color)
 	local decals = {}
 
 	-- Si no se proporciona un array de texturas, usar valores por defecto
@@ -18,6 +18,9 @@ function GlassBridgeEffects.CreateDecal(panel, textures)
 		"rbxassetid://6372755229"
 	}
 
+	-- Color por defecto si no se especifica
+	local decalColor = color or Color3.fromRGB(255, 255, 255)
+
 	-- Crear 3 Decals DIFERENTES en la parte superior del panel
 	for i = 1, 3 do
 		local decalTop = Instance.new("Decal")
@@ -25,6 +28,7 @@ function GlassBridgeEffects.CreateDecal(panel, textures)
 		decalTop.Face = Enum.NormalId.Top
 		decalTop.Texture = textureList[i] or "rbxassetid://6372755229"
 		decalTop.Transparency = 0.5
+		decalTop.Color3 = decalColor
 		decalTop.Parent = panel
 		table.insert(decals, decalTop)
 	end
@@ -36,6 +40,7 @@ function GlassBridgeEffects.CreateDecal(panel, textures)
 		decalBottom.Face = Enum.NormalId.Bottom
 		decalBottom.Texture = textureList[i] or "rbxassetid://6372755229"
 		decalBottom.Transparency = 0.5
+		decalBottom.Color3 = decalColor
 		decalBottom.Parent = panel
 		table.insert(decals, decalBottom)
 	end
