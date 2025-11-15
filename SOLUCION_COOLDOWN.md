@@ -1,3 +1,53 @@
+# 🔧 Solución: Sistema de Cooldown para Paneles Seguros
+
+## 🎯 Problema Solucionado
+
+**Problema anterior:**
+- El evento `Touched` se dispara múltiples veces mientras el jugador permanece sobre el panel
+- Esto causaba que el sonido y la animación se reprodujeran repetidamente
+- Mala experiencia de usuario con efectos excesivos
+
+**Solución implementada:**
+- Sistema de tracking de jugadores usando `TouchEnded`
+- Los efectos se activan solo una vez por "visita" al panel
+- Cuando el jugador deja el panel y vuelve, los efectos se reactivan
+
+---
+
+## 🛠️ Cómo Funciona
+
+### Sistema de Tracking de Jugadores
+
+1. **PlayersOnPanel**: Tabla que almacena UserId de jugadores actualmente en el panel
+2. **Touched**: Solo activa efectos si el jugador NO está en la tabla
+3. **TouchEnded**: Remueve al jugador de la tabla cuando deja el panel
+4. **Regenerate**: Limpia la tabla cuando el panel se regenera
+
+### Flujo de Eventos
+
+```
+Jugador pisa panel → ¿Ya está en PlayersOnPanel?
+                     │
+                     ├─ SÍ → No hacer nada (evitar repeticiones)
+                     │
+                     └─ NO → Agregar a PlayersOnPanel
+                            → Activar efectos (verde + sonido)
+                            → Esperar TouchEnded
+
+Jugador deja panel → TouchEnded detecta
+                    → Remover de PlayersOnPanel
+                    → Listo para nueva activación
+```
+
+---
+
+## 📄 SCRIPT ACTUALIZADO: GlassPanel.lua
+
+**Ubicación:** `ReplicatedStorage > ModuleScripts > GlassPanel` (ModuleScript)
+
+**⚠️ IMPORTANTE:** Este es el ÚNICO archivo que necesitas actualizar
+
+```lua
 --[[
 	GlassPanel.lua
 	Módulo para gestionar paneles individuales del Glass Bridge
@@ -62,7 +112,7 @@ function GlassPanel:CreatePart()
 	-- Agregar al workspace
 	panel.Parent = workspace:WaitForChild("GlassBridge")
 
-	-- NUEVO: Agregar Decals si está habilitado
+	-- Agregar Decals si está habilitado
 	if Config.UseDecals then
 		Effects.CreateDecal(panel, Config.DecalTexture)
 	end
@@ -120,7 +170,7 @@ function GlassPanel:OnTouch(hit)
 			end
 		end
 	else
-		-- ACTUALIZADO: Panel falso - explosión y regeneración
+		-- Panel falso - explosión y regeneración
 		-- Evitar múltiples activaciones del panel falso
 		if self.HasBeenTouched then
 			return
@@ -129,7 +179,7 @@ function GlassPanel:OnTouch(hit)
 		self.HasBeenTouched = true
 		print(hit.Parent.Name .. " pisó un panel FALSO (Fila " .. self.RowNumber .. " - " .. self.Side .. ")")
 
-		-- NUEVO: Crear explosión si está habilitado
+		-- Crear explosión si está habilitado
 		if Config.ExplosionEnabled then
 			-- Calcular fuerza basada en configuración
 			local explosionForce = Config.ExplosionForce * 1000 -- Multiplicar para Roblox BlastPressure
@@ -162,7 +212,7 @@ function GlassPanel:OnTouch(hit)
 			end
 		end)
 
-		-- NUEVO: Programar regeneración después del delay configurado
+		-- Programar regeneración después del delay configurado
 		if not self.RegenerationScheduled then
 			self.RegenerationScheduled = true
 			task.delay(Config.RegenerateDelay, function()
@@ -286,3 +336,112 @@ function GlassPanel:Destroy()
 end
 
 return GlassPanel
+```
+
+---
+
+## 📝 Cambios Realizados
+
+### 1. Nuevo Atributo: `PlayersOnPanel`
+```lua
+self.PlayersOnPanel = {} -- Tabla para rastrear jugadores actualmente en el panel
+```
+- Almacena UserId de jugadores como keys
+- Valor `true` indica que el jugador está en el panel
+
+### 2. Evento `TouchEnded` Agregado
+```lua
+self.Part.TouchEnded:Connect(function(hit)
+    self:OnTouchEnded(hit)
+end)
+```
+- Detecta cuando el jugador deja el panel
+- Permite resetear el estado para permitir nueva activación
+
+### 3. Verificación en `OnTouch`
+```lua
+if player and self.PlayersOnPanel[player.UserId] then
+    return -- Ya está en el panel, no activar de nuevo
+end
+```
+- Evita múltiples activaciones mientras el jugador permanece en el panel
+
+### 4. Nueva Función: `OnTouchEnded`
+```lua
+function GlassPanel:OnTouchEnded(hit)
+    -- Remover al jugador de la lista
+    if player and self.PlayersOnPanel[player.UserId] then
+        self.PlayersOnPanel[player.UserId] = nil
+    end
+end
+```
+- Limpia el tracking cuando el jugador se va
+- Permite que el jugador active el panel nuevamente si vuelve
+
+### 5. Reset en `Regenerate`
+```lua
+self.PlayersOnPanel = {} -- Limpiar la lista de jugadores
+```
+- Cuando el panel se regenera, todos los jugadores pueden activarlo de nuevo
+
+---
+
+## 🎮 Comportamiento Final
+
+### Escenario 1: Jugador se queda parado en panel seguro
+1. ✅ Pisa el panel → Efectos se activan (verde + sonido)
+2. ❌ Permanece parado → Efectos NO se repiten
+3. ✅ Deja el panel → Se resetea el tracking
+4. ✅ Vuelve a pisar → Efectos se activan de nuevo
+
+### Escenario 2: Jugador salta entre paneles
+1. ✅ Pisa Panel A → Efectos se activan
+2. ✅ Salta a Panel B → Efectos se activan en Panel B
+3. ✅ Vuelve a Panel A → Efectos se activan de nuevo en Panel A
+4. ✅ Cada panel rastrea independientemente
+
+### Escenario 3: Múltiples jugadores
+1. ✅ Jugador 1 pisa panel → Efectos para Jugador 1
+2. ✅ Jugador 2 pisa mismo panel → Efectos para Jugador 2
+3. ✅ Cada jugador tiene su propio tracking independiente
+
+---
+
+## 🚀 Instalación
+
+1. Abre Roblox Studio
+2. Ve a **ReplicatedStorage > ModuleScripts**
+3. Abre el ModuleScript **"GlassPanel"**
+4. **Reemplaza TODO el contenido** con el código de arriba
+5. Presiona **Play (F5)**
+
+**Nota:** Los demás scripts (Config, Effects, Manager, ClientEffects) NO necesitan modificarse.
+
+---
+
+## ✅ Verificación
+
+Abre la consola (F9) y deberías ver mensajes como:
+
+```
+NombreJugador pisó un panel SEGURO (Fila 1 - Left)
+NombreJugador dejó el panel (Fila 1 - Left)
+NombreJugador pisó un panel SEGURO (Fila 1 - Left)
+```
+
+Esto confirma que el sistema de tracking está funcionando correctamente.
+
+---
+
+## 🎯 Resumen
+
+| Antes | Ahora |
+|-------|-------|
+| Efectos se repiten mientras está parado | Efectos solo una vez por visita |
+| Sonido se reproduce constantemente | Sonido una vez al pisar |
+| Experiencia molesta | Experiencia fluida |
+| Sin control de repeticiones | Control total con TouchEnded |
+
+---
+
+¡El problema está solucionado! 🎉
