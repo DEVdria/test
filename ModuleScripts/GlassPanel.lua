@@ -49,8 +49,12 @@ function GlassPanel:CreatePart()
 	if Config.ShowCorrectPath then
 		panel.Color = self.IsSafe and Config.SafePanelColor or Config.FakePanelColor
 	else
-		-- Color neutro si no mostramos el camino
-		panel.Color = Color3.fromRGB(200, 230, 255)
+		-- Color por columna: izquierda azul, derecha rosa
+		if self.Side == "Left" then
+			panel.Color = Color3.fromRGB(100, 150, 255) -- Azul
+		else
+			panel.Color = Color3.fromRGB(255, 150, 200) -- Rosa
+		end
 	end
 
 	-- Agregar valor para identificar el tipo
