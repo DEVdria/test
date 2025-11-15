@@ -92,17 +92,16 @@ function GlassPanel:OnTouch(hit)
 	local player = game.Players:GetPlayerFromCharacter(hit.Parent)
 
 	if self.IsSafe then
-		-- ACTUALIZADO: Panel seguro - permitir múltiples activaciones si está configurado
-		-- Solo marcar como tocado si NO queremos múltiples efectos verdes
-		if not Config.AlwaysShowSafeGreen and self.HasBeenTouched then
-			return
-		end
-
-		self.HasBeenTouched = true
+		-- Panel seguro - efectos locales solo para el jugador que pisa
 		print(hit.Parent.Name .. " pisó un panel SEGURO (Fila " .. self.RowNumber .. " - " .. self.Side .. ")")
 
-		-- Pasar el parámetro keepGreen basado en la configuración
-		Effects.CreateSuccessEffect(self.Part, Config.AlwaysShowSafeGreen)
+		-- Disparar evento al cliente específico para efectos locales
+		if player then
+			local effectEvent = ReplicatedStorage:FindFirstChild("GlassBridgeEffectEvent")
+			if effectEvent then
+				effectEvent:FireClient(player, "SafePanel", self.Part)
+			end
+		end
 	else
 		-- ACTUALIZADO: Panel falso - explosión y regeneración
 		-- Evitar múltiples activaciones del panel falso

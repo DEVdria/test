@@ -27,6 +27,11 @@ local function Initialize()
 	GlassBridgeFolder.Name = "GlassBridge"
 	GlassBridgeFolder.Parent = workspace
 
+	-- Crear RemoteEvent para efectos locales del cliente
+	local remoteEvent = Instance.new("RemoteEvent")
+	remoteEvent.Name = "GlassBridgeEffectEvent"
+	remoteEvent.Parent = ReplicatedStorage
+
 	-- Generar camino aleatorio
 	GenerateRandomPath()
 
