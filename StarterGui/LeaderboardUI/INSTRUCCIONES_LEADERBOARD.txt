@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════
+INSTRUCCIONES PARA CONFIGURAR EL LEADERBOARD GLOBAL
+═══════════════════════════════════════════════════════════════
+
+📁 UBICACIÓN: StarterGui > LeaderboardUI
+
+🔧 PASOS DE INSTALACIÓN:
+
+1. En Roblox Studio, ve a StarterGui
+2. Crea un nuevo ScreenGui y nómbralo "LeaderboardUI"
+3. Dentro de LeaderboardUI, crea la siguiente estructura:
+
+   LeaderboardUI (ScreenGui)
+   └─ LeaderboardFrame (Frame) - Contenedor principal
+      ├─ TitleLabel (TextLabel) - Título del leaderboard
+      └─ PlayersContainer (ScrollingFrame) - Lista de jugadores
+
+4. Inserta el script "LeaderboardClient.lua" como LocalScript dentro de LeaderboardUI
+
+🎨 CONFIGURACIÓN RECOMENDADA:
+
+📊 LeaderboardFrame (Frame):
+   - Name: "LeaderboardFrame"
+   - Size: {0, 350},{0, 450}
+   - Position: {1, -360},{0, 10} (esquina superior derecha)
+   - BackgroundColor3: RGB(20, 20, 20)
+   - BackgroundTransparency: 0.2
+   - BorderSizePixel: 0
+   - Agregar UICorner con CornerRadius: 0.03, 0
+
+📝 TitleLabel (TextLabel):
+   - Name: "TitleLabel"
+   - Text: "🏆 TOP JUGADORES"
+   - Size: {1, 0},{0, 50}
+   - Position: {0, 0},{0, 0}
+   - BackgroundColor3: RGB(255, 215, 0)
+   - BackgroundTransparency: 0.1
+   - TextColor3: RGB(0, 0, 0)
+   - Font: GothamBold
+   - TextScaled: true
+
+📜 PlayersContainer (ScrollingFrame):
+   - Name: "PlayersContainer"
+   - Size: {1, -20},{1, -70}
+   - Position: {0, 10},{0, 60}
+   - BackgroundTransparency: 1
+   - ScrollBarThickness: 6
+   - CanvasSize: {0, 0},{0, 0} (se ajusta automáticamente)
+   - BorderSizePixel: 0
+
+✅ VERIFICACIÓN:
+
+Una vez configurado, deberías ver:
+- Un panel en la esquina superior derecha
+- Título "🏆 TOP JUGADORES"
+- Lista del top 10 jugadores con más dinero
+- Tu nombre resaltado si estás en el top
+- Emojis de medallas para los primeros 3 lugares:
+  🥇 Primer lugar (Oro)
+  🥈 Segundo lugar (Plata)
+  🥉 Tercer lugar (Bronce)
+
+🔄 ACTUALIZACIÓN AUTOMÁTICA:
+
+El leaderboard se actualiza automáticamente cada 30 segundos.
+No necesitas hacer nada, el sistema se encarga de todo.
+
+⚙️ PERSONALIZACIÓN:
+
+Para cambiar la frecuencia de actualización, edita:
+StarterGui > LeaderboardUI > LeaderboardClient.lua
+Línea: UpdateInterval = 30 (cambia el número de segundos)
+
+═══════════════════════════════════════════════════════════════

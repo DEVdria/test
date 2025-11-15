@@ -1,0 +1,81 @@
+═══════════════════════════════════════════════════════════════
+INSTRUCCIONES PARA CONFIGURAR LA TIENDA
+═══════════════════════════════════════════════════════════════
+
+📁 UBICACIÓN: StarterGui > ShopUI
+
+🔧 PASOS DE INSTALACIÓN:
+
+1. En Roblox Studio, ve a StarterGui
+2. Crea un nuevo ScreenGui y nómbralo "ShopUI"
+3. Dentro de ShopUI, crea la siguiente estructura:
+
+   ShopUI (ScreenGui)
+   ├─ ShopFrame (Frame) - Ventana principal de la tienda
+   │  ├─ ItemsContainer (ScrollingFrame) - Contenedor de items
+   │  └─ CloseButton (TextButton) - Botón para cerrar
+   └─ OpenButton (TextButton) - Botón para abrir la tienda
+
+4. Inserta el script "ShopClient.lua" como LocalScript dentro de ShopUI
+
+🎨 CONFIGURACIÓN RECOMENDADA:
+
+📦 ShopFrame (Frame):
+   - Name: "ShopFrame"
+   - Size: {0.6, 0},{0.7, 0}
+   - Position: {0.2, 0},{0.15, 0}
+   - BackgroundColor3: RGB(30, 30, 30)
+   - BackgroundTransparency: 0.1
+   - BorderSizePixel: 0
+   - Visible: false (se abre con script)
+   - Agregar UICorner con CornerRadius: 0.02, 0
+
+📜 ItemsContainer (ScrollingFrame):
+   - Name: "ItemsContainer"
+   - Size: {1, -20},{1, -60}
+   - Position: {0, 10},{0, 50}
+   - BackgroundTransparency: 1
+   - ScrollBarThickness: 8
+   - CanvasSize: {0, 0},{0, 0} (se ajusta automáticamente)
+
+❌ CloseButton (TextButton):
+   - Name: "CloseButton"
+   - Text: "X"
+   - Size: {0, 40},{0, 40}
+   - Position: {1, -50},{0, 5}
+   - BackgroundColor3: RGB(200, 0, 0)
+   - TextColor3: RGB(255, 255, 255)
+   - Font: GothamBold
+   - TextScaled: true
+   - Agregar UICorner
+
+🛒 OpenButton (TextButton):
+   - Name: "OpenButton"
+   - Text: "🛒 Tienda"
+   - Size: {0, 120},{0, 50}
+   - Position: {0.5, -60},{0, 10}
+   - BackgroundColor3: RGB(0, 120, 215)
+   - TextColor3: RGB(255, 255, 255)
+   - Font: GothamBold
+   - TextScaled: true
+   - Agregar UICorner
+
+✅ VERIFICACIÓN:
+
+- Deberías ver un botón "🛒 Tienda" en la parte superior de la pantalla
+- Al hacer clic, se abre una ventana con los items de la tienda
+- Puedes comprar items si tienes suficiente dinero
+- También puedes abrir/cerrar con la tecla "E"
+
+🛠️ PERSONALIZACIÓN DE ITEMS:
+
+Para agregar o modificar items de la tienda, edita el archivo:
+ServerScriptService > ShopHandler.lua
+
+En la tabla SHOP_ITEMS, puedes:
+- Agregar nuevos items
+- Cambiar precios
+- Modificar descripciones
+- Programar qué hace cada item al comprarse
+
+═══════════════════════════════════════════════════════════════

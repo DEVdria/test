@@ -1,0 +1,47 @@
+═══════════════════════════════════════════════════════════════
+INSTRUCCIONES PARA CONFIGURAR LA UI DE DINERO
+═══════════════════════════════════════════════════════════════
+
+📁 UBICACIÓN: StarterGui > MoneyUI
+
+🔧 PASOS DE INSTALACIÓN:
+
+1. En Roblox Studio, ve a StarterGui
+2. Crea un nuevo ScreenGui y nómbralo "MoneyUI"
+3. Dentro de MoneyUI, crea un TextLabel y nómbralo "MoneyLabel"
+4. Inserta el script "MoneyDisplay.lua" como LocalScript dentro de MoneyUI
+
+🎨 CONFIGURACIÓN RECOMENDADA DEL TextLabel (MoneyLabel):
+
+   Propiedades básicas:
+   - Name: "MoneyLabel"
+   - Text: "$0" (se actualizará automáticamente)
+   - TextScaled: true
+   - BackgroundTransparency: 0.3
+   - BackgroundColor3: RGB(0, 0, 0) [Negro]
+   - TextColor3: RGB(255, 215, 0) [Dorado]
+   - Font: GothamBold
+   - TextXAlignment: Center
+
+   Posición y tamaño:
+   - AnchorPoint: 0.5, 0
+   - Position: {0.5, 0},{0.02, 0} (centrado arriba)
+   - Size: {0, 200},{0, 50}
+
+   Opcional - Agregar UICorner:
+   - Inserta un UICorner dentro de MoneyLabel
+   - CornerRadius: 0.2, 0
+
+   Opcional - Agregar UIPadding:
+   - Inserta un UIPadding dentro de MoneyLabel
+   - PaddingLeft: 0, 10
+   - PaddingRight: 0, 10
+
+✅ VERIFICACIÓN:
+
+Una vez configurado, al probar el juego deberías ver:
+- Un label en la parte superior de la pantalla
+- El texto mostrando "💰 $100" (o el dinero que tengas)
+- El valor se actualiza automáticamente cuando cambia tu dinero
+
+═══════════════════════════════════════════════════════════════
