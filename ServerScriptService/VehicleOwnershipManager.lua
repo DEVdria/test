@@ -121,6 +121,8 @@ local function purchaseVehicle(player, vehicleName, price)
 			end
 		else
 			-- No tiene suficiente dinero
+			print("❌ No tiene suficiente dinero")
+
 			local notificationEvent = ReplicatedStorage:FindFirstChild("SendNotification")
 			if notificationEvent then
 				notificationEvent:FireClient(
@@ -135,8 +137,6 @@ local function purchaseVehicle(player, vehicleName, price)
 			if playSoundEvent then
 				playSoundEvent:FireClient(player, "Shop", "CannotAfford")
 			end
-		else
-			print("❌ No tiene suficiente dinero")
 		end
 	else
 		warn("❌ ERROR: MoneyManager NO está disponible!")
