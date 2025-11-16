@@ -1,0 +1,198 @@
+═══════════════════════════════════════════════════════════════
+INSTRUCCIONES PARA CONFIGURAR LA TIENDA FÍSICA
+═══════════════════════════════════════════════════════════════
+
+📍 UBICACIÓN: Workspace > ShopStand
+
+🔧 PASOS DE INSTALACIÓN:
+
+1. En Roblox Studio, ve al **Workspace**
+
+2. Crea una **Part** y nómbrala "ShopStand"
+
+3. Configura la Part:
+   - Size: 18, 14, 1 (ancho, alto, profundidad)
+   - Material: SmoothPlastic
+   - Color: Azul o color de tu preferencia
+   - Anchored: true (¡MUY IMPORTANTE!)
+   - CanCollide: true (para que los jugadores no la atraviesen)
+
+4. Posiciona la Part donde quieras que esté la tienda
+   - Recomendado: En una zona comercial o cerca del spawn
+
+5. Inserta el script "ShopPhysical.lua" como **Script** (normal, NO LocalScript)
+   dentro de la Part "ShopStand"
+
+6. El script creará automáticamente:
+   - Un SurfaceGui mostrando todos los items
+   - ProximityPrompts para comprar cada item
+   - Catálogo completo de la tienda
+
+═══════════════════════════════════════════════════════════════
+🎮 CÓMO FUNCIONA
+═══════════════════════════════════════════════════════════════
+
+**Para los jugadores:**
+
+1. **Ver items disponibles:**
+   - Simplemente mira la pantalla de la tienda
+   - Todos los items se muestran con:
+     * Nombre
+     * Descripción
+     * Precio
+     * Imagen (si está configurada)
+
+2. **Comprar un item:**
+   - Acércate a la tienda (dentro de 10 studs)
+   - Aparecerán ProximityPrompts para cada item
+   - Presiona y mantén E en el item que quieras comprar
+   - Si tienes suficiente dinero, recibirás el item
+
+3. **Notificaciones:**
+   - Recibirás un mensaje confirmando la compra
+   - O un mensaje de error si no tienes suficiente dinero
+
+═══════════════════════════════════════════════════════════════
+🎨 PERSONALIZACIÓN
+═══════════════════════════════════════════════════════════════
+
+**Cambiar la distancia de activación:**
+En ShopPhysical.lua, línea ~29:
+```lua
+MaxDistance = 10,  -- Cambia la distancia en studs
+```
+
+**Cambiar el tiempo de espera para comprar:**
+En ShopPhysical.lua, línea ~28:
+```lua
+HoldDuration = 1,  -- Segundos que hay que mantener E presionado
+```
+
+**Cambiar la cara donde aparece la tienda:**
+En ShopPhysical.lua, línea ~53:
+```lua
+surfaceGui.Face = Enum.NormalId.Front  -- Cambia a: Back, Top, Bottom, Left, Right
+```
+
+**Cambiar el tamaño del canvas:**
+En ShopPhysical.lua, línea ~54:
+```lua
+surfaceGui.CanvasSize = Vector2.new(1000, 800)  -- Ancho, Alto
+```
+
+**Agregar o modificar items:**
+Edita el archivo: ServerScriptService > ShopHandler.lua
+(Ver instrucciones en ese archivo)
+
+═══════════════════════════════════════════════════════════════
+🏗️ CONSTRUCCIÓN RECOMENDADA
+═══════════════════════════════════════════════════════════════
+
+Para crear una tienda más elaborada:
+
+**1. Estructura básica:**
+```
+ShopStand (Part principal con el script)
+├── Roof (Part para el techo)
+├── Floor (Part para el piso)
+├── Wall_Left (Pared izquierda)
+├── Wall_Right (Pared derecha)
+└── Counter (Mostrador)
+```
+
+**2. Decoración:**
+- Agrega PointLights para iluminación
+- Usa Decals para agregar logos o carteles
+- Agrega SpawnLocation cerca para respawn
+- Coloca la tienda en un edificio o stand
+
+**3. Múltiples pantallas:**
+- Duplica la Part principal
+- Cambia la cara del SurfaceGui en cada una
+- Colócalas en diferentes ángulos
+
+═══════════════════════════════════════════════════════════════
+✅ VERIFICACIÓN
+═══════════════════════════════════════════════════════════════
+
+Una vez configurado, deberías ver:
+- ✅ Un panel físico con el título "🛒 TIENDA 🛒"
+- ✅ Grid de items mostrando:
+   - Nombre del item
+   - Descripción
+   - Precio con formato ($1,000)
+- ✅ Instrucciones en la parte inferior
+- ✅ Al acercarte, aparecen prompts para comprar
+- ✅ Al comprar, recibes el item si tienes dinero
+
+═══════════════════════════════════════════════════════════════
+🔧 SOLUCIÓN DE PROBLEMAS
+═══════════════════════════════════════════════════════════════
+
+**La tienda no aparece:**
+1. Verifica que la Part se llame exactamente "ShopStand"
+2. Asegúrate de que el script sea un Script normal (NO LocalScript)
+3. Verifica que ShopHandler.lua esté en ServerScriptService
+4. Revisa Output para errores
+
+**Los items no se muestran:**
+1. Verifica que ShopHandler.lua tenga items configurados
+2. Espera unos segundos para que cargue
+3. Revisa la consola del servidor para errores
+4. Asegúrate de que RemoteEvents esté en ReplicatedStorage
+
+**Los ProximityPrompts no aparecen:**
+1. Acércate más a la tienda (máximo 10 studs)
+2. Verifica que la Part tenga CanCollide = true
+3. Asegúrate de estar en modo de juego (no en modo edición)
+4. Revisa que los items se hayan cargado correctamente
+
+**No puedo comprar items:**
+1. Verifica que tengas suficiente dinero
+2. Asegúrate de que ShopHandler.lua esté funcionando
+3. Revisa que PurchaseItem RemoteFunction exista
+4. Comprueba la consola del servidor para errores
+
+**El texto no se ve bien:**
+1. Aumenta el tamaño de la Part
+2. Ajusta CanvasSize en el script
+3. Verifica que LightInfluence = 0
+4. Aumenta la Brightness del SurfaceGui
+5. Cambia el ángulo de la cámara
+
+═══════════════════════════════════════════════════════════════
+📝 NOTAS IMPORTANTES
+═══════════════════════════════════════════════════════════════
+
+- ⚠️ La Part DEBE estar Anchored = true o se caerá
+- 🔄 La tienda se actualiza automáticamente cada 60 segundos
+- 👥 Múltiples jugadores pueden comprar al mismo tiempo
+- 💰 Las compras se validan en el servidor (anti-exploit)
+- 🎯 Los ProximityPrompts solo aparecen cuando estás cerca
+- 📱 Funciona mejor con Parts grandes (más fácil de leer)
+
+═══════════════════════════════════════════════════════════════
+🎨 IDEAS DE DISEÑO
+═══════════════════════════════════════════════════════════════
+
+**Tienda medieval:**
+- Material: Wood o WoodPlanks
+- Color: Marrón
+- Agregar un cartel de madera arriba
+
+**Tienda moderna:**
+- Material: Glass o Neon
+- Color: Azul eléctrico o blanco
+- Agregar luces LED alrededor
+
+**Tienda futurista:**
+- Material: ForceField o Neon
+- Color: Cian o morado
+- Agregar efectos de partículas
+
+**Tienda RPG:**
+- Material: Cobblestone
+- Color: Gris piedra
+- Agregar antorchas y decoración medieval
+
+═══════════════════════════════════════════════════════════════

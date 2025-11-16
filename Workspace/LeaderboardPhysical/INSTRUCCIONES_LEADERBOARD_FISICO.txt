@@ -1,0 +1,129 @@
+═══════════════════════════════════════════════════════════════
+INSTRUCCIONES PARA CONFIGURAR EL LEADERBOARD FÍSICO
+═══════════════════════════════════════════════════════════════
+
+📍 UBICACIÓN: Workspace > LeaderboardBoard
+
+🔧 PASOS DE INSTALACIÓN:
+
+1. En Roblox Studio, ve al **Workspace**
+
+2. Crea una **Part** y nómbrala "LeaderboardBoard"
+
+3. Configura la Part:
+   - Size: 16, 20, 1 (ancho, alto, profundidad)
+   - Material: SmoothPlastic
+   - Color: Negro o gris oscuro
+   - Anchored: true (importante!)
+   - CanCollide: false (opcional)
+
+4. Posiciona la Part donde quieras que esté el leaderboard
+   - Recomendado: En un lugar visible cerca del spawn
+
+5. Inserta el script "LeaderboardPhysical.lua" como **Script** (normal, NO LocalScript)
+   dentro de la Part "LeaderboardBoard"
+
+6. El script creará automáticamente:
+   - Un SurfaceGui en la cara frontal de la Part
+   - El título "🏆 TOP JUGADORES 🏆"
+   - La lista de jugadores con sus posiciones
+
+═══════════════════════════════════════════════════════════════
+🎨 PERSONALIZACIÓN OPCIONAL
+═══════════════════════════════════════════════════════════════
+
+**Cambiar la cara donde aparece el leaderboard:**
+En el script LeaderboardPhysical.lua, línea ~51:
+```lua
+surfaceGui.Face = Enum.NormalId.Front  -- Cambia a: Back, Top, Bottom, Left, Right
+```
+
+**Cambiar cuántos jugadores mostrar:**
+En el script LeaderboardPhysical.lua, línea ~28:
+```lua
+PlayersToShow = 10,  -- Cambia este número
+```
+
+**Cambiar frecuencia de actualización:**
+En el script LeaderboardPhysical.lua, línea ~27:
+```lua
+UpdateInterval = 30,  -- Segundos entre actualizaciones
+```
+
+**Cambiar el tamaño del canvas:**
+En el script LeaderboardPhysical.lua, línea ~53:
+```lua
+surfaceGui.CanvasSize = Vector2.new(800, 1000)  -- Ancho, Alto
+```
+
+═══════════════════════════════════════════════════════════════
+🎨 DECORACIÓN RECOMENDADA
+═══════════════════════════════════════════════════════════════
+
+Para hacer el leaderboard más atractivo:
+
+1. **Agregar marco/borde:**
+   - Duplica la Part principal
+   - Hazla ligeramente más grande
+   - Cambia el color a dorado/amarillo
+   - Colócala detrás del leaderboard
+
+2. **Agregar iluminación:**
+   - Inserta un PointLight dentro de la Part
+   - Brightness: 2
+   - Color: RGB(255, 215, 0) [Dorado]
+   - Range: 20
+
+3. **Agregar base/pedestal:**
+   - Crea una Part debajo del leaderboard
+   - Forma de cilindro o bloque
+   - Material: Marble o Granite
+
+═══════════════════════════════════════════════════════════════
+✅ VERIFICACIÓN
+═══════════════════════════════════════════════════════════════
+
+Una vez configurado, deberías ver:
+- ✅ Un panel físico en el mundo del juego
+- ✅ Título "🏆 TOP JUGADORES 🏆" en la parte superior
+- ✅ Lista del top 10 jugadores con:
+   - 🥇 Medalla de oro para el 1er lugar
+   - 🥈 Medalla de plata para el 2do lugar
+   - 🥉 Medalla de bronce para el 3er lugar
+   - Números para los demás lugares
+- ✅ Dinero de cada jugador con formato ($1,000)
+- ✅ Actualización automática cada 30 segundos
+
+═══════════════════════════════════════════════════════════════
+🔧 SOLUCIÓN DE PROBLEMAS
+═══════════════════════════════════════════════════════════════
+
+**El leaderboard no aparece:**
+1. Verifica que la Part se llame exactamente "LeaderboardBoard"
+2. Asegúrate de que el script sea un Script normal (NO LocalScript)
+3. Verifica que LeaderboardHandler.lua esté en ServerScriptService
+4. Revisa la consola del servidor (Output) para errores
+
+**El leaderboard está en blanco:**
+1. Espera al menos 30 segundos para la primera actualización
+2. Verifica que haya jugadores con dinero en el juego
+3. Asegúrate de que DataStore esté habilitado
+4. Revisa la consola para mensajes de error
+
+**No se puede ver el texto:**
+1. Aumenta el tamaño de la Part
+2. Verifica que la propiedad LightInfluence = 0 en el SurfaceGui
+3. Aumenta la Brightness del SurfaceGui
+4. Asegúrate de estar mirando la cara correcta de la Part
+
+═══════════════════════════════════════════════════════════════
+📝 NOTAS IMPORTANTES
+═══════════════════════════════════════════════════════════════
+
+- El leaderboard se actualiza automáticamente cada 30 segundos
+- No es necesario que los jugadores interactúen con él
+- Es visible para todos los jugadores al mismo tiempo
+- El script debe estar en el SERVIDOR (Script normal, no LocalScript)
+- Asegúrate de que la Part esté Anchored para que no se caiga
+
+═══════════════════════════════════════════════════════════════

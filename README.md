@@ -1,6 +1,6 @@
 # 💰 Sistema Completo de Dinero para Roblox
 
-Sistema completo de dinero con leaderstats, UI, tienda, cofres con ProximityPrompt, leaderboard global y guardado de datos.
+Sistema completo de dinero con leaderstats, UI, **tienda física**, cofres con ProximityPrompt, **leaderboard físico** y guardado de datos.
 
 ---
 
@@ -9,7 +9,7 @@ Sistema completo de dinero con leaderstats, UI, tienda, cofres con ProximityProm
 1. [Características](#características)
 2. [Estructura de Archivos](#estructura-de-archivos)
 3. [Instalación Paso a Paso](#instalación-paso-a-paso)
-4. [Configuración de UI](#configuración-de-ui)
+4. [Configuración de Elementos Físicos](#configuración-de-elementos-físicos)
 5. [Personalización](#personalización)
 6. [Solución de Problemas](#solución-de-problemas)
 
@@ -18,10 +18,10 @@ Sistema completo de dinero con leaderstats, UI, tienda, cofres con ProximityProm
 ## ✨ Características
 
 ✅ **Leaderstats automático** - Carpeta leaderstats con estadística Money creada automáticamente
-✅ **UI de dinero** - Muestra el dinero del jugador en tiempo real
+✅ **UI de dinero** - Muestra el dinero del jugador en tiempo real en pantalla
 ✅ **Sistema de cofres** - ProximityPrompt en cofres que otorgan dinero
-✅ **Tienda funcional** - Compra items con tu dinero
-✅ **Leaderboard global** - Muestra los jugadores con más dinero
+✅ **Tienda física** - Stand físico en el mundo donde comprar items
+✅ **Leaderboard físico** - Panel físico mostrando top jugadores
 ✅ **Guardado de datos** - DataStore que guarda el dinero al salir
 ✅ **Sistema de cooldown** - Evita spam en los cofres
 ✅ **Protección contra exploits** - Validación en el servidor
@@ -37,7 +37,7 @@ Roblox Game/
 │   ├── PlayerDataManager.lua          ← Leaderstats + DataStore
 │   ├── ChestReward.lua                ← Sistema de cofres
 │   ├── ShopHandler.lua                ← Lógica de la tienda
-│   └── LeaderboardHandler.lua         ← Leaderboard global
+│   └── LeaderboardHandler.lua         ← Leaderboard global (backend)
 │
 ├── ReplicatedStorage/
 │   └── RemoteEvents/                  ← (Se crea automáticamente)
@@ -45,18 +45,19 @@ Roblox Game/
 │       ├── PurchaseItem
 │       └── GetLeaderboard
 │
-└── StarterGui/
-    ├── MoneyUI/
-    │   ├── MoneyDisplay.lua           ← UI de dinero (LocalScript)
-    │   └── INSTRUCCIONES_UI.txt
+├── StarterGui/
+│   └── MoneyUI/
+│       ├── MoneyDisplay.lua           ← UI de dinero (LocalScript)
+│       └── INSTRUCCIONES_UI.txt
+│
+└── Workspace/
+    ├── LeaderboardPhysical/
+    │   ├── LeaderboardPhysical.lua    ← Script para panel físico
+    │   └── INSTRUCCIONES_LEADERBOARD_FISICO.txt
     │
-    ├── ShopUI/
-    │   ├── ShopClient.lua             ← UI de tienda (LocalScript)
-    │   └── INSTRUCCIONES_SHOP.txt
-    │
-    └── LeaderboardUI/
-        ├── LeaderboardClient.lua      ← UI de leaderboard (LocalScript)
-        └── INSTRUCCIONES_LEADERBOARD.txt
+    └── ShopPhysical/
+        ├── ShopPhysical.lua           ← Script para tienda física
+        └── INSTRUCCIONES_TIENDA_FISICA.txt
 ```
 
 ---
@@ -73,7 +74,7 @@ Roblox Game/
    - `LeaderboardHandler.lua`
 3. Copia el contenido de cada archivo descargado a su respectivo script
 
-### **Paso 2: Configurar UI de Dinero**
+### **Paso 2: Configurar UI de Dinero (en pantalla)**
 
 1. Ve a **StarterGui**
 2. Crea un **ScreenGui** llamado `MoneyUI`
@@ -93,33 +94,50 @@ Roblox Game/
 - Font: GothamBold
 ```
 
-### **Paso 3: Configurar UI de Tienda**
+### **Paso 3: Crear Leaderboard Físico**
 
-1. En **StarterGui**, crea un **ScreenGui** llamado `ShopUI`
-2. Dentro de ShopUI:
-   - Crea un **Frame** llamado `ShopFrame`
-   - Dentro de ShopFrame:
-     - Crea un **ScrollingFrame** llamado `ItemsContainer`
-     - Crea un **TextButton** llamado `CloseButton` (texto: "X")
-   - Crea un **TextButton** llamado `OpenButton` (texto: "🛒 Tienda")
-3. Inserta `ShopClient.lua` como **LocalScript** dentro de ShopUI
+1. Ve al **Workspace**
+2. Crea una **Part** y nómbrala `LeaderboardBoard`
+3. Configura la Part:
+   - Size: **16, 20, 1** (ancho, alto, profundidad)
+   - Material: SmoothPlastic
+   - Color: Negro o gris oscuro
+   - **Anchored: true** (¡IMPORTANTE!)
+   - CanCollide: false
+4. Posiciónala en un lugar visible (ej: cerca del spawn)
+5. Inserta el script `LeaderboardPhysical.lua` como **Script** dentro de la Part
 
-**Configuración rápida:**
-- ShopFrame: Size `{0.6, 0},{0.7, 0}`, Visible = `false`
-- OpenButton: Position `{0.5, -60},{0, 10}`, Size `{0, 120},{0, 50}`
+**El script creará automáticamente:**
+- SurfaceGui con el top de jugadores
+- Título "🏆 TOP JUGADORES 🏆"
+- Medallas para los primeros 3 lugares
 
-### **Paso 4: Configurar UI de Leaderboard**
+📝 **Ver detalles completos en**: `Workspace/LeaderboardPhysical/INSTRUCCIONES_LEADERBOARD_FISICO.txt`
 
-1. En **StarterGui**, crea un **ScreenGui** llamado `LeaderboardUI`
-2. Dentro de LeaderboardUI:
-   - Crea un **Frame** llamado `LeaderboardFrame`
-   - Dentro de LeaderboardFrame:
-     - Crea un **TextLabel** llamado `TitleLabel` (texto: "🏆 TOP JUGADORES")
-     - Crea un **ScrollingFrame** llamado `PlayersContainer`
-3. Inserta `LeaderboardClient.lua` como **LocalScript** dentro de LeaderboardUI
+### **Paso 4: Crear Tienda Física**
 
-**Configuración rápida:**
-- LeaderboardFrame: Size `{0, 350},{0, 450}`, Position `{1, -360},{0, 10}`
+1. Ve al **Workspace**
+2. Crea una **Part** y nómbrala `ShopStand`
+3. Configura la Part:
+   - Size: **18, 14, 1** (ancho, alto, profundidad)
+   - Material: SmoothPlastic
+   - Color: Azul o tu preferencia
+   - **Anchored: true** (¡IMPORTANTE!)
+   - CanCollide: true
+4. Posiciónala donde quieras la tienda
+5. Inserta el script `ShopPhysical.lua` como **Script** dentro de la Part
+
+**El script creará automáticamente:**
+- SurfaceGui mostrando todos los items
+- ProximityPrompts para comprar cada item
+- Sistema de catálogo completo
+
+**Cómo comprar:**
+- Acércate a la tienda (dentro de 10 studs)
+- Aparecerán prompts para cada item
+- Mantén E presionado en el item que quieras comprar
+
+📝 **Ver detalles completos en**: `Workspace/ShopPhysical/INSTRUCCIONES_TIENDA_FISICA.txt`
 
 ### **Paso 5: Crear Cofre en el Workspace**
 
@@ -128,47 +146,59 @@ Roblox Game/
 3. (Opcional) Inserta un **ProximityPrompt** dentro de la Part
    - Si no lo haces, el script lo creará automáticamente
 4. Personaliza el cofre como quieras (tamaño, color, etc.)
+5. **Anchored: true** (para que no se caiga)
 
 ---
 
-## 🎨 Configuración de UI
+## 🎨 Configuración de Elementos Físicos
 
-### **UI de Dinero (MoneyUI)**
+### **Leaderboard Físico**
 
-Para personalizar la apariencia del label de dinero:
+El leaderboard es un panel físico en el mundo que muestra:
+- 🥇 Top 1 con medalla de oro
+- 🥈 Top 2 con medalla de plata
+- 🥉 Top 3 con medalla de bronce
+- Hasta 10 jugadores en total
+- Actualización automática cada 30 segundos
+
+**Personalización:**
+- Cambia el tamaño de la Part para mejor visibilidad
+- Ajusta la propiedad `Face` del SurfaceGui para cambiar la cara visible
+- Modifica `PlayersToShow` en el script para mostrar más/menos jugadores
+- Agrega PointLights para iluminación dramática
+
+### **Tienda Física**
+
+La tienda es un stand físico que muestra todos los items disponibles:
+- Grid con todos los items
+- Nombre, descripción y precio de cada item
+- ProximityPrompts individuales para cada compra
+- Scroll automático si hay muchos items
+
+**Cómo funciona:**
+1. Los jugadores se acercan a la tienda
+2. Ven todos los items disponibles en la pantalla
+3. Aparecen ProximityPrompts al estar cerca
+4. Presionan E para comprar el item deseado
+5. Reciben confirmación o mensaje de error
+
+**Agregar items:**
+Edita `ServerScriptService/ShopHandler.lua` en la tabla `SHOP_ITEMS`:
 
 ```lua
--- En MoneyDisplay.lua, puedes cambiar:
-moneyLabel.Text = "💰 $" .. formatNumber(money.Value)
--- Por ejemplo, cambiar el emoji o el formato
-```
-
-### **UI de Tienda (ShopUI)**
-
-Para agregar items a la tienda, edita `ServerScriptService/ShopHandler.lua`:
-
-```lua
--- En la tabla SHOP_ITEMS, agrega:
 {
     ItemId = "mi_item",
-    Name = "Mi Item",
-    Description = "Descripción de mi item",
+    Name = "Mi Item Personalizado",
+    Description = "Descripción del item",
     Price = 500,
     Category = "Categoría",
+    ImageId = "rbxassetid://123456", -- Opcional
     OnPurchase = function(player)
-        -- Código cuando se compra
+        -- Lo que sucede al comprar
         print(player.Name .. " compró mi item")
+        -- Ejemplo: dar tool, aumentar stats, etc.
     end
 }
-```
-
-### **UI de Leaderboard (LeaderboardUI)**
-
-Para cambiar cuántos jugadores se muestran en el top:
-
-```lua
--- En ServerScriptService/LeaderboardHandler.lua
-TopPlayersCount = 10, -- Cambia este número
 ```
 
 ---
@@ -201,8 +231,20 @@ AUTO_SAVE_INTERVAL = 300 -- Segundos (5 minutos por defecto)
 ### **Actualización del Leaderboard**
 
 ```lua
--- En ServerScriptService/LeaderboardHandler.lua
+-- En ServerScriptService/LeaderboardHandler.lua (backend)
 UpdateInterval = 60,  -- Segundos entre actualizaciones
+
+-- En Workspace/LeaderboardBoard/LeaderboardPhysical.lua (visual)
+UpdateInterval = 30,  -- Segundos entre refrescos visuales
+PlayersToShow = 10,   -- Cuántos jugadores mostrar
+```
+
+### **Distancia de la Tienda**
+
+```lua
+-- En Workspace/ShopStand/ShopPhysical.lua
+MaxDistance = 10,  -- Distancia en studs para activar prompts
+HoldDuration = 1,  -- Segundos para mantener E presionado
 ```
 
 ---
@@ -216,29 +258,42 @@ UpdateInterval = 60,  -- Segundos entre actualizaciones
 2. Publica tu juego en Roblox
 3. Verifica la consola del servidor para errores de DataStore
 
-### **La UI no aparece**
+### **La UI de dinero no aparece**
 
 1. Verifica que los scripts estén en la ubicación correcta
-2. Asegúrate de que sean **LocalScripts** los de StarterGui
+2. Asegúrate de que sea **LocalScript** en StarterGui
 3. Revisa la consola del cliente (F9 en el juego) para errores
+
+### **El leaderboard físico no se muestra**
+
+1. Verifica que la Part se llame exactamente `LeaderboardBoard`
+2. Asegúrate de que el script sea **Script** normal (NO LocalScript)
+3. Verifica que `LeaderboardHandler.lua` esté en ServerScriptService
+4. Comprueba que la Part tenga `Anchored = true`
+5. Revisa Output para errores
+6. Espera 30 segundos para la primera actualización
+
+### **La tienda física está vacía**
+
+1. Verifica que la Part se llame exactamente `ShopStand`
+2. Asegúrate de que `ShopHandler.lua` esté en ServerScriptService
+3. Verifica que haya items en la tabla SHOP_ITEMS
+4. Revisa que `ReplicatedStorage/RemoteEvents` se haya creado
+5. Comprueba la consola del servidor para errores
+
+### **Los ProximityPrompts no aparecen en la tienda**
+
+1. Acércate más a la tienda (máximo 10 studs de distancia)
+2. Verifica que la Part tenga `CanCollide = true`
+3. Asegúrate de estar en modo juego (no en modo edición)
+4. Revisa que los items se hayan cargado correctamente
 
 ### **El cofre no funciona**
 
 1. Verifica que la Part se llame exactamente `Chest`
 2. Asegúrate de que el script `ChestReward.lua` esté en ServerScriptService
-3. Revisa la consola del servidor para mensajes de error
-
-### **La tienda está vacía**
-
-1. Verifica que `ShopHandler.lua` esté en ServerScriptService
-2. Asegúrate de que `ReplicatedStorage/RemoteEvents` se haya creado
-3. Revisa la consola del cliente y servidor para errores
-
-### **El leaderboard no se actualiza**
-
-1. Verifica que `LeaderboardHandler.lua` esté en ServerScriptService
-2. Asegúrate de que los DataStores estén habilitados (ver primer problema)
-3. Espera al menos 30 segundos para la primera actualización
+3. Verifica que la Part tenga `Anchored = true`
+4. Revisa la consola del servidor para mensajes de error
 
 ---
 
@@ -261,6 +316,14 @@ UpdateInterval = 60,  -- Segundos entre actualizaciones
 - Toda la lógica importante está en el servidor
 - Los clientes solo pueden solicitar datos, no modificarlos directamente
 - El sistema valida todas las compras en el servidor
+- Los ProximityPrompts se manejan server-side
+
+### **Elementos Físicos**
+
+- **SIEMPRE** usa `Anchored = true` en las Parts
+- Los scripts de elementos físicos deben ser Scripts normales (NO LocalScripts)
+- Los SurfaceGui se crean automáticamente por los scripts
+- Ajusta el tamaño de las Parts para mejor visibilidad
 
 ---
 
@@ -268,11 +331,11 @@ UpdateInterval = 60,  -- Segundos entre actualizaciones
 
 ### **Para Jugadores:**
 
-1. **Ver dinero**: Se muestra automáticamente en la parte superior
-2. **Abrir tienda**: Presiona `E` o haz clic en el botón "🛒 Tienda"
-3. **Comprar items**: Haz clic en el botón verde con el precio
-4. **Abrir cofres**: Acércate a un cofre y presiona `E`
-5. **Ver leaderboard**: Siempre visible en la esquina superior derecha
+1. **Ver dinero**: Se muestra automáticamente en la parte superior de la pantalla
+2. **Ver leaderboard**: Ve al panel físico del leaderboard en el mundo
+3. **Comprar items**: Ve a la tienda física, acércate y presiona E en el item deseado
+4. **Abrir cofres**: Acércate a un cofre y presiona E
+5. **Dinero se guarda**: Automáticamente cada 5 minutos y al salir
 
 ### **Para Desarrolladores:**
 
@@ -285,6 +348,11 @@ player.leaderstats.Money.Value = player.leaderstats.Money.Value + 100
 
 -- Quitar dinero a un jugador
 player.leaderstats.Money.Value = player.leaderstats.Money.Value - 50
+
+-- Verificar si un jugador puede comprar algo
+local function canAfford(player, price)
+    return player.leaderstats.Money.Value >= price
+end
 ```
 
 ---
@@ -297,6 +365,7 @@ Si tienes problemas:
 2. Revisa la **consola del cliente** (F9 en el juego)
 3. Lee los archivos `INSTRUCCIONES_*.txt` de cada carpeta
 4. Verifica que todos los nombres coincidan exactamente
+5. Asegúrate de que todas las Parts físicas tengan `Anchored = true`
 
 ---
 
@@ -311,12 +380,37 @@ Este sistema es de uso libre para tu proyecto de Roblox.
 Antes de probar tu juego, asegúrate de:
 
 - [ ] Todos los scripts del servidor están en ServerScriptService
-- [ ] Todos los LocalScripts de UI están en StarterGui
-- [ ] Los ScreenGuis tienen los nombres correctos (MoneyUI, ShopUI, LeaderboardUI)
-- [ ] Existe una Part llamada "Chest" en el Workspace
+- [ ] MoneyDisplay.lua (LocalScript) está en StarterGui/MoneyUI
+- [ ] Existe una Part "LeaderboardBoard" en Workspace con su script
+- [ ] Existe una Part "ShopStand" en Workspace con su script
+- [ ] Existe una Part "Chest" en el Workspace
+- [ ] TODAS las Parts físicas tienen `Anchored = true`
 - [ ] Studio Access to API Services está habilitado
-- [ ] El juego está publicado en Roblox
+- [ ] El juego está publicado en Roblox (para DataStore)
 
 ---
 
-¡Disfruta tu sistema de dinero completo! 💰🎮
+## 🎨 Ideas de Construcción
+
+### **Para el Leaderboard:**
+- Construye un podio con 3 niveles para los top 3
+- Agrega un marco dorado alrededor del panel
+- Coloca PointLights con color dorado
+- Crea una sala especial "Hall de la Fama"
+
+### **Para la Tienda:**
+- Construye un edificio o stand alrededor de la Part
+- Agrega un mostrador frontal
+- Coloca carteles decorativos
+- Agrega NPCs vendedores (Models)
+- Crea diferentes secciones de tienda con múltiples stands
+
+### **Para los Cofres:**
+- Duplica la Part Chest en varios lugares del mapa
+- Usa diferentes colores para diferentes recompensas
+- Agrega ParticleEmitters para efectos brillantes
+- Coloca en lugares estratégicos o escondidos
+
+---
+
+¡Disfruta tu sistema de dinero completo con elementos físicos! 💰🎮
