@@ -80,9 +80,16 @@ local function createPurchasePrompt()
 
 	-- Evento cuando se activa
 	proximityPrompt.Triggered:Connect(function(player)
+		print("🛒 Jugador " .. player.Name .. " presionó el botón de compra")
+		print("   Vehículo: " .. VEHICLE_NAME)
+		print("   Precio: $" .. VEHICLE_PRICE)
+		print("   Enviando evento al servidor...")
+
 		-- Enviar solicitud de compra al servidor
 		-- NOTA: Se permite comprar múltiples veces (compras temporales)
 		purchaseVehicleEvent:FireServer(VEHICLE_NAME, VEHICLE_PRICE)
+
+		print("✅ Evento enviado al servidor")
 	end)
 
 	print("✅ ProximityPrompt de compra creado para: " .. VEHICLE_NAME)

@@ -52,25 +52,17 @@ local function canUseVehicle(player)
 end
 
 --[[
-    Función: Expulsar a un jugador del asiento
+    Función: Matar a un jugador que usa el vehículo sin comprar
     Parámetros:
-        player - El jugador a expulsar
-        seat - El asiento del que expulsarlo
+        player - El jugador a matar
 --]]
-local function kickFromSeat(player, seat)
+local function killPlayer(player)
 	-- Evitar spam de mensajes
 	if recentlyKicked[player.UserId] then
 		return
 	end
 
 	recentlyKicked[player.UserId] = true
-
-	-- Expulsar del asiento
-	if seat:IsA("VehicleSeat") then
-		seat:Sit(nil)
-	elseif seat:IsA("Seat") then
-		seat:Sit(nil)
-	end
 
 	-- Mensaje de advertencia
 	if LOCK_MESSAGE_ENABLED then
@@ -83,6 +75,18 @@ local function kickFromSeat(player, seat)
 			)
 		end
 	end
+
+	-- Matar al jugador después de 1 segundo
+	task.delay(1, function()
+		local character = player.Character
+		if character then
+			local humanoid = character:FindFirstChild("Humanoid")
+			if humanoid then
+				humanoid.Health = 0
+				print("💀 " .. player.Name .. " murió por usar " .. VEHICLE_NAME .. " sin comprarlo")
+			end
+		end
+	end)
 
 	-- Cooldown para evitar spam
 	task.delay(2, function()
@@ -112,8 +116,8 @@ local function lockSeat(seat)
 			if player then
 				-- Verificar si puede usar el vehículo
 				if not canUseVehicle(player) then
-					-- Expulsar del asiento
-					kickFromSeat(player, seat)
+					-- Matar al jugador
+					killPlayer(player)
 				end
 			end
 		end

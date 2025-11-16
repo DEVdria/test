@@ -82,13 +82,19 @@ end
     Retorna: true si la compra fue exitosa, false si no
 --]]
 local function purchaseVehicle(player, vehicleName, price)
+	print("💰 Procesando compra para " .. player.Name)
+
 	-- Verificar que tenga suficiente dinero
 	if _G.MoneyManager then
+		print("✅ MoneyManager encontrado")
 		local currentMoney = _G.MoneyManager.GetMoney(player)
+		print("💵 Dinero actual: $" .. currentMoney .. " (Necesita: $" .. price .. ")")
 
 		if currentMoney >= price then
+			print("✅ Tiene suficiente dinero, removiendo...")
 			-- Remover dinero
 			local success = _G.MoneyManager.RemoveMoney(player, price)
+			print("💸 Resultado de RemoveMoney: " .. tostring(success))
 
 			if success then
 				-- Dar propiedad del vehículo
@@ -129,7 +135,12 @@ local function purchaseVehicle(player, vehicleName, price)
 			if playSoundEvent then
 				playSoundEvent:FireClient(player, "Shop", "CannotAfford")
 			end
+		else
+			print("❌ No tiene suficiente dinero")
 		end
+	else
+		warn("❌ ERROR: MoneyManager NO está disponible!")
+		warn("⚠️ Asegúrate de que MoneyManager.lua esté en ServerScriptService")
 	end
 
 	return false
@@ -157,6 +168,11 @@ end)
     Evento: Cliente solicita comprar vehículo
 --]]
 purchaseVehicleEvent.OnServerEvent:Connect(function(player, vehicleName, price)
+	print("🔔 Solicitud de compra recibida:")
+	print("   Jugador: " .. player.Name)
+	print("   Vehículo: " .. tostring(vehicleName))
+	print("   Precio: $" .. tostring(price))
+
 	purchaseVehicle(player, vehicleName, price)
 end)
 
