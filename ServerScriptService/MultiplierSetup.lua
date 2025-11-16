@@ -111,6 +111,7 @@ clientScript.Name = "MultiplierButtonClient"
 clientScript.Source = [=[
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 local button = script.Parent
@@ -121,25 +122,25 @@ local COLOR_HOVER = Color3.fromRGB(100, 190, 255)
 local COLOR_PRESSED = Color3.fromRGB(70, 150, 230)
 local COLOR_DISABLED = Color3.fromRGB(60, 60, 60)
 
-local canClick = true
+local canClick = false
 local purchaseMultiplierEvent = nil
+local isInitialized = false
 
-local function waitForRemoteEvents()
-	local maxWait = 10
-	local waited = 0
+print("🎮 Iniciando botón de multiplicador...")
 
-	while not ReplicatedStorage:FindFirstChild("PurchaseMultiplier") and waited < maxWait do
-		task.wait(0.5)
-		waited = waited + 0.5
+local function formatMoney(amount)
+	local str = tostring(amount)
+	local result = ""
+	local len = string.len(str)
+
+	for i = 1, len do
+		result = result .. string.sub(str, i, i)
+		if (len - i) % 3 == 0 and i ~= len then
+			result = result .. ","
+		end
 	end
 
-	if ReplicatedStorage:FindFirstChild("PurchaseMultiplier") then
-		purchaseMultiplierEvent = ReplicatedStorage.PurchaseMultiplier
-		return true
-	else
-		warn("No se pudo encontrar PurchaseMultiplier RemoteEvent")
-		return false
-	end
+	return result
 end
 
 local function getCurrentMultiplier()
@@ -164,22 +165,11 @@ local function getCurrentMoney()
 	return 0
 end
 
-local function formatMoney(amount)
-	local str = tostring(amount)
-	local result = ""
-	local len = string.len(str)
-
-	for i = 1, len do
-		result = result .. string.sub(str, i, i)
-		if (len - i) % 3 == 0 and i ~= len then
-			result = result .. ","
-		end
+local function updateButtonText()
+	if not isInitialized then
+		return
 	end
 
-	return result
-end
-
-local function updateButtonText()
 	local currentMultiplier = getCurrentMultiplier()
 	local nextMultiplier = math.floor((currentMultiplier + 0.1) * 10 + 0.5) / 10
 	local currentMoney = getCurrentMoney()
@@ -216,6 +206,7 @@ end
 
 button.MouseButton1Click:Connect(function()
 	if not canClick or not purchaseMultiplierEvent then
+		print("⚠️ No se puede comprar: canClick=" .. tostring(canClick) .. ", event=" .. tostring(purchaseMultiplierEvent ~= nil))
 		return
 	end
 
@@ -233,6 +224,7 @@ button.MouseButton1Click:Connect(function()
 	canClick = false
 
 	purchaseMultiplierEvent:FireServer()
+	print("📤 Solicitud de compra enviada")
 
 	task.wait(0.5)
 	updateButtonText()
@@ -252,40 +244,88 @@ button.MouseLeave:Connect(function()
 	end
 end)
 
-local function watchLeaderstats()
-	local leaderstats = player:WaitForChild("leaderstats", 10)
-	if not leaderstats then
-		warn("No se encontró leaderstats")
-		return
-	end
-
-	local multiplierStat = leaderstats:WaitForChild("Multiplicador", 10)
-	if multiplierStat then
-		multiplierStat.Changed:Connect(function()
-			updateButtonText()
-		end)
-	end
-
-	local moneyStat = leaderstats:WaitForChild("Money", 10)
-	if moneyStat then
-		moneyStat.Changed:Connect(function()
-			updateButtonText()
-		end)
-	end
-end
-
 task.spawn(function()
-	local success = waitForRemoteEvents()
-	if not success then
-		button.Text = "❌ ERROR\nNo se pudo conectar al servidor"
+	button.Text = "⏳ Esperando servidor...\n(Sistemas cargando)"
+	button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+
+	-- Esperar a que exista leaderstats (máximo 15 segundos)
+	print("⏳ Esperando leaderstats...")
+	local leaderstats = player:WaitForChild("leaderstats", 15)
+
+	if not leaderstats then
+		button.Text = "❌ ERROR\nLeaderstats no encontrado\n(¿MoneyManager activo?)"
 		button.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+		warn("❌ No se encontró leaderstats para " .. player.Name)
 		return
 	end
 
-	task.wait(1)
-	watchLeaderstats()
+	print("✅ Leaderstats encontrado")
+
+	-- Esperar a Money
+	print("⏳ Esperando Money...")
+	local moneyStat = leaderstats:WaitForChild("Money", 15)
+
+	if not moneyStat then
+		button.Text = "❌ ERROR\nMoney no encontrado"
+		button.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+		warn("❌ No se encontró Money para " .. player.Name)
+		return
+	end
+
+	print("✅ Money encontrado")
+
+	-- Esperar a Multiplicador
+	print("⏳ Esperando Multiplicador...")
+	button.Text = "⏳ Esperando multiplicador...\n(Casi listo)"
+
+	local multiplierStat = leaderstats:WaitForChild("Multiplicador", 15)
+
+	if not multiplierStat then
+		button.Text = "❌ ERROR\nMultiplicador no encontrado\n(¿MultiplierSystem activo?)"
+		button.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+		warn("❌ No se encontró Multiplicador para " .. player.Name)
+		return
+	end
+
+	print("✅ Multiplicador encontrado")
+
+	-- Esperar a RemoteEvent
+	print("⏳ Esperando RemoteEvent...")
+	button.Text = "⏳ Conectando...\n(Último paso)"
+
+	local waitTime = 0
+	while not ReplicatedStorage:FindFirstChild("PurchaseMultiplier") and waitTime < 15 do
+		task.wait(0.5)
+		waitTime = waitTime + 0.5
+	end
+
+	purchaseMultiplierEvent = ReplicatedStorage:FindFirstChild("PurchaseMultiplier")
+
+	if not purchaseMultiplierEvent then
+		button.Text = "❌ ERROR\nRemoteEvent no encontrado\n(¿MultiplierSystem activo?)"
+		button.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+		warn("❌ No se encontró PurchaseMultiplier RemoteEvent")
+		return
+	end
+
+	print("✅ RemoteEvent encontrado")
+
+	-- Todo listo, activar botón
+	isInitialized = true
+
+	-- Observar cambios
+	multiplierStat.Changed:Connect(function()
+		updateButtonText()
+	end)
+
+	moneyStat.Changed:Connect(function()
+		updateButtonText()
+	end)
+
+	-- Primera actualización
 	updateButtonText()
 
+	-- Actualizar periódicamente
 	task.spawn(function()
 		while true do
 			task.wait(2)
@@ -293,7 +333,7 @@ task.spawn(function()
 		end
 	end)
 
-	print("✅ Botón de multiplicador inicializado para " .. player.Name)
+	print("✅ Botón de multiplicador completamente inicializado para " .. player.Name)
 end)
 ]=]
 clientScript.Parent = buyButton
