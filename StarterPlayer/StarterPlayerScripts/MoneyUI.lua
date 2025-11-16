@@ -29,14 +29,21 @@ local function createMoneyUI()
 	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	screenGui.Parent = playerGui
 
-	-- Frame contenedor
+	-- Frame contenedor (responsive)
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Name = "MainFrame"
-	mainFrame.Size = UDim2.new(0, 250, 0, 80)
-	mainFrame.Position = UDim2.new(1, -270, 0, 20)
+	mainFrame.Size = UDim2.new(0.18, 0, 0.08, 0)
+	mainFrame.Position = UDim2.new(0.98, 0, 0.02, 0)
+	mainFrame.AnchorPoint = Vector2.new(1, 0)
 	mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 	mainFrame.BorderSizePixel = 0
 	mainFrame.Parent = screenGui
+
+	-- Constraint para mantener tamaño mínimo en móviles
+	local sizeConstraint = Instance.new("UISizeConstraint")
+	sizeConstraint.MinSize = Vector2.new(200, 60)
+	sizeConstraint.MaxSize = Vector2.new(300, 100)
+	sizeConstraint.Parent = mainFrame
 
 	-- Esquinas redondeadas
 	local corner = Instance.new("UICorner")
@@ -58,39 +65,39 @@ local function createMoneyUI()
 	shadowCorner.CornerRadius = UDim.new(0, 12)
 	shadowCorner.Parent = shadow
 
-	-- Ícono de moneda
+	-- Ícono de moneda (responsive)
 	local iconLabel = Instance.new("TextLabel")
 	iconLabel.Name = "Icon"
-	iconLabel.Size = UDim2.new(0, 50, 0, 50)
-	iconLabel.Position = UDim2.new(0, 10, 0.5, -25)
+	iconLabel.Size = UDim2.new(0.25, 0, 0.7, 0)
+	iconLabel.Position = UDim2.new(0.05, 0, 0.15, 0)
 	iconLabel.BackgroundTransparency = 1
 	iconLabel.Text = "💰"
-	iconLabel.TextSize = 32
+	iconLabel.TextScaled = true
 	iconLabel.Font = Enum.Font.GothamBold
 	iconLabel.Parent = mainFrame
 
-	-- Label de título
+	-- Label de título (responsive)
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Name = "TitleLabel"
-	titleLabel.Size = UDim2.new(0, 170, 0, 20)
-	titleLabel.Position = UDim2.new(0, 70, 0, 10)
+	titleLabel.Size = UDim2.new(0.65, 0, 0.25, 0)
+	titleLabel.Position = UDim2.new(0.32, 0, 0.1, 0)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = "DINERO"
 	titleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-	titleLabel.TextSize = 14
+	titleLabel.TextScaled = true
 	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.Parent = mainFrame
 
-	-- Label del dinero
+	-- Label del dinero (responsive)
 	local moneyLabel = Instance.new("TextLabel")
 	moneyLabel.Name = "MoneyLabel"
-	moneyLabel.Size = UDim2.new(0, 170, 0, 35)
-	moneyLabel.Position = UDim2.new(0, 70, 0, 35)
+	moneyLabel.Size = UDim2.new(0.65, 0, 0.5, 0)
+	moneyLabel.Position = UDim2.new(0.32, 0, 0.4, 0)
 	moneyLabel.BackgroundTransparency = 1
 	moneyLabel.Text = "$" .. tostring(money.Value)
 	moneyLabel.TextColor3 = Color3.fromRGB(85, 255, 127)
-	moneyLabel.TextSize = 24
+	moneyLabel.TextScaled = true
 	moneyLabel.Font = Enum.Font.GothamBold
 	moneyLabel.TextXAlignment = Enum.TextXAlignment.Left
 	moneyLabel.Parent = mainFrame
@@ -99,9 +106,9 @@ local function createMoneyUI()
 	money.Changed:Connect(function(newValue)
 		moneyLabel.Text = "$" .. tostring(newValue)
 
-		-- Efecto de pulso al cambiar
+		-- Efecto de pulso al cambiar (responsive)
 		moneyLabel:TweenSize(
-			UDim2.new(0, 180, 0, 40),
+			UDim2.new(0.7, 0, 0.55, 0),
 			Enum.EasingDirection.Out,
 			Enum.EasingStyle.Elastic,
 			0.3,
@@ -111,7 +118,7 @@ local function createMoneyUI()
 		wait(0.3)
 
 		moneyLabel:TweenSize(
-			UDim2.new(0, 170, 0, 35),
+			UDim2.new(0.65, 0, 0.5, 0),
 			Enum.EasingDirection.Out,
 			Enum.EasingStyle.Elastic,
 			0.3,
@@ -119,10 +126,10 @@ local function createMoneyUI()
 		)
 	end)
 
-	-- Animación de entrada
-	mainFrame.Position = UDim2.new(1, 0, 0, 20)
+	-- Animación de entrada (responsive)
+	mainFrame.Position = UDim2.new(1.2, 0, 0.02, 0)
 	mainFrame:TweenPosition(
-		UDim2.new(1, -270, 0, 20),
+		UDim2.new(0.98, 0, 0.02, 0),
 		Enum.EasingDirection.Out,
 		Enum.EasingStyle.Back,
 		0.5,

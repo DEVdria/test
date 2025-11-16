@@ -31,10 +31,10 @@ local currentShopGui = nil
         parent - Frame padre
 --]]
 local function createProductButton(item, index, parent)
-	-- Frame del producto
+	-- Frame del producto (responsive) - controlado por GridLayout
 	local productFrame = Instance.new("Frame")
 	productFrame.Name = "Product_" .. index
-	productFrame.Size = UDim2.new(0, 180, 0, 220)
+	productFrame.Size = UDim2.new(1, 0, 1, 0)  -- GridLayout controla el tamaño
 	productFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 	productFrame.BorderSizePixel = 0
 	productFrame.Parent = parent
@@ -44,66 +44,67 @@ local function createProductButton(item, index, parent)
 	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = productFrame
 
-	-- Ícono
+	-- Ícono (responsive)
 	local iconLabel = Instance.new("TextLabel")
 	iconLabel.Name = "Icon"
-	iconLabel.Size = UDim2.new(1, 0, 0, 60)
-	iconLabel.Position = UDim2.new(0, 0, 0, 10)
+	iconLabel.Size = UDim2.new(1, 0, 0.27, 0)
+	iconLabel.Position = UDim2.new(0, 0, 0.05, 0)
 	iconLabel.BackgroundTransparency = 1
 	iconLabel.Text = item.Icon
-	iconLabel.TextSize = 48
+	iconLabel.TextScaled = true
 	iconLabel.Font = Enum.Font.GothamBold
 	iconLabel.Parent = productFrame
 
-	-- Nombre
+	-- Nombre (responsive)
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Name = "NameLabel"
-	nameLabel.Size = UDim2.new(1, -20, 0, 25)
-	nameLabel.Position = UDim2.new(0, 10, 0, 80)
+	nameLabel.Size = UDim2.new(0.9, 0, 0.11, 0)
+	nameLabel.Position = UDim2.new(0.05, 0, 0.36, 0)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = item.Name
 	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	nameLabel.TextSize = 16
+	nameLabel.TextScaled = true
 	nameLabel.Font = Enum.Font.GothamBold
 	nameLabel.TextWrapped = true
 	nameLabel.Parent = productFrame
 
-	-- Descripción
+	-- Descripción (responsive)
 	local descLabel = Instance.new("TextLabel")
 	descLabel.Name = "DescLabel"
-	descLabel.Size = UDim2.new(1, -20, 0, 50)
-	descLabel.Position = UDim2.new(0, 10, 0, 110)
+	descLabel.Size = UDim2.new(0.9, 0, 0.23, 0)
+	descLabel.Position = UDim2.new(0.05, 0, 0.5, 0)
 	descLabel.BackgroundTransparency = 1
 	descLabel.Text = item.Description
 	descLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-	descLabel.TextSize = 12
+	descLabel.TextScaled = true
 	descLabel.Font = Enum.Font.Gotham
 	descLabel.TextWrapped = true
 	descLabel.TextYAlignment = Enum.TextYAlignment.Top
 	descLabel.Parent = productFrame
 
-	-- Precio
+	-- Precio (responsive)
 	local priceLabel = Instance.new("TextLabel")
 	priceLabel.Name = "PriceLabel"
-	priceLabel.Size = UDim2.new(1, 0, 0, 25)
-	priceLabel.Position = UDim2.new(0, 0, 0, 165)
+	priceLabel.Size = UDim2.new(1, 0, 0.11, 0)
+	priceLabel.Position = UDim2.new(0, 0, 0.75, 0)
 	priceLabel.BackgroundTransparency = 1
 	priceLabel.Text = "$" .. tostring(item.Price)
 	priceLabel.TextColor3 = Color3.fromRGB(85, 255, 127)
-	priceLabel.TextSize = 20
+	priceLabel.TextScaled = true
 	priceLabel.Font = Enum.Font.GothamBold
 	priceLabel.Parent = productFrame
 
-	-- Botón de compra
+	-- Botón de compra (responsive)
 	local buyButton = Instance.new("TextButton")
 	buyButton.Name = "BuyButton"
-	buyButton.Size = UDim2.new(0, 140, 0, 35)
-	buyButton.Position = UDim2.new(0.5, -70, 1, -45)
+	buyButton.Size = UDim2.new(0.78, 0, 0.16, 0)
+	buyButton.Position = UDim2.new(0.5, 0, 0.8, 0)
+	buyButton.AnchorPoint = Vector2.new(0.5, 0)
 	buyButton.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
 	buyButton.BorderSizePixel = 0
 	buyButton.Text = "COMPRAR"
 	buyButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-	buyButton.TextSize = 14
+	buyButton.TextScaled = true
 	buyButton.Font = Enum.Font.GothamBold
 	buyButton.Parent = productFrame
 
@@ -162,23 +163,30 @@ local function createShopUI(items)
 	background.BorderSizePixel = 0
 	background.Parent = screenGui
 
-	-- Frame principal de la tienda
+	-- Frame principal de la tienda (responsive)
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Name = "MainFrame"
-	mainFrame.Size = UDim2.new(0, 800, 0, 600)
-	mainFrame.Position = UDim2.new(0.5, -400, 0.5, -300)
+	mainFrame.Size = UDim2.new(0.7, 0, 0.75, 0)
+	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 	mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	mainFrame.BorderSizePixel = 0
 	mainFrame.Parent = screenGui
+
+	-- Constraint para mantener tamaño adecuado
+	local mainConstraint = Instance.new("UISizeConstraint")
+	mainConstraint.MinSize = Vector2.new(500, 400)
+	mainConstraint.MaxSize = Vector2.new(900, 700)
+	mainConstraint.Parent = mainFrame
 
 	local mainCorner = Instance.new("UICorner")
 	mainCorner.CornerRadius = UDim.new(0, 15)
 	mainCorner.Parent = mainFrame
 
-	-- Barra de título
+	-- Barra de título (responsive)
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
-	titleBar.Size = UDim2.new(1, 0, 0, 60)
+	titleBar.Size = UDim2.new(1, 0, 0.08, 0)
 	titleBar.BackgroundColor3 = Color3.fromRGB(85, 255, 127)
 	titleBar.BorderSizePixel = 0
 	titleBar.Parent = mainFrame
@@ -187,28 +195,28 @@ local function createShopUI(items)
 	titleCorner.CornerRadius = UDim.new(0, 15)
 	titleCorner.Parent = titleBar
 
-	-- Título
+	-- Título (responsive)
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(1, -100, 1, 0)
-	titleLabel.Position = UDim2.new(0, 20, 0, 0)
+	titleLabel.Size = UDim2.new(0.7, 0, 0.9, 0)
+	titleLabel.Position = UDim2.new(0.02, 0, 0.05, 0)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = "🛒 TIENDA"
 	titleLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-	titleLabel.TextSize = 28
+	titleLabel.TextScaled = true
 	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.Parent = titleBar
 
-	-- Botón de cerrar
+	-- Botón de cerrar (responsive)
 	local closeButton = Instance.new("TextButton")
 	closeButton.Name = "CloseButton"
-	closeButton.Size = UDim2.new(0, 40, 0, 40)
-	closeButton.Position = UDim2.new(1, -50, 0.5, -20)
+	closeButton.Size = UDim2.new(0.08, 0, 0.7, 0)
+	closeButton.Position = UDim2.new(0.9, 0, 0.15, 0)
 	closeButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
 	closeButton.BorderSizePixel = 0
 	closeButton.Text = "✕"
 	closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	closeButton.TextSize = 24
+	closeButton.TextScaled = true
 	closeButton.Font = Enum.Font.GothamBold
 	closeButton.Parent = titleBar
 
@@ -230,20 +238,20 @@ local function createShopUI(items)
 		end
 	end)
 
-	-- Frame de productos con scroll
+	-- Frame de productos con scroll (responsive)
 	local scrollFrame = Instance.new("ScrollingFrame")
 	scrollFrame.Name = "ProductsScroll"
-	scrollFrame.Size = UDim2.new(1, -40, 1, -100)
-	scrollFrame.Position = UDim2.new(0, 20, 0, 80)
+	scrollFrame.Size = UDim2.new(0.95, 0, 0.87, 0)
+	scrollFrame.Position = UDim2.new(0.025, 0, 0.11, 0)
 	scrollFrame.BackgroundTransparency = 1
 	scrollFrame.BorderSizePixel = 0
 	scrollFrame.ScrollBarThickness = 6
 	scrollFrame.Parent = mainFrame
 
-	-- Grid layout para productos
+	-- Grid layout para productos (responsive)
 	local gridLayout = Instance.new("UIGridLayout")
-	gridLayout.CellSize = UDim2.new(0, 180, 0, 220)
-	gridLayout.CellPadding = UDim2.new(0, 20, 0, 20)
+	gridLayout.CellSize = UDim2.new(0.3, 0, 0, 220)
+	gridLayout.CellPadding = UDim2.new(0.02, 0, 0, 20)
 	gridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	gridLayout.Parent = scrollFrame
@@ -261,10 +269,10 @@ local function createShopUI(items)
 		scrollFrame.CanvasSize = UDim2.new(0, 0, 0, gridLayout.AbsoluteContentSize.Y)
 	end)
 
-	-- Animación de entrada
-	mainFrame.Position = UDim2.new(0.5, -400, 1.5, 0)
+	-- Animación de entrada (responsive)
+	mainFrame.Position = UDim2.new(0.5, 0, 1.5, 0)
 	mainFrame:TweenPosition(
-		UDim2.new(0.5, -400, 0.5, -300),
+		UDim2.new(0.5, 0, 0.5, 0),
 		Enum.EasingDirection.Out,
 		Enum.EasingStyle.Back,
 		0.5,

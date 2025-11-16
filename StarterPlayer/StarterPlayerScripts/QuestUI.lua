@@ -48,46 +48,46 @@ local function createQuestItem(quest, index, parent)
 	corner.CornerRadius = UDim.new(0, 8)
 	corner.Parent = questFrame
 
-	-- Ícono
+	-- Ícono (responsive)
 	local iconLabel = Instance.new("TextLabel")
-	iconLabel.Size = UDim2.new(0, 50, 0, 50)
-	iconLabel.Position = UDim2.new(0, 10, 0.5, -25)
+	iconLabel.Size = UDim2.new(0.15, 0, 0.6, 0)
+	iconLabel.Position = UDim2.new(0.02, 0, 0.2, 0)
 	iconLabel.BackgroundTransparency = 1
 	iconLabel.Text = quest.Icon
-	iconLabel.TextSize = 32
+	iconLabel.TextScaled = true
 	iconLabel.Font = Enum.Font.GothamBold
 	iconLabel.Parent = questFrame
 
-	-- Nombre de la misión
+	-- Nombre de la misión (responsive)
 	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Size = UDim2.new(1, -140, 0, 20)
-	nameLabel.Position = UDim2.new(0, 70, 0, 10)
+	nameLabel.Size = UDim2.new(0.6, 0, 0.25, 0)
+	nameLabel.Position = UDim2.new(0.2, 0, 0.1, 0)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = quest.Name
 	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	nameLabel.TextSize = 16
+	nameLabel.TextScaled = true
 	nameLabel.Font = Enum.Font.GothamBold
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	nameLabel.Parent = questFrame
 
-	-- Descripción
+	-- Descripción (responsive)
 	local descLabel = Instance.new("TextLabel")
-	descLabel.Size = UDim2.new(1, -140, 0, 15)
-	descLabel.Position = UDim2.new(0, 70, 0, 32)
+	descLabel.Size = UDim2.new(0.6, 0, 0.2, 0)
+	descLabel.Position = UDim2.new(0.2, 0, 0.35, 0)
 	descLabel.BackgroundTransparency = 1
 	descLabel.Text = quest.Description
 	descLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-	descLabel.TextSize = 12
+	descLabel.TextScaled = true
 	descLabel.Font = Enum.Font.Gotham
 	descLabel.TextXAlignment = Enum.TextXAlignment.Left
 	descLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	descLabel.Parent = questFrame
 
-	-- Barra de progreso de fondo
+	-- Barra de progreso de fondo (responsive)
 	local progressBg = Instance.new("Frame")
-	progressBg.Size = UDim2.new(1, -80, 0, 8)
-	progressBg.Position = UDim2.new(0, 70, 1, -20)
+	progressBg.Size = UDim2.new(0.75, 0, 0.12, 0)
+	progressBg.Position = UDim2.new(0.2, 0, 0.75, 0)
 	progressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	progressBg.BorderSizePixel = 0
 	progressBg.Parent = questFrame
@@ -109,26 +109,26 @@ local function createQuestItem(quest, index, parent)
 	progressBarCorner.CornerRadius = UDim.new(0, 4)
 	progressBarCorner.Parent = progressBar
 
-	-- Texto de progreso
+	-- Texto de progreso (responsive)
 	local progressText = Instance.new("TextLabel")
 	progressText.Name = "ProgressText"
 	progressText.Size = UDim2.new(1, 0, 1, 0)
 	progressText.BackgroundTransparency = 1
 	progressText.Text = quest.Progress .. "/" .. quest.Goal
 	progressText.TextColor3 = Color3.fromRGB(255, 255, 255)
-	progressText.TextSize = 11
+	progressText.TextScaled = true
 	progressText.Font = Enum.Font.GothamBold
 	progressText.Parent = progressBg
 
-	-- Recompensa
+	-- Recompensa (responsive)
 	local rewardLabel = Instance.new("TextLabel")
-	rewardLabel.Size = UDim2.new(0, 60, 0, 20)
-	rewardLabel.Position = UDim2.new(1, -70, 0, 10)
+	rewardLabel.Size = UDim2.new(0.18, 0, 0.25, 0)
+	rewardLabel.Position = UDim2.new(0.8, 0, 0.1, 0)
 	rewardLabel.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
 	rewardLabel.BorderSizePixel = 0
 	rewardLabel.Text = "+$" .. quest.Reward
 	rewardLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-	rewardLabel.TextSize = 14
+	rewardLabel.TextScaled = true
 	rewardLabel.Font = Enum.Font.GothamBold
 	rewardLabel.Parent = questFrame
 
@@ -136,15 +136,15 @@ local function createQuestItem(quest, index, parent)
 	rewardCorner.CornerRadius = UDim.new(0, 5)
 	rewardCorner.Parent = rewardLabel
 
-	-- Marca de completado
+	-- Marca de completado (responsive)
 	if quest.Completed then
 		local checkMark = Instance.new("TextLabel")
-		checkMark.Size = UDim2.new(0, 30, 0, 30)
-		checkMark.Position = UDim2.new(1, -40, 0.5, -15)
+		checkMark.Size = UDim2.new(0.1, 0, 0.35, 0)
+		checkMark.Position = UDim2.new(0.88, 0, 0.55, 0)
 		checkMark.BackgroundTransparency = 1
 		checkMark.Text = "✓"
 		checkMark.TextColor3 = Color3.fromRGB(255, 255, 255)
-		checkMark.TextSize = 24
+		checkMark.TextScaled = true
 		checkMark.Font = Enum.Font.GothamBold
 		checkMark.Parent = questFrame
 	end
@@ -186,30 +186,44 @@ local function createQuestUI()
 	questGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	questGui.Parent = playerGui
 
-	-- Botón para abrir/cerrar panel
+	-- Botón para abrir/cerrar panel (responsive)
 	local toggleButton = Instance.new("TextButton")
 	toggleButton.Name = "ToggleButton"
-	toggleButton.Size = UDim2.new(0, 60, 0, 60)
-	toggleButton.Position = UDim2.new(1, -80, 0.5, -30)
+	toggleButton.Size = UDim2.new(0.05, 0, 0.08, 0)
+	toggleButton.Position = UDim2.new(0.96, 0, 0.5, 0)
+	toggleButton.AnchorPoint = Vector2.new(0.5, 0.5)
 	toggleButton.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
 	toggleButton.BorderSizePixel = 0
 	toggleButton.Text = "📋"
-	toggleButton.TextSize = 32
+	toggleButton.TextScaled = true
 	toggleButton.Font = Enum.Font.GothamBold
 	toggleButton.Parent = questGui
+
+	-- Constraint para el botón
+	local buttonConstraint = Instance.new("UISizeConstraint")
+	buttonConstraint.MinSize = Vector2.new(50, 50)
+	buttonConstraint.MaxSize = Vector2.new(70, 70)
+	buttonConstraint.Parent = toggleButton
 
 	local toggleCorner = Instance.new("UICorner")
 	toggleCorner.CornerRadius = UDim.new(0, 12)
 	toggleCorner.Parent = toggleButton
 
-	-- Panel de misiones
+	-- Panel de misiones (responsive)
 	questPanel = Instance.new("Frame")
 	questPanel.Name = "QuestPanel"
-	questPanel.Size = UDim2.new(0, 400, 0, 350)
-	questPanel.Position = UDim2.new(1, 20, 0.5, -175)
+	questPanel.Size = UDim2.new(0.28, 0, 0.45, 0)
+	questPanel.Position = UDim2.new(1, 20, 0.5, 0)
+	questPanel.AnchorPoint = Vector2.new(0, 0.5)
 	questPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	questPanel.BorderSizePixel = 0
 	questPanel.Parent = questGui
+
+	-- Constraint para el panel
+	local panelConstraint = Instance.new("UISizeConstraint")
+	panelConstraint.MinSize = Vector2.new(300, 300)
+	panelConstraint.MaxSize = Vector2.new(500, 500)
+	panelConstraint.Parent = questPanel
 
 	local panelCorner = Instance.new("UICorner")
 	panelCorner.CornerRadius = UDim.new(0, 15)
@@ -226,14 +240,14 @@ local function createQuestUI()
 	titleCorner.CornerRadius = UDim.new(0, 15)
 	titleCorner.Parent = titleBar
 
-	-- Título
+	-- Título (responsive)
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(1, -20, 1, 0)
-	titleLabel.Position = UDim2.new(0, 10, 0, 0)
+	titleLabel.Size = UDim2.new(0.95, 0, 0.9, 0)
+	titleLabel.Position = UDim2.new(0.025, 0, 0.05, 0)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = "📋 MISIONES"
 	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	titleLabel.TextSize = 22
+	titleLabel.TextScaled = true
 	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.Parent = titleBar
@@ -246,15 +260,15 @@ local function createQuestUI()
 	questList.BackgroundTransparency = 1
 	questList.Parent = questPanel
 
-	-- Evento del botón toggle
+	-- Evento del botón toggle (responsive)
 	toggleButton.MouseButton1Click:Connect(function()
 		isPanelOpen = not isPanelOpen
 
 		local targetPosition
 		if isPanelOpen then
-			targetPosition = UDim2.new(1, -420, 0.5, -175)
+			targetPosition = UDim2.new(0.7, 0, 0.5, 0)
 		else
-			targetPosition = UDim2.new(1, 20, 0.5, -175)
+			targetPosition = UDim2.new(1, 20, 0.5, 0)
 		end
 
 		local tween = TweenService:Create(
@@ -288,52 +302,59 @@ local function showQuestCompleteAnimation(quest)
 	completeGui.Parent = playerGui
 
 	local completeFrame = Instance.new("Frame")
-	completeFrame.Size = UDim2.new(0, 400, 0, 100)
-	completeFrame.Position = UDim2.new(0.5, -200, 0.5, -50)
+	completeFrame.Size = UDim2.new(0.28, 0, 0.12, 0)
+	completeFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	completeFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 	completeFrame.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
 	completeFrame.BorderSizePixel = 0
 	completeFrame.Parent = completeGui
+
+	-- Constraint para la notificación de completado
+	local completeConstraint = Instance.new("UISizeConstraint")
+	completeConstraint.MinSize = Vector2.new(300, 90)
+	completeConstraint.MaxSize = Vector2.new(500, 130)
+	completeConstraint.Parent = completeFrame
 
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 15)
 	corner.Parent = completeFrame
 
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(1, 0, 0, 30)
-	titleLabel.Position = UDim2.new(0, 0, 0, 10)
+	titleLabel.Size = UDim2.new(0.95, 0, 0.3, 0)
+	titleLabel.Position = UDim2.new(0.025, 0, 0.05, 0)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = "🎉 ¡MISIÓN COMPLETADA! 🎉"
 	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	titleLabel.TextSize = 20
+	titleLabel.TextScaled = true
 	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.Parent = completeFrame
 
 	local questLabel = Instance.new("TextLabel")
-	questLabel.Size = UDim2.new(1, 0, 0, 25)
-	questLabel.Position = UDim2.new(0, 0, 0, 45)
+	questLabel.Size = UDim2.new(0.95, 0, 0.28, 0)
+	questLabel.Position = UDim2.new(0.025, 0, 0.4, 0)
 	questLabel.BackgroundTransparency = 1
 	questLabel.Text = quest.Icon .. " " .. quest.Name
 	questLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	questLabel.TextSize = 18
+	questLabel.TextScaled = true
 	questLabel.Font = Enum.Font.Gotham
 	questLabel.Parent = completeFrame
 
 	local rewardLabel = Instance.new("TextLabel")
-	rewardLabel.Size = UDim2.new(1, 0, 0, 20)
-	rewardLabel.Position = UDim2.new(0, 0, 0, 75)
+	rewardLabel.Size = UDim2.new(0.95, 0, 0.22, 0)
+	rewardLabel.Position = UDim2.new(0.025, 0, 0.73, 0)
 	rewardLabel.BackgroundTransparency = 1
 	rewardLabel.Text = "Recompensa: +$" .. quest.Reward
 	rewardLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-	rewardLabel.TextSize = 16
+	rewardLabel.TextScaled = true
 	rewardLabel.Font = Enum.Font.GothamBold
 	rewardLabel.Parent = completeFrame
 
-	-- Animación
+	-- Animación (responsive)
 	completeFrame.Size = UDim2.new(0, 0, 0, 0)
 	local tween = TweenService:Create(
 		completeFrame,
 		TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-		{Size = UDim2.new(0, 400, 0, 100)}
+		{Size = UDim2.new(0.28, 0, 0.12, 0)}
 	)
 	tween:Play()
 

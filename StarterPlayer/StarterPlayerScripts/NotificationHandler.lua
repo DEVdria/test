@@ -43,35 +43,42 @@ local function showNotification(message, color)
 		screenGui.Parent = playerGui
 	end
 
-	-- Crear frame de notificación
+	-- Crear frame de notificación (responsive)
 	local notification = Instance.new("Frame")
 	notification.Name = "Notification"
-	notification.Size = UDim2.new(0, 350, 0, 60)
-	notification.Position = UDim2.new(0.5, -175, 0, -80)
+	notification.Size = UDim2.new(0.25, 0, 0.06, 0)
+	notification.Position = UDim2.new(0.5, 0, 0, -80)
+	notification.AnchorPoint = Vector2.new(0.5, 0)
 	notification.BackgroundColor3 = color
 	notification.BorderSizePixel = 0
 	notification.Parent = screenGui
+
+	-- Constraint para mantener tamaño adecuado en móviles
+	local sizeConstraint = Instance.new("UISizeConstraint")
+	sizeConstraint.MinSize = Vector2.new(250, 50)
+	sizeConstraint.MaxSize = Vector2.new(450, 80)
+	sizeConstraint.Parent = notification
 
 	-- Esquinas redondeadas
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = notification
 
-	-- Texto de la notificación
+	-- Texto de la notificación (responsive)
 	local textLabel = Instance.new("TextLabel")
-	textLabel.Size = UDim2.new(1, -20, 1, 0)
-	textLabel.Position = UDim2.new(0, 10, 0, 0)
+	textLabel.Size = UDim2.new(0.95, 0, 0.9, 0)
+	textLabel.Position = UDim2.new(0.025, 0, 0.05, 0)
 	textLabel.BackgroundTransparency = 1
 	textLabel.Text = message
 	textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	textLabel.TextSize = 18
+	textLabel.TextScaled = true
 	textLabel.Font = Enum.Font.GothamBold
 	textLabel.TextWrapped = true
 	textLabel.Parent = notification
 
-	-- Animación de entrada
+	-- Animación de entrada (responsive)
 	notification:TweenPosition(
-		UDim2.new(0.5, -175, 0, 20),
+		UDim2.new(0.5, 0, 0.02, 0),
 		Enum.EasingDirection.Out,
 		Enum.EasingStyle.Back,
 		0.5,
@@ -81,7 +88,7 @@ local function showNotification(message, color)
 	-- Animación de salida y destrucción
 	task.delay(3, function()
 		notification:TweenPosition(
-			UDim2.new(0.5, -175, 0, -80),
+			UDim2.new(0.5, 0, 0, -80),
 			Enum.EasingDirection.In,
 			Enum.EasingStyle.Back,
 			0.5,
