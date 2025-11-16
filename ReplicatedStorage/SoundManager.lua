@@ -33,6 +33,11 @@ local SoundManager = {}
 SoundManager.Sounds = {
     -- Sonidos de Cofres
     Chests = {
+        TreasureChest = {
+            SoundId = "rbxassetid://3398620867", -- Sonido de monedas
+            Volume = 0.5,
+            PlaybackSpeed = 1.0
+        },
         CommonChest = {
             SoundId = "rbxassetid://3398620867", -- Sonido de monedas básico
             Volume = 0.5,

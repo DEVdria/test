@@ -19,6 +19,14 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Crear RemoteEvent para sonidos si no existe
+local playSoundEvent = ReplicatedStorage:FindFirstChild("PlaySound")
+if not playSoundEvent then
+	playSoundEvent = Instance.new("RemoteEvent")
+	playSoundEvent.Name = "PlaySound"
+	playSoundEvent.Parent = ReplicatedStorage
+end
+
 -- CONFIGURACIÓN
 local CHEST_REWARD = 50 -- Dinero que otorga el cofre
 local COOLDOWN_TIME = 30 -- Tiempo de espera entre usos (segundos)
@@ -127,6 +135,9 @@ local function setupChest(chest)
 			if event then
 				event:FireClient(player, "💰 +$" .. CHEST_REWARD .. " del cofre!", Color3.fromRGB(85, 255, 127))
 			end
+
+			-- Reproducir sonido de cofre
+			playSoundEvent:FireClient(player, "Chests", "TreasureChest", chest.Position)
 
 			print(player.Name .. " abrió un cofre y recibió $" .. CHEST_REWARD)
 		else
