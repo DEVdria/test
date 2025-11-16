@@ -110,14 +110,24 @@ local function savePlayerData(player)
 end
 
 --[[
-    Función: Añadir dinero a un jugador
+    Función: Añadir dinero a un jugador (CON MULTIPLICADOR)
     Parámetros:
         player - El jugador
-        amount - Cantidad a añadir
+        amount - Cantidad base a añadir (se aplicará multiplicador)
 --]]
 local function addMoney(player, amount)
 	if playerData[player.UserId] then
-		playerData[player.UserId].Money = playerData[player.UserId].Money + amount
+		-- Obtener multiplicador del jugador
+		local multiplier = 1.0
+		if _G.GetMultiplier then
+			multiplier = _G.GetMultiplier(player)
+		end
+
+		-- Aplicar multiplicador
+		local finalAmount = math.floor(amount * multiplier)
+
+		-- Añadir dinero
+		playerData[player.UserId].Money = playerData[player.UserId].Money + finalAmount
 
 		-- Actualizar leaderstats
 		local leaderstats = player:FindFirstChild("leaderstats")
@@ -128,12 +138,18 @@ local function addMoney(player, amount)
 			end
 		end
 
+		-- Log del multiplicador aplicado (solo si es diferente de 1.0)
+		if multiplier > 1.0 then
+			print(string.format("💰 %s ganó $%d (base: $%d × %.1f)",
+				player.Name, finalAmount, amount, multiplier))
+		end
+
 		-- Actualizar progreso de misiones (si no viene de cofres)
 		-- Los cofres ya actualizan directamente en su script
 		if _G.QuestSystem and amount > 0 then
 			-- Solo actualizar si es una cantidad pequeña (probablemente no es de cofre)
 			if amount < 2000 then
-				_G.QuestSystem.UpdateProgress(player, "MoneyEarned", amount)
+				_G.QuestSystem.UpdateProgress(player, "MoneyEarned", finalAmount)
 			end
 		end
 	end
@@ -242,6 +258,11 @@ _G.MoneyManager = {
 	SaveData = savePlayerData,
 	IsDataStoreEnabled = function() return dataStoreEnabled end
 }
+
+-- Alias para compatibilidad con scripts existentes
+_G.AddMoney = addMoney
+_G.RemoveMoney = removeMoney
+_G.GetMoney = getMoney
 
 print("═══════════════════════════════════════════════════════")
 print("💰 Money Manager iniciado correctamente")
