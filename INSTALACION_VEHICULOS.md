@@ -7,7 +7,8 @@ Este sistema permite bloquear vehículos (carros, helicópteros, etc.) descargad
 **✅ Características:**
 - Respeta completamente los scripts originales del creador
 - Funciona con cualquier vehículo de la Toolbox
-- Guarda las compras en DataStore (permanente)
+- **Las compras son temporales** (solo duran la sesión actual)
+- Los jugadores pueden comprar el mismo vehículo múltiples veces
 - Sistema de ProximityPrompt para comprar
 - Bloquea asientos automáticamente
 
@@ -195,7 +196,7 @@ Repite los **Pasos 2 y 3** para cada vehículo nuevo:
 
 ### ¿Las compras se guardan si el jugador sale?
 
-**Sí.** Se guardan en DataStore y son permanentes.
+**NO.** Las compras son temporales y solo duran la sesión actual. Si el jugador sale del servidor, pierde el acceso al vehículo y debe volver a comprarlo.
 
 ### ¿Qué pasa si el vehículo no tiene PrimaryPart?
 

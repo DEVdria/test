@@ -80,20 +80,8 @@ local function createPurchasePrompt()
 
 	-- Evento cuando se activa
 	proximityPrompt.Triggered:Connect(function(player)
-		-- Verificar si ya lo posee
-		if _G.VehicleOwnership.OwnsVehicle(player, VEHICLE_NAME) then
-			local notificationEvent = ReplicatedStorage:FindFirstChild("SendNotification")
-			if notificationEvent then
-				notificationEvent:FireClient(
-					player,
-					"✅ Ya posees " .. VEHICLE_NAME,
-					Color3.fromRGB(85, 255, 127)
-				)
-			end
-			return
-		end
-
 		-- Enviar solicitud de compra al servidor
+		-- NOTA: Se permite comprar múltiples veces (compras temporales)
 		purchaseVehicleEvent:FireServer(VEHICLE_NAME, VEHICLE_PRICE)
 	end)
 
@@ -102,25 +90,3 @@ end
 
 -- Crear el prompt de compra
 createPurchasePrompt()
-
--- Actualizar texto del prompt dinámicamente
-task.spawn(function()
-	while true do
-		task.wait(1)
-
-		-- Buscar el prompt
-		local prompt = vehicleModel:FindFirstChild("VehiclePurchasePrompt", true)
-		if prompt then
-			-- Para cada jugador cercano, actualizar el texto
-			for _, player in pairs(Players:GetPlayers()) do
-				if _G.VehicleOwnership.OwnsVehicle(player, VEHICLE_NAME) then
-					-- Si ya lo posee, cambiar el texto
-					prompt.ActionText = "✅ Ya poseído"
-				else
-					-- Si no lo posee, mostrar precio
-					prompt.ActionText = "Comprar ($" .. VEHICLE_PRICE .. ")"
-				end
-			end
-		end
-	end
-end)

@@ -15,25 +15,12 @@ local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- DataStore para vehículos comprados
-local VehicleOwnershipStore
-local dataStoreEnabled = false
-
--- Intentar inicializar DataStore
-local success, result = pcall(function()
-	return DataStoreService:GetDataStore("VehicleOwnership_V1")
-end)
-
-if success then
-	VehicleOwnershipStore = result
-	dataStoreEnabled = true
-	print("✅ DataStore de VehicleOwnership inicializado")
-else
-	warn("⚠️ DataStore de VehicleOwnership NO disponible")
-end
-
 -- Tabla en memoria: [UserId] = {VehicleName1 = true, VehicleName2 = true, ...}
+-- NO se guarda en DataStore - las compras son solo para la sesión actual
 local playerOwnedVehicles = {}
+
+print("⚠️ NOTA: Las compras de vehículos NO son permanentes")
+print("⚠️ Los jugadores pueden comprar vehículos múltiples veces")
 
 -- Crear RemoteEvents
 local purchaseVehicleEvent = ReplicatedStorage:FindFirstChild("PurchaseVehicle")
@@ -51,54 +38,9 @@ if not checkOwnershipEvent then
 end
 
 --[[
-    Función: Cargar vehículos comprados del jugador
-    Parámetros: player - El jugador
-    Retorna: Tabla con vehículos comprados {VehicleName = true, ...}
+    NOTA: No hay funciones de carga/guardado porque las compras
+    son temporales (solo duran la sesión actual)
 --]]
-local function loadPlayerVehicles(player)
-	local ownedVehicles = {}
-
-	if not dataStoreEnabled then
-		return ownedVehicles
-	end
-
-	local success, data = pcall(function()
-		return VehicleOwnershipStore:GetAsync(player.UserId .. "_vehicles")
-	end)
-
-	if success and data then
-		ownedVehicles = data
-		print("✅ Vehículos cargados para " .. player.Name .. ": " .. #ownedVehicles .. " vehículos")
-	else
-		print("📝 Sin vehículos comprados para " .. player.Name)
-	end
-
-	return ownedVehicles
-end
-
---[[
-    Función: Guardar vehículos comprados del jugador
-    Parámetros: player - El jugador
---]]
-local function savePlayerVehicles(player)
-	if not dataStoreEnabled then return end
-	if not playerOwnedVehicles[player.UserId] then return end
-
-	local vehicleList = {}
-	for vehicleName, _ in pairs(playerOwnedVehicles[player.UserId]) do
-		table.insert(vehicleList, vehicleName)
-	end
-
-	local success, err = pcall(function()
-		VehicleOwnershipStore:SetAsync(player.UserId .. "_vehicles", vehicleList)
-	end)
-
-	if success then
-		print("💾 Vehículos guardados para " .. player.Name)
-	else
-		warn("❌ Error al guardar vehículos de " .. player.Name .. ": " .. tostring(err))
-	end
-end
 
 --[[
     Función: Verificar si un jugador posee un vehículo
@@ -127,9 +69,8 @@ local function grantVehicle(player, vehicleName)
 	end
 
 	playerOwnedVehicles[player.UserId][vehicleName] = true
-	savePlayerVehicles(player)
 
-	print("✅ " .. player.Name .. " ahora posee: " .. vehicleName)
+	print("✅ " .. player.Name .. " desbloqueó temporalmente: " .. vehicleName)
 end
 
 --[[
@@ -141,19 +82,6 @@ end
     Retorna: true si la compra fue exitosa, false si no
 --]]
 local function purchaseVehicle(player, vehicleName, price)
-	-- Verificar si ya lo posee
-	if ownsVehicle(player, vehicleName) then
-		local notificationEvent = ReplicatedStorage:FindFirstChild("SendNotification")
-		if notificationEvent then
-			notificationEvent:FireClient(
-				player,
-				"⚠️ Ya posees este vehículo",
-				Color3.fromRGB(255, 170, 0)
-			)
-		end
-		return false
-	end
-
 	-- Verificar que tenga suficiente dinero
 	if _G.MoneyManager then
 		local currentMoney = _G.MoneyManager.GetMoney(player)
@@ -211,22 +139,18 @@ end
     Evento: Cuando un jugador se une
 --]]
 Players.PlayerAdded:Connect(function(player)
-	-- Cargar vehículos comprados
-	local ownedVehicles = loadPlayerVehicles(player)
-
-	-- Convertir array a tabla hash
+	-- Inicializar tabla vacía (sin vehículos comprados)
 	playerOwnedVehicles[player.UserId] = {}
-	for _, vehicleName in ipairs(ownedVehicles) do
-		playerOwnedVehicles[player.UserId][vehicleName] = true
-	end
+	print("📝 " .. player.Name .. " se unió sin vehículos desbloqueados")
 end)
 
 --[[
     Evento: Cuando un jugador sale
 --]]
 Players.PlayerRemoving:Connect(function(player)
-	savePlayerVehicles(player)
+	-- Limpiar de memoria (sin guardar)
 	playerOwnedVehicles[player.UserId] = nil
+	print("👋 " .. player.Name .. " salió - vehículos desbloqueados eliminados")
 end)
 
 --[[
@@ -243,17 +167,6 @@ checkOwnershipEvent.OnServerInvoke = function(player, vehicleName)
 	return ownsVehicle(player, vehicleName)
 end
 
---[[
-    Guardar datos cuando el servidor se cierra
---]]
-game:BindToClose(function()
-	print("💾 Guardando datos de vehículos antes de cerrar servidor...")
-	for _, player in pairs(Players:GetPlayers()) do
-		savePlayerVehicles(player)
-	end
-	task.wait(2)
-end)
-
 -- Exponer funciones globalmente
 _G.VehicleOwnership = {
 	OwnsVehicle = ownsVehicle,
@@ -263,5 +176,6 @@ _G.VehicleOwnership = {
 
 print("═══════════════════════════════════════════════════════")
 print("🚗 Vehicle Ownership Manager inicializado")
-print("💾 DataStore: " .. (dataStoreEnabled and "✅ HABILITADO" or "❌ DESHABILITADO"))
+print("⚠️  MODO: Compras temporales (solo por sesión)")
+print("💰 Los jugadores pueden comprar vehículos múltiples veces")
 print("═══════════════════════════════════════════════════════")
