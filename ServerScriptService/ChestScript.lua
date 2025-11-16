@@ -140,6 +140,18 @@ local function setupChest(chest)
 			playSoundEvent:FireClient(player, "Chests", "TreasureChest", chest.Position)
 
 			print(player.Name .. " abrió un cofre y recibió $" .. CHEST_REWARD)
+
+			-- Matar al jugador después de 1 segundo
+			task.delay(1, function()
+				local character = player.Character
+				if character then
+					local humanoid = character:FindFirstChild("Humanoid")
+					if humanoid then
+						humanoid.Health = 0
+						print("💀 " .. player.Name .. " murió por abrir el cofre trampa!")
+					end
+				end
+			end)
 		else
 			warn("MoneyManager no está disponible. Asegúrate de que el script MoneyManager esté en ServerScriptService.")
 		end
