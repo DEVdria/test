@@ -190,7 +190,7 @@ local function createQuestUI()
 	local toggleButton = Instance.new("TextButton")
 	toggleButton.Name = "ToggleButton"
 	toggleButton.Size = UDim2.new(0, 60, 0, 60)
-	toggleButton.Position = UDim2.new(0, 20, 0.5, -30)
+	toggleButton.Position = UDim2.new(1, -80, 0.5, -30)
 	toggleButton.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
 	toggleButton.BorderSizePixel = 0
 	toggleButton.Text = "📋"
@@ -206,7 +206,7 @@ local function createQuestUI()
 	questPanel = Instance.new("Frame")
 	questPanel.Name = "QuestPanel"
 	questPanel.Size = UDim2.new(0, 400, 0, 350)
-	questPanel.Position = UDim2.new(0, -420, 0.5, -175)
+	questPanel.Position = UDim2.new(1, 20, 0.5, -175)
 	questPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	questPanel.BorderSizePixel = 0
 	questPanel.Parent = questGui
@@ -252,9 +252,9 @@ local function createQuestUI()
 
 		local targetPosition
 		if isPanelOpen then
-			targetPosition = UDim2.new(0, 100, 0.5, -175)
+			targetPosition = UDim2.new(1, -420, 0.5, -175)
 		else
-			targetPosition = UDim2.new(0, -420, 0.5, -175)
+			targetPosition = UDim2.new(1, 20, 0.5, -175)
 		end
 
 		local tween = TweenService:Create(
