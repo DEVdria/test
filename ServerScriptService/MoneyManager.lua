@@ -13,9 +13,7 @@
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
-
--- DataStore para guardar el dinero de los jugadores
-local MoneyDataStore = DataStoreService:GetDataStore("PlayerMoney_V1")
+local RunService = game:GetService("RunService")
 
 -- Dinero inicial que reciben los nuevos jugadores
 local DEFAULT_MONEY = 100
@@ -23,11 +21,40 @@ local DEFAULT_MONEY = 100
 -- Tabla para almacenar datos en memoria
 local playerData = {}
 
+-- Verificar si el DataStore está disponible
+local MoneyDataStore = nil
+local dataStoreEnabled = false
+
+-- Intentar inicializar DataStore
+local success, result = pcall(function()
+	return DataStoreService:GetDataStore("PlayerMoney_V1")
+end)
+
+if success then
+	MoneyDataStore = result
+	dataStoreEnabled = true
+	print("✅ DataStore inicializado correctamente")
+else
+	warn("⚠️ DataStore NO disponible: " .. tostring(result))
+	warn("⚠️ El dinero NO se guardará entre sesiones")
+	warn("⚠️ Para habilitar DataStore en Studio:")
+	warn("   1. Ve a Game Settings (Home → Game Settings)")
+	warn("   2. Security → Enable Studio Access to API Services")
+	warn("   3. Guarda y reinicia el juego")
+	warn("⚠️ En juegos publicados, el DataStore funciona automáticamente")
+end
+
 --[[
     Función: Cargar datos del jugador
     Parámetros: player - El jugador que se une
 --]]
 local function loadPlayerData(player)
+	-- Si DataStore no está disponible, usar dinero por defecto
+	if not dataStoreEnabled or not MoneyDataStore then
+		print("📊 " .. player.Name .. " inicia con dinero por defecto (DataStore deshabilitado)")
+		return DEFAULT_MONEY
+	end
+
 	local success, data
 	local attempts = 0
 	local maxAttempts = 3
@@ -40,16 +67,19 @@ local function loadPlayerData(player)
 		end)
 
 		if not success then
-			warn("Error al cargar datos de " .. player.Name .. " (Intento " .. attempts .. "/" .. maxAttempts .. ")")
-			wait(1)
+			warn("❌ Error al cargar datos de " .. player.Name .. " (Intento " .. attempts .. "/" .. maxAttempts .. ")")
+			if attempts < maxAttempts then
+				wait(1)
+			end
 		end
 	until success or attempts >= maxAttempts
 
 	-- Retornar datos cargados o datos por defecto
 	if success and data then
+		print("💾 Datos cargados para " .. player.Name .. ": $" .. tostring(data))
 		return data
 	else
-		warn("No se pudieron cargar datos para " .. player.Name .. ". Usando valores por defecto.")
+		print("📊 " .. player.Name .. " inicia con dinero por defecto")
 		return DEFAULT_MONEY
 	end
 end
@@ -63,14 +93,19 @@ local function savePlayerData(player)
 		return
 	end
 
+	-- Si DataStore no está disponible, no intentar guardar
+	if not dataStoreEnabled or not MoneyDataStore then
+		return
+	end
+
 	local success, errorMessage = pcall(function()
 		MoneyDataStore:SetAsync(player.UserId, playerData[player.UserId].Money)
 	end)
 
 	if success then
-		print("Datos guardados para " .. player.Name)
+		print("💾 Datos guardados para " .. player.Name .. ": $" .. playerData[player.UserId].Money)
 	else
-		warn("Error al guardar datos de " .. player.Name .. ": " .. tostring(errorMessage))
+		warn("❌ Error al guardar datos de " .. player.Name .. ": " .. tostring(errorMessage))
 	end
 end
 
@@ -159,7 +194,7 @@ Players.PlayerAdded:Connect(function(player)
 	-- Actualizar valor en leaderstats
 	money.Value = savedMoney
 
-	print(player.Name .. " se ha unido con $" .. savedMoney)
+	print("👤 " .. player.Name .. " se ha unido con $" .. savedMoney)
 end)
 
 -- Cuando un jugador sale del juego
@@ -169,14 +204,25 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 -- Guardar datos cada 5 minutos (auto-guardado)
-while true do
-	wait(300) -- 5 minutos
+-- Solo si DataStore está habilitado
+if dataStoreEnabled then
+	task.spawn(function()
+		while true do
+			task.wait(300) -- 5 minutos
 
-	for _, player in pairs(Players:GetPlayers()) do
-		savePlayerData(player)
-	end
+			local playerCount = 0
+			for _, player in pairs(Players:GetPlayers()) do
+				savePlayerData(player)
+				playerCount = playerCount + 1
+			end
 
-	print("Auto-guardado completado")
+			if playerCount > 0 then
+				print("💾 Auto-guardado completado (" .. playerCount .. " jugadores)")
+			end
+		end
+	end)
+else
+	print("⚠️ Auto-guardado deshabilitado (DataStore no disponible)")
 end
 
 -- Exponer funciones globalmente para otros scripts
@@ -184,5 +230,12 @@ _G.MoneyManager = {
 	AddMoney = addMoney,
 	RemoveMoney = removeMoney,
 	GetMoney = getMoney,
-	SaveData = savePlayerData
+	SaveData = savePlayerData,
+	IsDataStoreEnabled = function() return dataStoreEnabled end
 }
+
+print("═══════════════════════════════════════════════════════")
+print("💰 Money Manager iniciado correctamente")
+print("💾 DataStore: " .. (dataStoreEnabled and "✅ HABILITADO" or "❌ DESHABILITADO"))
+print("💵 Dinero inicial: $" .. DEFAULT_MONEY)
+print("═══════════════════════════════════════════════════════")
