@@ -1,14 +1,16 @@
 --[[
 ═══════════════════════════════════════════════════════════════
     VEHICLE PURCHASE PROMPT - Sistema de Compra de Vehículos
-    Ubicación: Dentro del modelo del vehículo (como Script hijo)
+    Ubicación: Dentro del modelo del vehículo (como LocalScript hijo)
 
     INSTALACIÓN:
     1. Abre el modelo del vehículo en el Workspace
-    2. Crea un nuevo Script como hijo DIRECTO del modelo
+    2. Crea un nuevo **LocalScript** como hijo DIRECTO del modelo
     3. Nómbralo "VehiclePurchasePrompt"
     4. Pega este código dentro
     5. Configura las variables abajo
+
+    ⚠️ IMPORTANTE: DEBE ser LocalScript, NO Script normal
 
     Funcionalidad:
     - Crea un ProximityPrompt para comprar el vehículo
@@ -36,25 +38,14 @@ if not vehicleModel:IsA("Model") then
 	return
 end
 
--- Esperar a que el sistema global esté cargado
-local maxWaitTime = 10
-local waitTime = 0
-while not _G.VehicleOwnership and waitTime < maxWaitTime do
-	task.wait(0.5)
-	waitTime = waitTime + 0.5
-end
-
-if not _G.VehicleOwnership then
-	warn("⚠️ VehicleOwnership no se cargó")
-	return
-end
-
--- Buscar RemoteEvent
+-- Buscar RemoteEvent (esperar hasta 10 segundos)
 local purchaseVehicleEvent = ReplicatedStorage:WaitForChild("PurchaseVehicle", 10)
 if not purchaseVehicleEvent then
-	warn("⚠️ RemoteEvent 'PurchaseVehicle' no encontrado")
+	warn("⚠️ RemoteEvent 'PurchaseVehicle' no encontrado en ReplicatedStorage")
 	return
 end
+
+print("🎮 VehiclePurchasePrompt (Cliente) iniciado para: " .. VEHICLE_NAME)
 
 --[[
     Función: Crear punto de compra (ProximityPrompt)
