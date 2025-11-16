@@ -1,19 +1,117 @@
 --[[
 ═══════════════════════════════════════════════════════════════
-    MULTIPLIER BUTTON CLIENT - Script Local del Botón (MEJORADO)
+    MULTIPLIER SETUP - Instalación Automática del Multiplicador
+    Ubicación: ServerScriptService
 
-    ⚠️ NO NECESITAS ESTE ARCHIVO SI USAS MultiplierSetup.lua
+    INSTRUCCIONES:
+    1. Coloca este script en ServerScriptService
+    2. Ejecuta el juego UNA SOLA VEZ
+    3. La Part aparecerá en el Workspace automáticamente
+    4. ELIMINA ESTE SCRIPT después de la primera ejecución
 
-    Este archivo es solo de REFERENCIA.
-    El código ya está integrado en MultiplierSetup.lua
-    que crea todo automáticamente.
-
-    Si quieres instalarlo manualmente:
-    1. Crea una Part en Workspace
-    2. Añade SurfaceGui a la Part
-    3. Añade TextButton al SurfaceGui
-    4. Pega este código como LocalScript dentro del TextButton
+    El script crea:
+    - Part en el Workspace (MultiplierPart)
+    - SurfaceGui con botón funcional
+    - LocalScript del cliente integrado
 ═══════════════════════════════════════════════════════════════
+--]]
+
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Verificar que no exista ya
+if Workspace:FindFirstChild("MultiplierPart") then
+	warn("⚠️ MultiplierPart ya existe en el Workspace. Eliminando este script.")
+	script:Destroy()
+	return
+end
+
+print("🔧 Instalando sistema de multiplicadores en el Workspace...")
+
+-- ====================================
+-- CREAR LA PART
+-- ====================================
+local part = Instance.new("Part")
+part.Name = "MultiplierPart"
+part.Size = Vector3.new(8, 6, 1)
+part.Position = Vector3.new(0, 10, 0) -- Ajusta esta posición según tu mapa
+part.Anchored = true
+part.CanCollide = false
+part.Material = Enum.Material.SmoothPlastic
+part.BrickColor = BrickColor.new("Deep blue")
+part.TopSurface = Enum.SurfaceType.Smooth
+part.BottomSurface = Enum.SurfaceType.Smooth
+part.Parent = Workspace
+
+-- Añadir brillo
+local pointLight = Instance.new("PointLight")
+pointLight.Brightness = 2
+pointLight.Range = 15
+pointLight.Color = Color3.fromRGB(85, 170, 255)
+pointLight.Parent = part
+
+-- ====================================
+-- CREAR SURFACEGUI
+-- ====================================
+local surfaceGui = Instance.new("SurfaceGui")
+surfaceGui.Name = "MultiplierGui"
+surfaceGui.Face = Enum.NormalId.Front
+surfaceGui.CanvasSize = Vector2.new(800, 600)
+surfaceGui.LightInfluence = 0
+surfaceGui.AlwaysOnTop = false
+surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+surfaceGui.PixelsPerStud = 100
+surfaceGui.Parent = part
+
+-- ====================================
+-- CREAR FRAME DE FONDO
+-- ====================================
+local backgroundFrame = Instance.new("Frame")
+backgroundFrame.Name = "Background"
+backgroundFrame.Size = UDim2.new(1, 0, 1, 0)
+backgroundFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+backgroundFrame.BorderSizePixel = 0
+backgroundFrame.Parent = surfaceGui
+
+local bgCorner = Instance.new("UICorner")
+bgCorner.CornerRadius = UDim.new(0, 20)
+bgCorner.Parent = backgroundFrame
+
+-- ====================================
+-- CREAR BOTÓN DE COMPRA
+-- ====================================
+local buyButton = Instance.new("TextButton")
+buyButton.Name = "BuyButton"
+buyButton.Size = UDim2.new(0.9, 0, 0.85, 0)
+buyButton.Position = UDim2.new(0.05, 0, 0.075, 0)
+buyButton.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
+buyButton.BorderSizePixel = 0
+buyButton.Text = "💰 COMPRAR MULTIPLICADOR 💰\n\nCargando..."
+buyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+buyButton.Font = Enum.Font.GothamBold
+buyButton.TextScaled = true
+buyButton.Parent = backgroundFrame
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 15)
+btnCorner.Parent = buyButton
+
+local btnPadding = Instance.new("UIPadding")
+btnPadding.PaddingTop = UDim.new(0.05, 0)
+btnPadding.PaddingBottom = UDim.new(0.05, 0)
+btnPadding.PaddingLeft = UDim.new(0.05, 0)
+btnPadding.PaddingRight = UDim.new(0.05, 0)
+btnPadding.Parent = buyButton
+
+-- ====================================
+-- CREAR LOCALSCRIPT DEL CLIENTE
+-- ====================================
+local clientScript = Instance.new("LocalScript")
+clientScript.Name = "MultiplierButtonClient"
+clientScript.Source = [[
+--[[
+    MULTIPLIER BUTTON CLIENT - Script Local del Botón
+    Este script maneja la interacción del jugador con el botón
 --]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -238,3 +336,18 @@ task.spawn(function()
 
 	print("✅ Botón de multiplicador inicializado para " .. player.Name)
 end)
+]]
+clientScript.Parent = buyButton
+
+-- ====================================
+-- MENSAJES DE CONFIRMACIÓN
+-- ====================================
+print("✅ MultiplierPart creada exitosamente en el Workspace!")
+print("📍 Posición: " .. tostring(part.Position))
+print("💡 Ajusta la posición de la Part según tu mapa")
+print("🗑️ ELIMINA este script (MultiplierSetup) de ServerScriptService")
+
+-- Auto-eliminar el script después de 5 segundos
+task.wait(5)
+print("🗑️ Auto-eliminando script de instalación...")
+script:Destroy()
