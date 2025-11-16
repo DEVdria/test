@@ -96,21 +96,25 @@ end
         itemType - Tipo de objeto
 --]]
 local function giveItemToPlayer(player, itemName, itemType)
-	-- Aquí puedes personalizar qué sucede cuando se compra cada tipo de objeto
 	if itemType == "Tool" then
-		-- Crear una herramienta simple como ejemplo
-		local tool = Instance.new("Tool")
-		tool.Name = itemName
-		tool.RequiresHandle = false
-		tool.Parent = player.Backpack
+		-- Buscar el item en ServerStorage
+		local itemTemplate = game.ServerStorage:FindFirstChild(itemName)
 
-		-- Aquí podrías clonar herramientas predefinidas desde ServerStorage
-		-- Ejemplo:
-		-- local toolTemplate = game.ServerStorage:FindFirstChild(itemName)
-		-- if toolTemplate then
-		--     local toolClone = toolTemplate:Clone()
-		--     toolClone.Parent = player.Backpack
-		-- end
+		if itemTemplate then
+			-- Si existe en ServerStorage, clonarlo
+			local itemClone = itemTemplate:Clone()
+			itemClone.Parent = player.Backpack
+			print("✅ Dando item real: " .. itemName .. " a " .. player.Name)
+		else
+			-- Si no existe, crear Tool vacío como fallback y avisar
+			warn("⚠️ No se encontró '" .. itemName .. "' en ServerStorage, creando Tool vacío")
+			warn("   💡 Para dar el item real, coloca el objeto de la Toolbox en ServerStorage con el nombre exacto: " .. itemName)
+
+			local tool = Instance.new("Tool")
+			tool.Name = itemName
+			tool.RequiresHandle = false
+			tool.Parent = player.Backpack
+		end
 
 	elseif itemType == "Consumable" then
 		-- Ejemplo: Restaurar salud para pociones
@@ -120,6 +124,7 @@ local function giveItemToPlayer(player, itemName, itemType)
 				local humanoid = character:FindFirstChild("Humanoid")
 				if humanoid then
 					humanoid.Health = humanoid.MaxHealth
+					print("✅ " .. player.Name .. " usó Poción de Salud")
 				end
 			end
 		end
