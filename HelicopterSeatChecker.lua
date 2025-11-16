@@ -16,17 +16,22 @@
     - Detecta cuando alguien se sienta
     - Verifica si compró el helicóptero
     - Si no compró, muestra mensaje y lo mata 1 segundo después
+    - Si compró, inicia temporizador de 3 minutos y destruye el Heli
 ═══════════════════════════════════════════════════════════════
 --]]
 
 -- ⚙️ CONFIGURACIÓN
 local VEHICLE_NAME = "Helicopter"  -- Nombre del vehículo (debe coincidir con el ProximityPrompt)
+local DESTROY_TIME = 180  -- 3 minutos = 180 segundos
 
 -- ═══════════════════════════════════════════════════════════
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local seat = script.Parent
+
+-- Referencia al modelo Heli (el que se va a destruir)
+local heliModel = seat.Parent
 
 -- Esperar a que SimpleVehicleSystem cargue
 local maxWait = 10
@@ -42,6 +47,9 @@ if not _G.SimpleVehicleSystem then
 end
 
 print("🔒 SeatChecker activado en " .. seat:GetFullName())
+
+-- Variable para el temporizador de destrucción
+local destructionTimer = nil
 
 -- Detectar cuando alguien se sienta
 seat.ChildAdded:Connect(function(child)
@@ -85,6 +93,66 @@ seat.ChildAdded:Connect(function(child)
 			end)
 		else
 			print("✅ " .. player.Name .. " SÍ ha comprado " .. VEHICLE_NAME .. " - Permitido")
+
+			-- Cancelar temporizador anterior si existe
+			if destructionTimer then
+				task.cancel(destructionTimer)
+			end
+
+			-- Iniciar temporizador de destrucción de 3 minutos
+			print("⏱️ Temporizador de 3 minutos iniciado para destruir " .. heliModel.Name)
+
+			-- Avisar al jugador a los 2 minutos (falta 1 minuto)
+			task.delay(120, function()
+				if heliModel and heliModel.Parent then
+					local notificationEvent = ReplicatedStorage:FindFirstChild("SendNotification")
+					if notificationEvent and player and player.Parent then
+						notificationEvent:FireClient(
+							player,
+							"⚠️ El helicóptero se autodestruirá en 1 minuto",
+							Color3.fromRGB(255, 170, 0)
+						)
+					end
+					print("⚠️ Advertencia: Heli se destruirá en 1 minuto")
+				end
+			end)
+
+			-- Avisar 30 segundos antes
+			task.delay(150, function()
+				if heliModel and heliModel.Parent then
+					local notificationEvent = ReplicatedStorage:FindFirstChild("SendNotification")
+					if notificationEvent and player and player.Parent then
+						notificationEvent:FireClient(
+							player,
+							"⚠️ El helicóptero se autodestruirá en 30 segundos",
+							Color3.fromRGB(255, 85, 85)
+						)
+					end
+					print("⚠️ Advertencia: Heli se destruirá en 30 segundos")
+				end
+			end)
+
+			-- Destruir el modelo Heli después de 3 minutos
+			destructionTimer = task.delay(DESTROY_TIME, function()
+				if heliModel and heliModel.Parent then
+					print("💥 Destruyendo " .. heliModel.Name .. " después de 3 minutos")
+
+					-- Notificar al jugador
+					local notificationEvent = ReplicatedStorage:FindFirstChild("SendNotification")
+					if notificationEvent and player and player.Parent then
+						notificationEvent:FireClient(
+							player,
+							"💥 ¡El helicóptero se autodestruyó!",
+							Color3.fromRGB(255, 0, 0)
+						)
+					end
+
+					-- Destruir el modelo Heli
+					heliModel:Destroy()
+
+					print("✅ " .. heliModel.Name .. " destruido exitosamente")
+				end
+			end)
 		end
 	end
 end)
