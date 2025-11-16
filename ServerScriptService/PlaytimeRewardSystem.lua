@@ -15,6 +15,14 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataStoreService = game:GetService("DataStoreService")
 
+-- Crear RemoteEvent para sonidos si no existe
+local playSoundEvent = ReplicatedStorage:FindFirstChild("PlaySound")
+if not playSoundEvent then
+	playSoundEvent = Instance.new("RemoteEvent")
+	playSoundEvent.Name = "PlaySound"
+	playSoundEvent.Parent = ReplicatedStorage
+end
+
 -- DataStore para guardar tiempo jugado y recompensas reclamadas
 local PlaytimeDataStore
 local dataStoreEnabled = false
@@ -206,6 +214,9 @@ local function claimReward(player, rewardIndex)
 			Color3.fromRGB(85, 255, 127)
 		)
 	end
+
+	-- Reproducir sonido de recompensa
+	playSoundEvent:FireClient(player, "Rewards", "PlaytimeReward")
 
 	return true
 end

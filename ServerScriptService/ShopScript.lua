@@ -18,6 +18,14 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Crear RemoteEvent para sonidos si no existe
+local playSoundEvent = ReplicatedStorage:FindFirstChild("PlaySound")
+if not playSoundEvent then
+	playSoundEvent = Instance.new("RemoteEvent")
+	playSoundEvent.Name = "PlaySound"
+	playSoundEvent.Parent = ReplicatedStorage
+end
+
 -- CATÁLOGO DE PRODUCTOS
 -- Puedes añadir más productos aquí
 local SHOP_ITEMS = {
@@ -157,6 +165,9 @@ local function processPurchase(player, itemIndex)
 					Color3.fromRGB(85, 255, 127)
 				)
 
+				-- Reproducir sonido de compra exitosa
+				playSoundEvent:FireClient(player, "Shop", "Purchase")
+
 				print(player.Name .. " compró " .. item.Name .. " por $" .. item.Price)
 			else
 				-- No se pudo remover dinero
@@ -173,6 +184,9 @@ local function processPurchase(player, itemIndex)
 				"❌ No tienes suficiente dinero ($" .. item.Price .. " necesarios)",
 				Color3.fromRGB(255, 170, 0)
 			)
+
+			-- Reproducir sonido de error (no puede comprar)
+			playSoundEvent:FireClient(player, "Shop", "CannotAfford")
 		end
 	else
 		warn("MoneyManager no está disponible")

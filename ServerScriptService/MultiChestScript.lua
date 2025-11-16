@@ -24,6 +24,14 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Crear RemoteEvent para sonidos si no existe
+local playSoundEvent = ReplicatedStorage:FindFirstChild("PlaySound")
+if not playSoundEvent then
+	playSoundEvent = Instance.new("RemoteEvent")
+	playSoundEvent.Name = "PlaySound"
+	playSoundEvent.Parent = ReplicatedStorage
+end
+
 -- CONFIGURACIÓN DE TIPOS DE COFRES
 local CHEST_TYPES = {
 	CommonChest = {
@@ -252,6 +260,9 @@ local function setupChest(chest, chestTypeName)
 					chestType.Color
 				)
 			end
+
+			-- Reproducir sonido de cofre
+			playSoundEvent:FireClient(player, "Chests", chestTypeName, chest.Position)
 
 			print(player.Name .. " abrió " .. chestType.DisplayName .. " y recibió $" .. reward)
 		else
