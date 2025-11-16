@@ -127,6 +127,15 @@ local function addMoney(player, amount)
 				money.Value = playerData[player.UserId].Money
 			end
 		end
+
+		-- Actualizar progreso de misiones (si no viene de cofres)
+		-- Los cofres ya actualizan directamente en su script
+		if _G.QuestSystem and amount > 0 then
+			-- Solo actualizar si es una cantidad pequeña (probablemente no es de cofre)
+			if amount < 2000 then
+				_G.QuestSystem.UpdateProgress(player, "MoneyEarned", amount)
+			end
+		end
 	end
 end
 

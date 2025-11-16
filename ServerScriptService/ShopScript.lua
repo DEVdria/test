@@ -145,6 +145,11 @@ local function processPurchase(player, itemIndex)
 				-- Dar objeto al jugador
 				giveItemToPlayer(player, item.Name, item.ItemType)
 
+				-- Actualizar progreso de misiones
+				if _G.QuestSystem then
+					_G.QuestSystem.UpdateProgress(player, "MoneySpent", item.Price)
+				end
+
 				-- Notificar éxito
 				notificationEvent:FireClient(
 					player,
