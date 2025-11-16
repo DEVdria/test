@@ -96,38 +96,101 @@ end
         itemType - Tipo de objeto
 --]]
 local function giveItemToPlayer(player, itemName, itemType)
+	--[[
+		PERSONALIZACIÓN DE ITEMS:
+		Aquí puedes definir qué recibe el jugador al comprar cada item.
+
+		Para TOOLS (armas, escudos, etc):
+		Por defecto se crea un Tool vacío. Si quieres dar un item real:
+		1. Descarga el item de la Toolbox
+		2. Colócalo en ServerStorage
+		3. Descomenta las líneas de ejemplo y ajusta el nombre
+
+		Para CONSUMABLES (pociones, boosts, etc):
+		Define el efecto en la sección correspondiente
+	--]]
+
 	if itemType == "Tool" then
-		-- Buscar el item en ServerStorage
-		local itemTemplate = game.ServerStorage:FindFirstChild(itemName)
+		-- CREAR TOOL SIMPLE (Por defecto)
+		local tool = Instance.new("Tool")
+		tool.Name = itemName
+		tool.RequiresHandle = false -- Permite equipar sin Handle
+		tool.Parent = player.Backpack
 
-		if itemTemplate then
-			-- Si existe en ServerStorage, clonarlo
-			local itemClone = itemTemplate:Clone()
-			itemClone.Parent = player.Backpack
-			print("✅ Dando item real: " .. itemName .. " a " .. player.Name)
+		--[[
+		-- OPCIÓN: Dar un Tool real de ServerStorage
+		-- Descomenta este código y comenta el código de arriba:
+
+		local toolTemplate = game.ServerStorage:FindFirstChild(itemName)
+		if toolTemplate then
+			local toolClone = toolTemplate:Clone()
+			toolClone.Parent = player.Backpack
 		else
-			-- Si no existe, crear Tool vacío como fallback y avisar
-			warn("⚠️ No se encontró '" .. itemName .. "' en ServerStorage, creando Tool vacío")
-			warn("   💡 Para dar el item real, coloca el objeto de la Toolbox en ServerStorage con el nombre exacto: " .. itemName)
-
-			local tool = Instance.new("Tool")
-			tool.Name = itemName
-			tool.RequiresHandle = false
-			tool.Parent = player.Backpack
+			warn("No se encontró " .. itemName .. " en ServerStorage")
 		end
+		--]]
+
+		--[[
+		-- OPCIÓN: Personalizar cada Tool individualmente
+		-- Descomenta este código y comenta el código de arriba:
+
+		if itemName == "Espada Básica" then
+			local sword = game.ServerStorage:FindFirstChild("BasicSword")
+			if sword then
+				sword:Clone().Parent = player.Backpack
+			end
+
+		elseif itemName == "Escudo Dorado" then
+			local shield = game.ServerStorage:FindFirstChild("GoldenShield")
+			if shield then
+				shield:Clone().Parent = player.Backpack
+			end
+
+		elseif itemName == "Botas de Velocidad" then
+			local boots = game.ServerStorage:FindFirstChild("SpeedBoots")
+			if boots then
+				boots:Clone().Parent = player.Backpack
+			end
+
+		elseif itemName == "Casco de Diamante" then
+			local helmet = game.ServerStorage:FindFirstChild("DiamondHelmet")
+			if helmet then
+				helmet:Clone().Parent = player.Backpack
+			end
+		end
+		--]]
 
 	elseif itemType == "Consumable" then
-		-- Ejemplo: Restaurar salud para pociones
+		-- EFECTOS DE CONSUMIBLES
+		-- Define qué hace cada consumible cuando se compra
+
 		if itemName == "Poción de Salud" then
+			-- Restaurar salud completa
 			local character = player.Character
 			if character then
 				local humanoid = character:FindFirstChild("Humanoid")
 				if humanoid then
 					humanoid.Health = humanoid.MaxHealth
-					print("✅ " .. player.Name .. " usó Poción de Salud")
+					print(player.Name .. " usó Poción de Salud")
 				end
 			end
 		end
+
+		--[[
+		-- Puedes añadir más consumibles aquí:
+
+		elseif itemName == "Poción de Velocidad" then
+			local character = player.Character
+			if character then
+				local humanoid = character:FindFirstChild("Humanoid")
+				if humanoid then
+					humanoid.WalkSpeed = humanoid.WalkSpeed * 2
+					task.delay(10, function() -- Dura 10 segundos
+						humanoid.WalkSpeed = humanoid.WalkSpeed / 2
+					end)
+				end
+			end
+		--]]
 	end
 end
 
