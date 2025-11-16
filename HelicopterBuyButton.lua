@@ -1,74 +1,91 @@
 --[[
 ═══════════════════════════════════════════════════════════════
     HELICOPTER BUY BUTTON
-    Ubicación: Dentro del modelo Helicopter (como LocalScript)
+    Ubicación: Dentro de Button1 (como Script)
 
     INSTALACIÓN:
-    1. Ve a Workspace → Helicopter
-    2. Crea un nuevo LocalScript (hijo del modelo Helicopter)
-    3. Nómbralo "BuyButton"
+    1. Ve a Workspace → Helicopter → Button1
+    2. Crea un nuevo Script (hijo de Button1)
+    3. Nómbralo "BuyScript"
     4. Pega este código
 
-    ⚠️ DEBE ser LocalScript, NO Script
+    ⚠️ Script normal (servidor), NO LocalScript
+    ⚠️ NO borres el script de regeneración que ya tiene Button1
 
     Funcionalidad:
-    - Crea un ProximityPrompt para comprar el helicóptero
-    - Al presionar, envía solicitud de compra al servidor
+    - Usa el ClickDetector existente para vender el helicóptero
+    - Cuando hacen click, intenta vender
 ═══════════════════════════════════════════════════════════════
 --]]
 
 -- ⚙️ CONFIGURACIÓN
 local VEHICLE_NAME = "Helicopter"
 local VEHICLE_PRICE = 5000
-local PROMPT_ICON = "🚁"
 
 -- ═══════════════════════════════════════════════════════════
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local helicopterModel = script.Parent
+local button = script.Parent
 
--- Esperar el RemoteEvent
-local buyVehicleEvent = ReplicatedStorage:WaitForChild("BuyVehicle", 10)
-if not buyVehicleEvent then
-	warn("❌ BuyVehicle RemoteEvent no encontrado")
+-- Esperar a que SimpleVehicleSystem cargue
+local maxWait = 10
+local waited = 0
+while not _G.SimpleVehicleSystem and waited < maxWait do
+	task.wait(0.5)
+	waited = waited + 0.5
+end
+
+if not _G.SimpleVehicleSystem then
+	warn("❌ SimpleVehicleSystem no cargó!")
 	return
 end
 
-print("🎮 BuyButton (Cliente) iniciado para " .. VEHICLE_NAME)
+print("🛒 BuyScript activado en Button1")
 
--- Buscar una Part donde colocar el ProximityPrompt
-local promptPart = helicopterModel:FindFirstChild("Button1")
-if not promptPart then
-	promptPart = helicopterModel.PrimaryPart
-end
-if not promptPart then
-	promptPart = helicopterModel:FindFirstChildWhichIsA("BasePart", true)
-end
-
-if not promptPart then
-	warn("❌ No se encontró una Part para el ProximityPrompt")
-	return
+-- Buscar o crear ClickDetector
+local clickDetector = button:FindFirstChild("ClickDetector")
+if not clickDetector then
+	clickDetector = Instance.new("ClickDetector")
+	clickDetector.Parent = button
+	print("✅ ClickDetector creado")
 end
 
--- Crear ProximityPrompt
-local proximityPrompt = Instance.new("ProximityPrompt")
-proximityPrompt.Name = "BuyHelicopterPrompt"
-proximityPrompt.ObjectText = PROMPT_ICON .. " " .. VEHICLE_NAME
-proximityPrompt.ActionText = "Comprar ($" .. VEHICLE_PRICE .. ")"
-proximityPrompt.MaxActivationDistance = 10
-proximityPrompt.HoldDuration = 1
-proximityPrompt.RequiresLineOfSight = false
-proximityPrompt.Parent = promptPart
+-- Crear BillboardGui para mostrar el precio
+local billboard = Instance.new("BillboardGui")
+billboard.Name = "PriceTag"
+billboard.Size = UDim2.new(0, 200, 0, 50)
+billboard.StudsOffset = Vector3.new(0, 3, 0)
+billboard.AlwaysOnTop = true
+billboard.Parent = button
 
-print("✅ ProximityPrompt creado en: " .. promptPart.Name)
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1, 0, 1, 0)
+textLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+textLabel.BackgroundTransparency = 0.5
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+textLabel.TextScaled = true
+textLabel.Font = Enum.Font.GothamBold
+textLabel.Text = "🚁 COMPRAR HELICOPTER\n$" .. VEHICLE_PRICE
+textLabel.Parent = billboard
 
--- Cuando se presiona
-proximityPrompt.Triggered:Connect(function()
-	print("🛒 Presionado botón de compra de " .. VEHICLE_NAME)
-	print("   Enviando al servidor: " .. VEHICLE_NAME .. ", $" .. VEHICLE_PRICE)
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 10)
+uiCorner.Parent = textLabel
 
-	-- Enviar al servidor
-	buyVehicleEvent:FireServer(VEHICLE_NAME, VEHICLE_PRICE)
+print("✅ Cartel de precio creado")
 
-	print("✅ Evento enviado")
+-- Cuando hacen click en el botón
+clickDetector.MouseClick:Connect(function(player)
+	print("🛒 " .. player.Name .. " hizo click en el botón de compra")
+
+	-- Intentar comprar
+	local success = _G.SimpleVehicleSystem.BuyVehicle(player, VEHICLE_NAME, VEHICLE_PRICE)
+
+	if success then
+		print("✅ Compra exitosa para " .. player.Name)
+	else
+		print("❌ Compra fallida para " .. player.Name)
+	end
 end)
+
+print("✅ Sistema de compra conectado al ClickDetector")
