@@ -47,23 +47,55 @@ local DEVELOPER_PRODUCTS = {
 	RagdollAll = {
 		ID = 0, -- Reemplazar con el ID real del Developer Product
 		Name = "Ragdoll All Players",
-		Description = "Pone a todos los jugadores en ragdoll",
+		Description = "Lanza a todos los jugadores hacia el cielo",
 		Effect = function(purchaser)
-			-- Poner a todos en ragdoll
+			-- Lanzar a todos hacia arriba
 			print(purchaser.Name .. " usó Ragdoll All!")
 
 			for _, player in pairs(Players:GetPlayers()) do
 				local character = player.Character
 				if character then
 					local humanoid = character:FindFirstChild("Humanoid")
-					if humanoid then
-						-- Cambiar el estado a Ragdoll
-						humanoid:ChangeState(Enum.HumanoidStateType.Ragdoll)
+					local rootPart = character:FindFirstChild("HumanoidRootPart")
 
-						-- Opcional: Quitar el ragdoll después de 5 segundos
-						task.delay(5, function()
+					if humanoid and rootPart then
+						-- Hacer que el jugador se ponga en PlatformStand (pierde control)
+						humanoid.PlatformStand = true
+
+						-- Crear BodyVelocity para lanzarlo hacia arriba
+						local bodyVelocity = Instance.new("BodyVelocity")
+						bodyVelocity.Velocity = Vector3.new(
+							math.random(-20, 20), -- Movimiento horizontal aleatorio en X
+							math.random(80, 120),  -- Fuerza principal hacia arriba
+							math.random(-20, 20)  -- Movimiento horizontal aleatorio en Z
+						)
+						bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+						bodyVelocity.Parent = rootPart
+
+						-- Crear BodyAngularVelocity para que gire en el aire
+						local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
+						bodyAngularVelocity.AngularVelocity = Vector3.new(
+							math.random(-10, 10),
+							math.random(-10, 10),
+							math.random(-10, 10)
+						)
+						bodyAngularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
+						bodyAngularVelocity.Parent = rootPart
+
+						-- Después de 1.5 segundos, quitar las fuerzas para que caiga naturalmente
+						task.delay(1.5, function()
+							if bodyVelocity and bodyVelocity.Parent then
+								bodyVelocity:Destroy()
+							end
+							if bodyAngularVelocity and bodyAngularVelocity.Parent then
+								bodyAngularVelocity:Destroy()
+							end
+						end)
+
+						-- Después de 3 segundos, devolver el control al jugador
+						task.delay(3, function()
 							if humanoid and humanoid.Parent then
-								humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+								humanoid.PlatformStand = false
 							end
 						end)
 					end
@@ -72,7 +104,7 @@ local DEVELOPER_PRODUCTS = {
 
 			-- Mensaje en el servidor
 			local message = Instance.new("Message")
-			message.Text = purchaser.Name .. " usó Ragdoll All!"
+			message.Text = purchaser.Name .. " lanzó a todos al cielo! 🚀"
 			message.Parent = game.Workspace
 			wait(3)
 			message:Destroy()

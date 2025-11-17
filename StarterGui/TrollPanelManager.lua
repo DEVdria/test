@@ -96,8 +96,8 @@ local DEVELOPER_PRODUCTS = {
 	},
 	{
 		Key = "RagdollAll",
-		Name = "🤸 Ragdoll All",
-		Description = "Pon a todos en ragdoll por 5 segundos",
+		Name = "🚀 Launch All",
+		Description = "Lanza a todos los jugadores hacia el cielo",
 		Price = "20 Robux",
 		Color = Color3.fromRGB(100, 100, 0)
 	},
