@@ -139,6 +139,7 @@ local function createProductButton(productData)
 	button.BorderSizePixel = 2
 	button.BorderColor3 = Color3.fromRGB(255, 255, 255)
 	button.Font = Enum.Font.GothamBold
+	button.Text = "" -- Quitar el texto por defecto "Button"
 	button.TextColor3 = Color3.fromRGB(255, 255, 255)
 	button.TextSize = 18
 	button.AutoButtonColor = true
