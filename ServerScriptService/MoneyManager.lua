@@ -17,6 +17,7 @@ local RunService = game:GetService("RunService")
 
 -- Dinero inicial que reciben los nuevos jugadores
 local DEFAULT_MONEY = 100
+local DEFAULT_WINS = 0
 
 -- Tabla para almacenar datos en memoria
 local playerData = {}
@@ -47,12 +48,13 @@ end
 --[[
     Función: Cargar datos del jugador
     Parámetros: player - El jugador que se une
+    Retorna: tabla con Money y Wins
 --]]
 local function loadPlayerData(player)
-	-- Si DataStore no está disponible, usar dinero por defecto
+	-- Si DataStore no está disponible, usar datos por defecto
 	if not dataStoreEnabled or not MoneyDataStore then
-		print("📊 " .. player.Name .. " inicia con dinero por defecto (DataStore deshabilitado)")
-		return DEFAULT_MONEY
+		print("📊 " .. player.Name .. " inicia con datos por defecto (DataStore deshabilitado)")
+		return {Money = DEFAULT_MONEY, Wins = DEFAULT_WINS}
 	end
 
 	local success, data
@@ -76,17 +78,24 @@ local function loadPlayerData(player)
 
 	-- Retornar datos cargados o datos por defecto
 	if success and data then
-		print("💾 Datos cargados para " .. player.Name .. ": $" .. tostring(data))
-		return data
-	else
-		print("📊 " .. player.Name .. " inicia con dinero por defecto")
-		return DEFAULT_MONEY
+		-- Si data es un número (formato antiguo), convertir a tabla
+		if type(data) == "number" then
+			print("💾 Datos cargados para " .. player.Name .. ": $" .. tostring(data) .. " (formato antiguo)")
+			return {Money = data, Wins = DEFAULT_WINS}
+		-- Si data es una tabla (formato nuevo)
+		elseif type(data) == "table" then
+			print("💾 Datos cargados para " .. player.Name .. ": $" .. tostring(data.Money) .. ", Wins: " .. tostring(data.Wins or 0))
+			return {Money = data.Money or DEFAULT_MONEY, Wins = data.Wins or DEFAULT_WINS}
+		end
 	end
+
+	print("📊 " .. player.Name .. " inicia con datos por defecto")
+	return {Money = DEFAULT_MONEY, Wins = DEFAULT_WINS}
 end
 
 --[[
     Función: Guardar datos del jugador
-    Parámetros: player - El jugador cuyo dinero se guardará
+    Parámetros: player - El jugador cuyo dinero y wins se guardarán
 --]]
 local function savePlayerData(player)
 	if not playerData[player.UserId] then
@@ -98,12 +107,17 @@ local function savePlayerData(player)
 		return
 	end
 
+	local dataToSave = {
+		Money = playerData[player.UserId].Money,
+		Wins = playerData[player.UserId].Wins
+	}
+
 	local success, errorMessage = pcall(function()
-		MoneyDataStore:SetAsync(player.UserId, playerData[player.UserId].Money)
+		MoneyDataStore:SetAsync(player.UserId, dataToSave)
 	end)
 
 	if success then
-		print("💾 Datos guardados para " .. player.Name .. ": $" .. playerData[player.UserId].Money)
+		print("💾 Datos guardados para " .. player.Name .. ": $" .. dataToSave.Money .. ", Wins: " .. dataToSave.Wins)
 	else
 		warn("❌ Error al guardar datos de " .. player.Name .. ": " .. tostring(errorMessage))
 	end
@@ -180,6 +194,42 @@ local function getMoney(player)
 	return 0
 end
 
+--[[
+    Función: Añadir wins a un jugador
+    Parámetros:
+        player - El jugador
+        amount - Cantidad de wins a añadir (por defecto 1)
+--]]
+local function addWins(player, amount)
+	amount = amount or 1
+
+	if playerData[player.UserId] then
+		-- Añadir wins
+		playerData[player.UserId].Wins = playerData[player.UserId].Wins + amount
+
+		-- Actualizar leaderstats
+		local leaderstats = player:FindFirstChild("leaderstats")
+		if leaderstats then
+			local wins = leaderstats:FindFirstChild("Wins")
+			if wins then
+				wins.Value = playerData[player.UserId].Wins
+			end
+		end
+	end
+end
+
+--[[
+    Función: Obtener wins actuales del jugador
+    Parámetros: player - El jugador
+    Retorna: Cantidad de wins o 0
+--]]
+local function getWins(player)
+	if playerData[player.UserId] then
+		return playerData[player.UserId].Wins
+	end
+	return 0
+end
+
 -- Cuando un jugador se une al juego
 Players.PlayerAdded:Connect(function(player)
 	-- Crear carpeta leaderstats
@@ -193,18 +243,26 @@ Players.PlayerAdded:Connect(function(player)
 	money.Value = 0
 	money.Parent = leaderstats
 
+	-- Crear valor de Wins
+	local wins = Instance.new("IntValue")
+	wins.Name = "Wins"
+	wins.Value = 0
+	wins.Parent = leaderstats
+
 	-- Cargar datos guardados
-	local savedMoney = loadPlayerData(player)
+	local savedData = loadPlayerData(player)
 
 	-- Guardar en tabla de datos
 	playerData[player.UserId] = {
-		Money = savedMoney
+		Money = savedData.Money,
+		Wins = savedData.Wins
 	}
 
-	-- Actualizar valor en leaderstats
-	money.Value = savedMoney
+	-- Actualizar valores en leaderstats
+	money.Value = savedData.Money
+	wins.Value = savedData.Wins
 
-	print("👤 " .. player.Name .. " se ha unido con $" .. savedMoney)
+	print("👤 " .. player.Name .. " se ha unido con $" .. savedData.Money .. " y " .. savedData.Wins .. " wins")
 end)
 
 -- Cuando un jugador sale del juego
@@ -240,6 +298,8 @@ _G.MoneyManager = {
 	AddMoney = addMoney,
 	RemoveMoney = removeMoney,
 	GetMoney = getMoney,
+	AddWins = addWins,
+	GetWins = getWins,
 	SaveData = savePlayerData,
 	IsDataStoreEnabled = function() return dataStoreEnabled end
 }
@@ -248,6 +308,8 @@ _G.MoneyManager = {
 _G.AddMoney = addMoney
 _G.RemoveMoney = removeMoney
 _G.GetMoney = getMoney
+_G.AddWins = addWins
+_G.GetWins = getWins
 
 print("═══════════════════════════════════════════════════════")
 print("💰 Money Manager iniciado correctamente")

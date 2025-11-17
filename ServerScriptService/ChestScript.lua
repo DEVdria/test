@@ -120,9 +120,10 @@ local function setupChest(chest)
 			return
 		end
 
-		-- Añadir dinero usando el MoneyManager
+		-- Añadir dinero y wins usando el MoneyManager
 		if _G.MoneyManager then
 			_G.MoneyManager.AddMoney(player, CHEST_REWARD)
+			_G.MoneyManager.AddWins(player, 1)
 
 			-- Establecer cooldown
 			setCooldown(player)
@@ -133,13 +134,14 @@ local function setupChest(chest)
 			-- Notificar al jugador
 			local event = ReplicatedStorage:FindFirstChild("SendNotification")
 			if event then
-				event:FireClient(player, "💰 +$" .. CHEST_REWARD .. " del cofre!", Color3.fromRGB(85, 255, 127))
+				event:FireClient(player, "💰 +$" .. CHEST_REWARD .. " | 🏆 +1 Win!", Color3.fromRGB(85, 255, 127))
 			end
 
 			-- Reproducir sonido de cofre
 			playSoundEvent:FireClient(player, "Chests", "TreasureChest", chest.Position)
 
-			print(player.Name .. " abrió un cofre y recibió $" .. CHEST_REWARD)
+			local currentWins = _G.MoneyManager.GetWins(player)
+			print(player.Name .. " abrió un cofre y recibió $" .. CHEST_REWARD .. " | Wins totales: " .. currentWins)
 
 			-- Matar al jugador después de 1 segundo
 			task.delay(1, function()
