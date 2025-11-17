@@ -1,6 +1,6 @@
-# 🎵 Sistema de Música para Roblox
+# 🎮 Sistemas Completos para Roblox
 
-Sistema completo de música con interfaz gráfica para juegos de Roblox.
+Colección de sistemas profesionales listos para usar en tus juegos de Roblox.
 
 ![Roblox](https://img.shields.io/badge/Roblox-Studio-blue)
 ![Lua](https://img.shields.io/badge/Lua-5.1-purple)
@@ -8,40 +8,55 @@ Sistema completo de música con interfaz gráfica para juegos de Roblox.
 
 ---
 
-## ✨ Características
+## 📦 Sistemas Incluidos
 
-- 🎮 **Interfaz intuitiva** en la esquina inferior izquierda
-- 🎵 **Panel de selección** de canciones con scroll
-- ⏯️ **Controles de reproducción** (Play/Pause)
-- 🎨 **Diseño moderno** con animaciones suaves
-- 🔄 **Reproducción en loop** automática
-- 📜 **Lista completa** de canciones disponibles
-- ✅ **Compatible con audios** de la Toolbox de Roblox
-- 🎯 **Fácil de personalizar** y extender
-- 📱 **UI Responsive** - se adapta automáticamente a móviles, tablets y PC
-- 🔍 **Detección inteligente** de tipo de dispositivo
-- ⚡ **Optimizado** para todas las plataformas
+### 🛒 **Sistema de Tienda** (NUEVO)
+Sistema completo de compras con Gamepasses y Developer Products, incluyendo panel de productos "Troll".
+
+**Características:**
+- Compra de Gamepasses con activación automática de beneficios
+- Developer Products consumibles (monedas, power-ups, etc.)
+- Panel especial de productos Troll (Kill All, Ragdoll, etc.)
+- UI profesional y responsive
+- Seguridad total en el servidor
+
+📖 **Guía:** [SHOP_SYSTEM_GUIDE.md](./SHOP_SYSTEM_GUIDE.md)
+📂 **Código:** [src/ShopSystem/](./src/ShopSystem/)
 
 ---
 
-## 📦 Componentes
+### 🎵 **Sistema de Música**
+Sistema completo de música con interfaz gráfica para juegos de Roblox.
 
-### 1. **SongsConfig.lua** (ModuleScript)
-Configuración de todas las canciones disponibles. Ubicación: `ReplicatedStorage`
+**Características:**
+- Interfaz intuitiva en la esquina inferior izquierda
+- Panel de selección de canciones con scroll
+- Controles de reproducción (Play/Pause)
+- Diseño moderno con animaciones suaves
+- Reproducción en loop automática
+- UI Responsive - se adapta a móviles, tablets y PC
+- Detección inteligente de tipo de dispositivo
 
-### 2. **MusicPlayerScript.lua** (LocalScript)
-Script principal que controla toda la funcionalidad. Ubicación: `StarterPlayerScripts`
+📖 **Guía:** [INSTALACION.md](./INSTALACION.md)
+📂 **Código:** [src/MusicSystem/](./src/MusicSystem/)
 
 ---
 
 ## 🚀 Instalación Rápida
 
-1. **Copia `SongsConfig.lua`** → ReplicatedStorage como **ModuleScript**
-2. **Copia `MusicPlayerScript.lua`** → StarterPlayerScripts como **LocalScript**
-3. **Configura tus canciones** en SongsConfig
-4. **¡Presiona Play!** (F5)
+### Sistema de Tienda:
+1. Lee la guía completa: [SHOP_SYSTEM_GUIDE.md](./SHOP_SYSTEM_GUIDE.md)
+2. Configura tus IDs de productos en `ProductsConfig.lua`
+3. Copia los scripts a las ubicaciones indicadas
+4. ¡Publica y prueba en tu juego!
 
-📖 **Para instrucciones detalladas, lee:** [INSTALACION.md](./INSTALACION.md)
+### Sistema de Música:
+1. Copia `SongsConfig.lua` → ReplicatedStorage como **ModuleScript**
+2. Copia `MusicPlayerScript.lua` → StarterPlayerScripts como **LocalScript**
+3. Configura tus canciones en SongsConfig
+4. ¡Presiona Play! (F5)
+
+📖 **Documentación completa disponible en cada carpeta**
 
 ---
 
@@ -87,15 +102,28 @@ SongsConfig.Songs = {
 
 ```
 src/
-└── MusicSystem/
-    ├── SongsConfig.lua          # Configuración de canciones
-    └── MusicPlayerScript.lua    # Script principal (con UI Responsive)
+├── ShopSystem/                  # Sistema de Tienda (NUEVO)
+│   ├── Client/                  # Scripts del cliente
+│   │   ├── ShopFrameHandler.lua
+│   │   ├── TrollButtonHandler.lua
+│   │   └── ShopButtonHandler.lua
+│   ├── Server/                  # Scripts del servidor
+│   │   ├── PurchaseHandler.lua
+│   │   └── GamepassHandler.lua
+│   └── Shared/                  # Configuración compartida
+│       └── ProductsConfig.lua
+│
+└── MusicSystem/                 # Sistema de Música
+    ├── SongsConfig.lua
+    └── MusicPlayerScript.lua
 
-INSTALACION.md                   # Guía de instalación completa
-RESPONSIVE_DESIGN.md             # Guía de UI responsive
-EJEMPLOS_AUDIO.md                # Cómo conseguir IDs de audio
-REFERENCIA_RAPIDA.md             # Referencia rápida
-README.md                        # Este archivo
+Documentación/
+├── SHOP_SYSTEM_GUIDE.md         # Guía completa del sistema de tienda
+├── INSTALACION.md               # Guía del sistema de música
+├── RESPONSIVE_DESIGN.md         # Guía de UI responsive
+├── EJEMPLOS_AUDIO.md            # Cómo conseguir IDs de audio
+├── REFERENCIA_RAPIDA.md         # Referencia rápida
+└── README.md                    # Este archivo
 ```
 
 ---
