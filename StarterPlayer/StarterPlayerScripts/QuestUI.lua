@@ -214,7 +214,7 @@ local function createQuestUI()
 	questPanel.Name = "QuestPanel"
 	questPanel.Size = UDim2.new(0.25, 0, 0.38, 0)
 	questPanel.Position = UDim2.new(1, 20, 0.5, 0)
-	questPanel.AnchorPoint = Vector2.new(0, 0.5)
+	questPanel.AnchorPoint = Vector2.new(1, 0.5)
 	questPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	questPanel.BorderSizePixel = 0
 	questPanel.Parent = questGui
@@ -266,7 +266,7 @@ local function createQuestUI()
 
 		local targetPosition
 		if isPanelOpen then
-			targetPosition = UDim2.new(0.73, 0, 0.5, 0)
+			targetPosition = UDim2.new(1, -10, 0.5, 0)
 		else
 			targetPosition = UDim2.new(1, 20, 0.5, 0)
 		end

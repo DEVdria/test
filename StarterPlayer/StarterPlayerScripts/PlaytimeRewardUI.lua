@@ -263,7 +263,7 @@ local function createPlaytimeRewardUI()
 	rewardPanel.Name = "RewardPanel"
 	rewardPanel.Size = UDim2.new(0.28, 0, 0.52, 0)
 	rewardPanel.Position = UDim2.new(1, 20, 0.5, 0)
-	rewardPanel.AnchorPoint = Vector2.new(0, 0.5)
+	rewardPanel.AnchorPoint = Vector2.new(1, 0.5)
 	rewardPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	rewardPanel.BorderSizePixel = 0
 	rewardPanel.Parent = rewardGui
@@ -358,7 +358,7 @@ local function createPlaytimeRewardUI()
 
 		local targetPosition
 		if isPanelOpen then
-			targetPosition = UDim2.new(0.7, 0, 0.5, 0)
+			targetPosition = UDim2.new(1, -10, 0.5, 0)
 			-- Solicitar actualización de datos
 			getRewardsEvent:FireServer()
 		else
