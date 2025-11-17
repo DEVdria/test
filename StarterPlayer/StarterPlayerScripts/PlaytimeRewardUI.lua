@@ -262,7 +262,7 @@ local function createPlaytimeRewardUI()
 	rewardPanel = Instance.new("Frame")
 	rewardPanel.Name = "RewardPanel"
 	rewardPanel.Size = UDim2.new(0.28, 0, 0.52, 0)
-	rewardPanel.Position = UDim2.new(1, 20, 0.5, 0)
+	rewardPanel.Position = UDim2.new(1.5, 0, 0.5, 0)
 	rewardPanel.AnchorPoint = Vector2.new(1, 0.5)
 	rewardPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	rewardPanel.BorderSizePixel = 0
@@ -362,7 +362,7 @@ local function createPlaytimeRewardUI()
 			-- Solicitar actualización de datos
 			getRewardsEvent:FireServer()
 		else
-			targetPosition = UDim2.new(1, 20, 0.5, 0)
+			targetPosition = UDim2.new(1.5, 0, 0.5, 0)
 		end
 
 		local tween = TweenService:Create(
