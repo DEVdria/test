@@ -12,15 +12,38 @@
 	- Panel selector de canciones
 	- Actualización automática de UI
 	- Compatible con audios de la Toolbox
+	- ✨ NUEVO: UI Responsive - se adapta automáticamente a móviles, tablets y PC
+	- ✨ Detección automática de dispositivo
+	- ✨ Escalado inteligente según tamaño de pantalla
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+-- Detectar tipo de dispositivo
+local function getDeviceType()
+	local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	local isTablet = UserInputService.TouchEnabled and UserInputService.KeyboardEnabled
+	local viewportSize = workspace.CurrentCamera.ViewportSize
+
+	-- Si la pantalla es muy pequeña, es móvil
+	if viewportSize.X < 600 or isMobile then
+		return "Mobile"
+	elseif viewportSize.X < 1024 or isTablet then
+		return "Tablet"
+	else
+		return "Desktop"
+	end
+end
+
+local deviceType = getDeviceType()
+print("📱 Dispositivo detectado:", deviceType)
 
 -- Esperar a que cargue la configuración de canciones
 local SongsConfig = ReplicatedStorage:WaitForChild("SongsConfig")
@@ -49,16 +72,40 @@ local function createMusicPlayerUI()
 	screenGui.Name = "MusicPlayerUI"
 	screenGui.ResetOnSpawn = false
 	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	screenGui.IgnoreGuiInset = true
 	screenGui.Parent = playerGui
+
+	-- Configuración de tamaños según dispositivo
+	local uiScale = 1
+	local mainFrameSize, mainFramePos
+
+	if deviceType == "Mobile" then
+		uiScale = 0.7  -- 70% del tamaño original en móviles
+		mainFrameSize = UDim2.new(0.85, 0, 0, 60)  -- Más ancho en móviles
+		mainFramePos = UDim2.new(0.075, 0, 1, -70)
+	elseif deviceType == "Tablet" then
+		uiScale = 0.85  -- 85% en tablets
+		mainFrameSize = UDim2.new(0, 300, 0, 70)
+		mainFramePos = UDim2.new(0, 15, 1, -85)
+	else  -- Desktop
+		uiScale = 1
+		mainFrameSize = UDim2.new(0, 300, 0, 80)
+		mainFramePos = UDim2.new(0, 20, 1, -100)
+	end
 
 	-- Frame principal (esquina inferior izquierda)
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Name = "MainFrame"
-	mainFrame.Size = UDim2.new(0, 300, 0, 80)
-	mainFrame.Position = UDim2.new(0, 20, 1, -100)
+	mainFrame.Size = mainFrameSize
+	mainFrame.Position = mainFramePos
 	mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 	mainFrame.BorderSizePixel = 0
 	mainFrame.Parent = screenGui
+
+	-- UIScale para ajustar tamaño según dispositivo
+	local mainScale = Instance.new("UIScale")
+	mainScale.Scale = uiScale
+	mainScale.Parent = mainFrame
 
 	-- Esquinas redondeadas
 	local corner = Instance.new("UICorner")
@@ -90,10 +137,11 @@ local function createMusicPlayerUI()
 	songLabel.BackgroundTransparency = 1
 	songLabel.Text = "Cargando..."
 	songLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	songLabel.TextSize = 16
+	songLabel.TextSize = deviceType == "Mobile" and 14 or 16
 	songLabel.Font = Enum.Font.GothamBold
 	songLabel.TextXAlignment = Enum.TextXAlignment.Left
 	songLabel.TextTruncate = Enum.TextTruncate.AtEnd
+	songLabel.TextScaled = deviceType == "Mobile"  -- Escalar texto en móvil
 	songLabel.Parent = mainFrame
 
 	-- Botón Play/Pause
@@ -144,12 +192,31 @@ local function createMusicPlayerUI()
 	-- Panel selector de canciones (inicialmente invisible)
 	local selectorPanel = Instance.new("Frame")
 	selectorPanel.Name = "SongSelectorPanel"
-	selectorPanel.Size = UDim2.new(0, 320, 0, 400)
-	selectorPanel.Position = UDim2.new(0, 20, 0.5, -200)
+
+	-- Tamaño del panel según dispositivo
+	local panelSize, panelPos
+	if deviceType == "Mobile" then
+		panelSize = UDim2.new(0.9, 0, 0.6, 0)  -- 90% ancho, 60% alto en móvil
+		panelPos = UDim2.new(0.05, 0, 0.2, 0)   -- Centrado
+	elseif deviceType == "Tablet" then
+		panelSize = UDim2.new(0.7, 0, 0.65, 0)
+		panelPos = UDim2.new(0.15, 0, 0.175, 0)
+	else  -- Desktop
+		panelSize = UDim2.new(0, 320, 0, 400)
+		panelPos = UDim2.new(0, 20, 0.5, -200)
+	end
+
+	selectorPanel.Size = panelSize
+	selectorPanel.Position = panelPos
 	selectorPanel.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 	selectorPanel.BorderSizePixel = 0
 	selectorPanel.Visible = false
 	selectorPanel.Parent = screenGui
+
+	-- UIScale para el panel
+	local panelScale = Instance.new("UIScale")
+	panelScale.Scale = uiScale
+	panelScale.Parent = selectorPanel
 
 	local panelCorner = Instance.new("UICorner")
 	panelCorner.CornerRadius = UDim.new(0, 12)
@@ -168,9 +235,10 @@ local function createMusicPlayerUI()
 	panelTitle.BackgroundTransparency = 1
 	panelTitle.Text = "🎵 Selecciona una Canción"
 	panelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	panelTitle.TextSize = 20
+	panelTitle.TextSize = deviceType == "Mobile" and 16 or 20
 	panelTitle.Font = Enum.Font.GothamBold
 	panelTitle.TextXAlignment = Enum.TextXAlignment.Left
+	panelTitle.TextScaled = deviceType == "Mobile"
 	panelTitle.Parent = selectorPanel
 
 	-- Botón cerrar
@@ -226,7 +294,14 @@ local function createMusicPlayerUI()
 	songSelectorPanel = selectorPanel
 	songListFrame = scrollFrame
 
-	return screenGui, closeButton
+	-- Guardar tamaños para animaciones
+	local panelData = {
+		openSize = panelSize,
+		closedSize = UDim2.new(0, 0, 0, 0),
+		scale = uiScale
+	}
+
+	return screenGui, closeButton, panelData
 end
 
 -- ==================== CREACIÓN DE BOTONES DE CANCIONES ====================
@@ -266,7 +341,7 @@ local function createSongButton(songData, index)
 	numberLabel.BackgroundTransparency = 1
 	numberLabel.Text = tostring(index)
 	numberLabel.TextColor3 = Color3.fromRGB(150, 150, 160)
-	numberLabel.TextSize = 18
+	numberLabel.TextSize = deviceType == "Mobile" and 14 or 18
 	numberLabel.Font = Enum.Font.GothamBold
 	numberLabel.Parent = button
 
@@ -277,9 +352,10 @@ local function createSongButton(songData, index)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = songData.Name
 	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	nameLabel.TextSize = 16
+	nameLabel.TextSize = deviceType == "Mobile" and 14 or 16
 	nameLabel.Font = Enum.Font.Gotham
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	nameLabel.TextScaled = deviceType == "Mobile"
 	nameLabel.Parent = button
 
 	-- Efecto hover
@@ -384,7 +460,7 @@ end
 
 -- ==================== EVENTOS DE BOTONES ====================
 
-local function setupButtons(closeButton)
+local function setupButtons(closeButton, panelData)
 	-- Botón Play/Pause
 	playPauseButton.MouseButton1Click:Connect(function()
 		if isPlaying then
@@ -401,15 +477,15 @@ local function setupButtons(closeButton)
 
 		if isSelectorOpen then
 			-- Animación de apertura
-			songSelectorPanel.Size = UDim2.new(0, 0, 0, 0)
+			songSelectorPanel.Size = panelData.closedSize
 			songSelectorPanel.Visible = true
 			TweenService:Create(songSelectorPanel, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
-				Size = UDim2.new(0, 320, 0, 400)
+				Size = panelData.openSize
 			}):Play()
 		else
 			-- Animación de cierre
 			TweenService:Create(songSelectorPanel, TweenInfo.new(0.2), {
-				Size = UDim2.new(0, 0, 0, 0)
+				Size = panelData.closedSize
 			}):Play()
 			task.wait(0.2)
 			songSelectorPanel.Visible = false
@@ -420,7 +496,7 @@ local function setupButtons(closeButton)
 	closeButton.MouseButton1Click:Connect(function()
 		isSelectorOpen = false
 		TweenService:Create(songSelectorPanel, TweenInfo.new(0.2), {
-			Size = UDim2.new(0, 0, 0, 0)
+			Size = panelData.closedSize
 		}):Play()
 		task.wait(0.2)
 		songSelectorPanel.Visible = false
@@ -433,7 +509,7 @@ local function initialize()
 	print("🎵 Inicializando Sistema de Música...")
 
 	-- Crear UI
-	local screenGui, closeButton = createMusicPlayerUI()
+	local screenGui, closeButton, panelData = createMusicPlayerUI()
 	print("✅ UI creada correctamente")
 
 	-- Crear botones de canciones
@@ -446,7 +522,7 @@ local function initialize()
 	songListFrame.CanvasSize = UDim2.new(0, 0, 0, (#songsData.Songs * 58) + 16)
 
 	-- Configurar eventos de botones
-	setupButtons(closeButton)
+	setupButtons(closeButton, panelData)
 	print("✅ Eventos configurados")
 
 	-- Iniciar con la canción por defecto

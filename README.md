@@ -18,6 +18,9 @@ Sistema completo de música con interfaz gráfica para juegos de Roblox.
 - 📜 **Lista completa** de canciones disponibles
 - ✅ **Compatible con audios** de la Toolbox de Roblox
 - 🎯 **Fácil de personalizar** y extender
+- 📱 **UI Responsive** - se adapta automáticamente a móviles, tablets y PC
+- 🔍 **Detección inteligente** de tipo de dispositivo
+- ⚡ **Optimizado** para todas las plataformas
 
 ---
 
@@ -86,9 +89,12 @@ SongsConfig.Songs = {
 src/
 └── MusicSystem/
     ├── SongsConfig.lua          # Configuración de canciones
-    └── MusicPlayerScript.lua    # Script principal
+    └── MusicPlayerScript.lua    # Script principal (con UI Responsive)
 
 INSTALACION.md                   # Guía de instalación completa
+RESPONSIVE_DESIGN.md             # Guía de UI responsive
+EJEMPLOS_AUDIO.md                # Cómo conseguir IDs de audio
+REFERENCIA_RAPIDA.md             # Referencia rápida
 README.md                        # Este archivo
 ```
 
@@ -146,6 +152,25 @@ SongsConfig.DefaultVolume = 0.5  -- 0 = mudo, 1 = máximo
 - Asegúrate de usar los tipos correctos (LocalScript/ModuleScript)
 
 📖 **Más soluciones en:** [INSTALACION.md](./INSTALACION.md#solución-de-problemas)
+
+---
+
+## 📱 UI Responsive (NUEVO)
+
+El sistema ahora se adapta automáticamente a diferentes dispositivos:
+
+### **Detección Automática:**
+- 📱 **Móviles** - UI reducida al 70%, optimizada para pantallas pequeñas
+- 📲 **Tablets** - UI al 85%, balance perfecto
+- 🖥️ **Desktop** - UI completa al 100%
+
+### **Características Responsive:**
+- ✅ Tamaños ajustados según dispositivo
+- ✅ Textos escalables en móviles
+- ✅ Panel selector optimizado para touch
+- ✅ Posiciones inteligentes
+
+📖 **Guía completa:** [RESPONSIVE_DESIGN.md](./RESPONSIVE_DESIGN.md)
 
 ---
 
