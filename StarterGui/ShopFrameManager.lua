@@ -28,24 +28,59 @@ local CheckGamepassOwnership = ShopRemotesModule.CheckGamepassOwnership
 local GAMEPASSES = {
 	{
 		Key = "VIP",
-		Name = "VIP Pass",
+		Name = "✨ VIP Pass",
 		Description = "Obtén beneficios exclusivos VIP",
-		Icon = "rbxassetid://0", -- Opcional: ID de la imagen del gamepass
-		Price = "100 Robux" -- Texto informativo
+		Icon = "rbxassetid://0",
+		Price = "100 Robux"
 	},
 	{
-		Key = "SpeedBoost",
-		Name = "Speed Boost",
-		Description = "Corre el doble de rápido",
+		Key = "DoubleJump",
+		Name = "🦘 Double Jump",
+		Description = "Salta dos veces en el aire",
 		Icon = "rbxassetid://0",
 		Price = "50 Robux"
 	},
 	{
-		Key = "DoubleJump",
-		Name = "Double Jump",
-		Description = "Salta mucho más alto",
+		Key = "Espada",
+		Name = "⚔️ Espada",
+		Description = "Desbloquea la poderosa Espada",
 		Icon = "rbxassetid://0",
 		Price = "75 Robux"
+	},
+	{
+		Key = "BobinaGravedad",
+		Name = "🌀 Bobina de Gravedad",
+		Description = "Controla la gravedad a tu alrededor",
+		Icon = "rbxassetid://0",
+		Price = "100 Robux"
+	},
+	{
+		Key = "BobinaVelocidad",
+		Name = "⚡ Bobina de Velocidad",
+		Description = "Muévete a velocidades increíbles",
+		Icon = "rbxassetid://0",
+		Price = "100 Robux"
+	},
+	{
+		Key = "AlfombraMagica",
+		Name = "🧙 Alfombra Mágica",
+		Description = "Vuela sobre una alfombra mágica",
+		Icon = "rbxassetid://0",
+		Price = "150 Robux"
+	},
+	{
+		Key = "PistolaHiperlaser",
+		Name = "🔫 Pistola Hiperlaser",
+		Description = "Dispara rayos láser devastadores",
+		Icon = "rbxassetid://0",
+		Price = "125 Robux"
+	},
+	{
+		Key = "BobinaFusion",
+		Name = "💥 Bobina de Fusion",
+		Description = "Fusiona y explota todo a tu paso",
+		Icon = "rbxassetid://0",
+		Price = "175 Robux"
 	}
 }
 

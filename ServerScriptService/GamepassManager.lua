@@ -4,6 +4,7 @@
 local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local ServerStorage = game:GetService("ServerStorage")
 
 -- Esperar a que ShopRemotes esté disponible
 local ShopRemotesModule = require(ReplicatedStorage:WaitForChild("ShopRemotes"))
@@ -21,10 +22,6 @@ local GAMEPASSES = {
 		Effect = function(player)
 			-- Efecto del VIP: Por ejemplo, dar un tag o beneficios
 			print(player.Name .. " tiene VIP activado!")
-			-- Aquí puedes agregar lógica como:
-			-- - Dar más dinero
-			-- - Desbloquear áreas
-			-- - Cambiar el nombre con un tag especial
 			local leaderstats = player:FindFirstChild("leaderstats")
 			if leaderstats then
 				local vipTag = leaderstats:FindFirstChild("VIP")
@@ -38,27 +35,284 @@ local GAMEPASSES = {
 		end
 	},
 
-	SpeedBoost = {
-		ID = 0, -- Reemplazar con el ID real del Gamepass Speed Boost
-		Name = "Speed Boost",
-		Effect = function(player)
-			-- Efecto del Speed Boost: Aumentar velocidad del jugador
-			print(player.Name .. " tiene Speed Boost activado!")
-			local character = player.Character or player.CharacterAdded:Wait()
-			local humanoid = character:WaitForChild("Humanoid")
-			humanoid.WalkSpeed = 32 -- Velocidad aumentada (default es 16)
-		end
-	},
-
 	DoubleJump = {
 		ID = 0, -- Reemplazar con el ID real del Gamepass Double Jump
 		Name = "Double Jump",
 		Effect = function(player)
-			-- Efecto del Double Jump
+			-- Efecto del Double Jump: Permitir saltar en el aire
 			print(player.Name .. " tiene Double Jump activado!")
-			local character = player.Character or player.CharacterAdded:Wait()
-			local humanoid = character:WaitForChild("Humanoid")
-			humanoid.JumpPower = 100 -- Salto aumentado (default es 50)
+
+			-- Guardar estado del double jump en el jugador
+			local doubleJumpEnabled = Instance.new("BoolValue")
+			doubleJumpEnabled.Name = "DoubleJumpEnabled"
+			doubleJumpEnabled.Value = true
+			doubleJumpEnabled.Parent = player
+
+			-- Función para configurar el double jump en un personaje
+			local function setupDoubleJump(character)
+				local humanoid = character:WaitForChild("Humanoid")
+				local canDoubleJump = true
+
+				-- Cuando el jugador salta
+				humanoid.StateChanged:Connect(function(oldState, newState)
+					-- Si aterriza, puede volver a hacer double jump
+					if newState == Enum.HumanoidStateType.Landed then
+						canDoubleJump = true
+					end
+				end)
+
+				-- Detectar cuando el jugador está cayendo y presiona espacio
+				humanoid.FreeFalling:Connect(function()
+					-- Crear un detector de input en el personaje
+					local rootPart = character:FindFirstChild("HumanoidRootPart")
+					if rootPart and canDoubleJump then
+						-- Esperar un frame para el input
+						task.wait(0.1)
+					end
+				end)
+			end
+
+			-- Configurar para el personaje actual
+			if player.Character then
+				setupDoubleJump(player.Character)
+			end
+
+			-- Configurar para futuros personajes
+			player.CharacterAdded:Connect(function(character)
+				setupDoubleJump(character)
+			end)
+		end
+	},
+
+	-- ====================================
+	-- GAMEPASSES DE HERRAMIENTAS
+	-- ====================================
+	-- IMPORTANTE: Estos gamepasses requieren que tengas las herramientas en ServerStorage
+	-- Los nombres de las herramientas en ServerStorage deben coincidir exactamente
+
+	Espada = {
+		ID = 0, -- Reemplazar con el ID real del Gamepass
+		Name = "Espada",
+		ToolName = "Espada", -- Nombre del tool en ServerStorage
+		Effect = function(player)
+			print(player.Name .. " tiene el gamepass de Espada!")
+
+			local function giveToolToPlayer(character)
+				local backpack = player:FindFirstChild("Backpack")
+				if not backpack then return end
+
+				-- Verificar si ya tiene el tool
+				if backpack:FindFirstChild("Espada") or character:FindFirstChild("Espada") then
+					return -- Ya lo tiene
+				end
+
+				-- Buscar el tool en ServerStorage
+				local toolTemplate = ServerStorage:FindFirstChild("Espada")
+				if toolTemplate then
+					local toolClone = toolTemplate:Clone()
+					toolClone.Parent = backpack
+					print("Tool 'Espada' entregado a " .. player.Name)
+				else
+					warn("Tool 'Espada' no encontrado en ServerStorage!")
+				end
+			end
+
+			-- Dar el tool al personaje actual
+			if player.Character then
+				giveToolToPlayer(player.Character)
+			end
+
+			-- Dar el tool cada vez que respawnee
+			player.CharacterAdded:Connect(function(character)
+				character:WaitForChild("Humanoid") -- Esperar a que el humanoid cargue
+				wait(0.5) -- Pequeña espera para asegurar que todo cargue
+				giveToolToPlayer(character)
+			end)
+		end
+	},
+
+	BobinaGravedad = {
+		ID = 0, -- Reemplazar con el ID real del Gamepass
+		Name = "Bobina de Gravedad",
+		ToolName = "Bobina de gravedad", -- Nombre exacto del tool en ServerStorage
+		Effect = function(player)
+			print(player.Name .. " tiene el gamepass de Bobina de Gravedad!")
+
+			local function giveToolToPlayer(character)
+				local backpack = player:FindFirstChild("Backpack")
+				if not backpack then return end
+
+				if backpack:FindFirstChild("Bobina de gravedad") or character:FindFirstChild("Bobina de gravedad") then
+					return
+				end
+
+				local toolTemplate = ServerStorage:FindFirstChild("Bobina de gravedad")
+				if toolTemplate then
+					local toolClone = toolTemplate:Clone()
+					toolClone.Parent = backpack
+					print("Tool 'Bobina de gravedad' entregado a " .. player.Name)
+				else
+					warn("Tool 'Bobina de gravedad' no encontrado en ServerStorage!")
+				end
+			end
+
+			if player.Character then
+				giveToolToPlayer(player.Character)
+			end
+
+			player.CharacterAdded:Connect(function(character)
+				character:WaitForChild("Humanoid")
+				wait(0.5)
+				giveToolToPlayer(character)
+			end)
+		end
+	},
+
+	BobinaVelocidad = {
+		ID = 0, -- Reemplazar con el ID real del Gamepass
+		Name = "Bobina de Velocidad",
+		ToolName = "Bobina de velocidad", -- Nombre exacto del tool en ServerStorage
+		Effect = function(player)
+			print(player.Name .. " tiene el gamepass de Bobina de Velocidad!")
+
+			local function giveToolToPlayer(character)
+				local backpack = player:FindFirstChild("Backpack")
+				if not backpack then return end
+
+				if backpack:FindFirstChild("Bobina de velocidad") or character:FindFirstChild("Bobina de velocidad") then
+					return
+				end
+
+				local toolTemplate = ServerStorage:FindFirstChild("Bobina de velocidad")
+				if toolTemplate then
+					local toolClone = toolTemplate:Clone()
+					toolClone.Parent = backpack
+					print("Tool 'Bobina de velocidad' entregado a " .. player.Name)
+				else
+					warn("Tool 'Bobina de velocidad' no encontrado en ServerStorage!")
+				end
+			end
+
+			if player.Character then
+				giveToolToPlayer(player.Character)
+			end
+
+			player.CharacterAdded:Connect(function(character)
+				character:WaitForChild("Humanoid")
+				wait(0.5)
+				giveToolToPlayer(character)
+			end)
+		end
+	},
+
+	AlfombraMagica = {
+		ID = 0, -- Reemplazar con el ID real del Gamepass
+		Name = "Alfombra Mágica",
+		ToolName = "Alfombra magica", -- Nombre exacto del tool en ServerStorage
+		Effect = function(player)
+			print(player.Name .. " tiene el gamepass de Alfombra Mágica!")
+
+			local function giveToolToPlayer(character)
+				local backpack = player:FindFirstChild("Backpack")
+				if not backpack then return end
+
+				if backpack:FindFirstChild("Alfombra magica") or character:FindFirstChild("Alfombra magica") then
+					return
+				end
+
+				local toolTemplate = ServerStorage:FindFirstChild("Alfombra magica")
+				if toolTemplate then
+					local toolClone = toolTemplate:Clone()
+					toolClone.Parent = backpack
+					print("Tool 'Alfombra magica' entregado a " .. player.Name)
+				else
+					warn("Tool 'Alfombra magica' no encontrado en ServerStorage!")
+				end
+			end
+
+			if player.Character then
+				giveToolToPlayer(player.Character)
+			end
+
+			player.CharacterAdded:Connect(function(character)
+				character:WaitForChild("Humanoid")
+				wait(0.5)
+				giveToolToPlayer(character)
+			end)
+		end
+	},
+
+	PistolaHiperlaser = {
+		ID = 0, -- Reemplazar con el ID real del Gamepass
+		Name = "Pistola Hiperlaser",
+		ToolName = "Pistola Hiperlaser", -- Nombre exacto del tool en ServerStorage
+		Effect = function(player)
+			print(player.Name .. " tiene el gamepass de Pistola Hiperlaser!")
+
+			local function giveToolToPlayer(character)
+				local backpack = player:FindFirstChild("Backpack")
+				if not backpack then return end
+
+				if backpack:FindFirstChild("Pistola Hiperlaser") or character:FindFirstChild("Pistola Hiperlaser") then
+					return
+				end
+
+				local toolTemplate = ServerStorage:FindFirstChild("Pistola Hiperlaser")
+				if toolTemplate then
+					local toolClone = toolTemplate:Clone()
+					toolClone.Parent = backpack
+					print("Tool 'Pistola Hiperlaser' entregado a " .. player.Name)
+				else
+					warn("Tool 'Pistola Hiperlaser' no encontrado en ServerStorage!")
+				end
+			end
+
+			if player.Character then
+				giveToolToPlayer(player.Character)
+			end
+
+			player.CharacterAdded:Connect(function(character)
+				character:WaitForChild("Humanoid")
+				wait(0.5)
+				giveToolToPlayer(character)
+			end)
+		end
+	},
+
+	BobinaFusion = {
+		ID = 0, -- Reemplazar con el ID real del Gamepass
+		Name = "Bobina de Fusion",
+		ToolName = "Bobina de Fusion", -- Nombre exacto del tool en ServerStorage
+		Effect = function(player)
+			print(player.Name .. " tiene el gamepass de Bobina de Fusion!")
+
+			local function giveToolToPlayer(character)
+				local backpack = player:FindFirstChild("Backpack")
+				if not backpack then return end
+
+				if backpack:FindFirstChild("Bobina de Fusion") or character:FindFirstChild("Bobina de Fusion") then
+					return
+				end
+
+				local toolTemplate = ServerStorage:FindFirstChild("Bobina de Fusion")
+				if toolTemplate then
+					local toolClone = toolTemplate:Clone()
+					toolClone.Parent = backpack
+					print("Tool 'Bobina de Fusion' entregado a " .. player.Name)
+				else
+					warn("Tool 'Bobina de Fusion' no encontrado en ServerStorage!")
+				end
+			end
+
+			if player.Character then
+				giveToolToPlayer(player.Character)
+			end
+
+			player.CharacterAdded:Connect(function(character)
+				character:WaitForChild("Humanoid")
+				wait(0.5)
+				giveToolToPlayer(character)
+			end)
 		end
 	}
 }
