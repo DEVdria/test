@@ -5,6 +5,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
+local PhysicsService = game:GetService("PhysicsService")
 
 -- Esperar a que ShopRemotes esté disponible
 local ShopRemotesModule = require(ReplicatedStorage:WaitForChild("ShopRemotes"))
@@ -73,7 +74,25 @@ local GAMEPASSES = {
 				padding.PaddingBottom = UDim.new(0, 5)
 				padding.Parent = textLabel
 
-				print("Tag VIP creado para " .. player.Name)
+				-- Configurar collision group para VIP (permitir atravesar VipBarrier)
+				for _, part in pairs(character:GetDescendants()) do
+					if part:IsA("BasePart") then
+						pcall(function()
+							PhysicsService:SetPartCollisionGroup(part, "VIPPlayers")
+						end)
+					end
+				end
+
+				-- Detectar nuevas partes que se agreguen al personaje
+				character.DescendantAdded:Connect(function(descendant)
+					if descendant:IsA("BasePart") then
+						pcall(function()
+							PhysicsService:SetPartCollisionGroup(descendant, "VIPPlayers")
+						end)
+					end
+				end)
+
+				print("Tag VIP creado para " .. player.Name .. " - Puede atravesar barreras VIP")
 			end
 
 			-- Crear el tag para el personaje actual
