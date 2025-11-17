@@ -111,11 +111,23 @@ local function createGamepassButton(gamepassData)
 	button.TextSize = 18
 	button.AutoButtonColor = true
 
-	-- Texto del botón
+	-- Imagen del gamepass (ícono)
+	local iconImage = Instance.new("ImageLabel")
+	iconImage.Name = "IconImage"
+	iconImage.Size = UDim2.new(0, 70, 0, 70)
+	iconImage.Position = UDim2.new(0, 5, 0, 5)
+	iconImage.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	iconImage.BorderSizePixel = 2
+	iconImage.BorderColor3 = Color3.fromRGB(100, 100, 100)
+	iconImage.Image = gamepassData.Icon or ""
+	iconImage.ScaleType = Enum.ScaleType.Fit
+	iconImage.Parent = button
+
+	-- Texto del botón (ajustado para dejar espacio a la imagen)
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Name = "NameLabel"
-	nameLabel.Size = UDim2.new(1, -10, 0, 25)
-	nameLabel.Position = UDim2.new(0, 5, 0, 5)
+	nameLabel.Size = UDim2.new(1, -90, 0, 25)
+	nameLabel.Position = UDim2.new(0, 80, 0, 5)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Font = Enum.Font.GothamBold
 	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
@@ -126,8 +138,8 @@ local function createGamepassButton(gamepassData)
 
 	local descLabel = Instance.new("TextLabel")
 	descLabel.Name = "DescLabel"
-	descLabel.Size = UDim2.new(1, -10, 0, 20)
-	descLabel.Position = UDim2.new(0, 5, 0, 30)
+	descLabel.Size = UDim2.new(1, -90, 0, 20)
+	descLabel.Position = UDim2.new(0, 80, 0, 30)
 	descLabel.BackgroundTransparency = 1
 	descLabel.Font = Enum.Font.Gotham
 	descLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -138,8 +150,8 @@ local function createGamepassButton(gamepassData)
 
 	local priceLabel = Instance.new("TextLabel")
 	priceLabel.Name = "PriceLabel"
-	priceLabel.Size = UDim2.new(1, -10, 0, 20)
-	priceLabel.Position = UDim2.new(0, 5, 0, 55)
+	priceLabel.Size = UDim2.new(1, -90, 0, 20)
+	priceLabel.Position = UDim2.new(0, 80, 0, 55)
 	priceLabel.BackgroundTransparency = 1
 	priceLabel.Font = Enum.Font.GothamBold
 	priceLabel.TextColor3 = Color3.fromRGB(0, 255, 0)

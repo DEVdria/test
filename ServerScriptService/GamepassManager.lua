@@ -20,18 +20,71 @@ local GAMEPASSES = {
 		ID = 0, -- Reemplazar con el ID real del Gamepass VIP
 		Name = "VIP",
 		Effect = function(player)
-			-- Efecto del VIP: Por ejemplo, dar un tag o beneficios
+			-- Efecto del VIP: Mostrar tag VIP sobre el jugador
 			print(player.Name .. " tiene VIP activado!")
-			local leaderstats = player:FindFirstChild("leaderstats")
-			if leaderstats then
-				local vipTag = leaderstats:FindFirstChild("VIP")
-				if not vipTag then
-					vipTag = Instance.new("StringValue")
-					vipTag.Name = "VIP"
-					vipTag.Value = "✨"
-					vipTag.Parent = leaderstats
+
+			-- Función para crear el BillboardGui sobre el jugador
+			local function createVIPTag(character)
+				-- Esperar a que la cabeza cargue
+				local head = character:WaitForChild("Head")
+
+				-- Verificar si ya tiene el tag VIP (evitar duplicados)
+				if head:FindFirstChild("VIPTag") then
+					return
 				end
+
+				-- Crear BillboardGui
+				local billboardGui = Instance.new("BillboardGui")
+				billboardGui.Name = "VIPTag"
+				billboardGui.Adornee = head
+				billboardGui.Size = UDim2.new(0, 100, 0, 40)
+				billboardGui.StudsOffset = Vector3.new(0, 2.5, 0) -- Encima de la cabeza
+				billboardGui.AlwaysOnTop = true
+				billboardGui.Parent = head
+
+				-- Frame contenedor
+				local frame = Instance.new("Frame")
+				frame.Size = UDim2.new(1, 0, 1, 0)
+				frame.BackgroundColor3 = Color3.fromRGB(255, 215, 0) -- Dorado
+				frame.BorderSizePixel = 2
+				frame.BorderColor3 = Color3.fromRGB(255, 255, 0)
+				frame.Parent = billboardGui
+
+				-- Esquinas redondeadas
+				local corner = Instance.new("UICorner")
+				corner.CornerRadius = UDim.new(0, 8)
+				corner.Parent = frame
+
+				-- Texto VIP
+				local textLabel = Instance.new("TextLabel")
+				textLabel.Size = UDim2.new(1, 0, 1, 0)
+				textLabel.BackgroundTransparency = 1
+				textLabel.Text = "✨ VIP ✨"
+				textLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+				textLabel.TextScaled = true
+				textLabel.Font = Enum.Font.GothamBold
+				textLabel.Parent = frame
+
+				-- Padding para el texto
+				local padding = Instance.new("UIPadding")
+				padding.PaddingLeft = UDim.new(0, 5)
+				padding.PaddingRight = UDim.new(0, 5)
+				padding.PaddingTop = UDim.new(0, 5)
+				padding.PaddingBottom = UDim.new(0, 5)
+				padding.Parent = textLabel
+
+				print("Tag VIP creado para " .. player.Name)
 			end
+
+			-- Crear el tag para el personaje actual
+			if player.Character then
+				createVIPTag(player.Character)
+			end
+
+			-- Crear el tag cada vez que el jugador respawnee
+			player.CharacterAdded:Connect(function(character)
+				createVIPTag(character)
+			end)
 		end
 	},
 
@@ -39,48 +92,18 @@ local GAMEPASSES = {
 		ID = 0, -- Reemplazar con el ID real del Gamepass Double Jump
 		Name = "Double Jump",
 		Effect = function(player)
-			-- Efecto del Double Jump: Permitir saltar en el aire
+			-- Efecto del Double Jump: Marcar al jugador como que tiene el gamepass
 			print(player.Name .. " tiene Double Jump activado!")
 
-			-- Guardar estado del double jump en el jugador
-			local doubleJumpEnabled = Instance.new("BoolValue")
-			doubleJumpEnabled.Name = "DoubleJumpEnabled"
-			doubleJumpEnabled.Value = true
-			doubleJumpEnabled.Parent = player
-
-			-- Función para configurar el double jump en un personaje
-			local function setupDoubleJump(character)
-				local humanoid = character:WaitForChild("Humanoid")
-				local canDoubleJump = true
-
-				-- Cuando el jugador salta
-				humanoid.StateChanged:Connect(function(oldState, newState)
-					-- Si aterriza, puede volver a hacer double jump
-					if newState == Enum.HumanoidStateType.Landed then
-						canDoubleJump = true
-					end
-				end)
-
-				-- Detectar cuando el jugador está cayendo y presiona espacio
-				humanoid.FreeFalling:Connect(function()
-					-- Crear un detector de input en el personaje
-					local rootPart = character:FindFirstChild("HumanoidRootPart")
-					if rootPart and canDoubleJump then
-						-- Esperar un frame para el input
-						task.wait(0.1)
-					end
-				end)
+			-- Verificar si ya tiene el BoolValue
+			if not player:FindFirstChild("DoubleJumpEnabled") then
+				-- Guardar estado del double jump en el jugador
+				local doubleJumpEnabled = Instance.new("BoolValue")
+				doubleJumpEnabled.Name = "DoubleJumpEnabled"
+				doubleJumpEnabled.Value = true
+				doubleJumpEnabled.Parent = player
+				print("DoubleJumpEnabled agregado a " .. player.Name)
 			end
-
-			-- Configurar para el personaje actual
-			if player.Character then
-				setupDoubleJump(player.Character)
-			end
-
-			-- Configurar para futuros personajes
-			player.CharacterAdded:Connect(function(character)
-				setupDoubleJump(character)
-			end)
 		end
 	},
 
