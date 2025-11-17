@@ -56,7 +56,7 @@ local function createRewardItem(reward, parent)
 	-- Frame de la recompensa (responsive)
 	local rewardFrame = Instance.new("Frame")
 	rewardFrame.Name = "Reward_" .. reward.Index
-	rewardFrame.Size = UDim2.new(1, -20, 0, 90)
+	rewardFrame.Size = UDim2.new(1, -20, 0, 75)
 	rewardFrame.BackgroundColor3 = reward.IsClaimed and Color3.fromRGB(40, 40, 40) or (reward.CanClaim and Color3.fromRGB(85, 255, 127) or Color3.fromRGB(50, 50, 50))
 	rewardFrame.BorderSizePixel = 0
 	rewardFrame.Parent = parent
@@ -215,7 +215,7 @@ local function updateRewardPanel(playtime, rewards)
 			for _, reward in ipairs(rewards) do
 				local rewardItem = createRewardItem(reward, scrollFrame)
 				rewardItem.Position = UDim2.new(0, 10, 0, yOffset)
-				yOffset = yOffset + 100
+				yOffset = yOffset + 83
 			end
 
 			-- Actualizar tamaño del canvas
@@ -250,8 +250,8 @@ local function createPlaytimeRewardUI()
 
 	-- Constraint para el botón
 	local buttonConstraint = Instance.new("UISizeConstraint")
-	buttonConstraint.MinSize = Vector2.new(60, 60)
-	buttonConstraint.MaxSize = Vector2.new(100, 100)
+	buttonConstraint.MinSize = Vector2.new(55, 55)
+	buttonConstraint.MaxSize = Vector2.new(90, 90)
 	buttonConstraint.Parent = toggleButton
 
 	local toggleCorner = Instance.new("UICorner")
@@ -261,7 +261,7 @@ local function createPlaytimeRewardUI()
 	-- Panel de recompensas (responsive)
 	rewardPanel = Instance.new("Frame")
 	rewardPanel.Name = "RewardPanel"
-	rewardPanel.Size = UDim2.new(0.35, 0, 0.65, 0)
+	rewardPanel.Size = UDim2.new(0.28, 0, 0.52, 0)
 	rewardPanel.Position = UDim2.new(1, 20, 0.5, 0)
 	rewardPanel.AnchorPoint = Vector2.new(0, 0.5)
 	rewardPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -270,8 +270,8 @@ local function createPlaytimeRewardUI()
 
 	-- Constraint para el panel
 	local panelConstraint = Instance.new("UISizeConstraint")
-	panelConstraint.MinSize = Vector2.new(350, 450)
-	panelConstraint.MaxSize = Vector2.new(550, 700)
+	panelConstraint.MinSize = Vector2.new(260, 340)
+	panelConstraint.MaxSize = Vector2.new(450, 580)
 	panelConstraint.Parent = rewardPanel
 
 	local panelCorner = Instance.new("UICorner")
@@ -281,7 +281,7 @@ local function createPlaytimeRewardUI()
 	-- Barra de título (responsive)
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
-	titleBar.Size = UDim2.new(1, 0, 0, 60)
+	titleBar.Size = UDim2.new(1, 0, 0, 50)
 	titleBar.BackgroundColor3 = Color3.fromRGB(255, 193, 7)
 	titleBar.BorderSizePixel = 0
 	titleBar.Parent = rewardPanel
@@ -305,8 +305,8 @@ local function createPlaytimeRewardUI()
 	-- Display de tiempo jugado (responsive)
 	local timeDisplay = Instance.new("Frame")
 	timeDisplay.Name = "TimeDisplay"
-	timeDisplay.Size = UDim2.new(0.95, 0, 0, 70)
-	timeDisplay.Position = UDim2.new(0.025, 0, 0, 70)
+	timeDisplay.Size = UDim2.new(0.95, 0, 0, 60)
+	timeDisplay.Position = UDim2.new(0.025, 0, 0, 58)
 	timeDisplay.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 	timeDisplay.BorderSizePixel = 0
 	timeDisplay.Parent = rewardPanel
@@ -339,8 +339,8 @@ local function createPlaytimeRewardUI()
 	-- Lista de recompensas (responsive)
 	local rewardList = Instance.new("Frame")
 	rewardList.Name = "RewardList"
-	rewardList.Size = UDim2.new(1, 0, 1, -150)
-	rewardList.Position = UDim2.new(0, 0, 0, 150)
+	rewardList.Size = UDim2.new(1, 0, 1, -125)
+	rewardList.Position = UDim2.new(0, 0, 0, 125)
 	rewardList.BackgroundTransparency = 1
 	rewardList.Parent = rewardPanel
 
@@ -358,7 +358,7 @@ local function createPlaytimeRewardUI()
 
 		local targetPosition
 		if isPanelOpen then
-			targetPosition = UDim2.new(0.63, 0, 0.5, 0)
+			targetPosition = UDim2.new(0.7, 0, 0.5, 0)
 			-- Solicitar actualización de datos
 			getRewardsEvent:FireServer()
 		else

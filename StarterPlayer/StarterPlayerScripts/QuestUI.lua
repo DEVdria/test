@@ -212,7 +212,7 @@ local function createQuestUI()
 	-- Panel de misiones (responsive)
 	questPanel = Instance.new("Frame")
 	questPanel.Name = "QuestPanel"
-	questPanel.Size = UDim2.new(0.28, 0, 0.45, 0)
+	questPanel.Size = UDim2.new(0.25, 0, 0.38, 0)
 	questPanel.Position = UDim2.new(1, 20, 0.5, 0)
 	questPanel.AnchorPoint = Vector2.new(0, 0.5)
 	questPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -221,8 +221,8 @@ local function createQuestUI()
 
 	-- Constraint para el panel
 	local panelConstraint = Instance.new("UISizeConstraint")
-	panelConstraint.MinSize = Vector2.new(300, 300)
-	panelConstraint.MaxSize = Vector2.new(500, 500)
+	panelConstraint.MinSize = Vector2.new(220, 240)
+	panelConstraint.MaxSize = Vector2.new(380, 420)
 	panelConstraint.Parent = questPanel
 
 	local panelCorner = Instance.new("UICorner")
@@ -266,7 +266,7 @@ local function createQuestUI()
 
 		local targetPosition
 		if isPanelOpen then
-			targetPosition = UDim2.new(0.7, 0, 0.5, 0)
+			targetPosition = UDim2.new(0.73, 0, 0.5, 0)
 		else
 			targetPosition = UDim2.new(1, 20, 0.5, 0)
 		end
@@ -302,7 +302,7 @@ local function showQuestCompleteAnimation(quest)
 	completeGui.Parent = playerGui
 
 	local completeFrame = Instance.new("Frame")
-	completeFrame.Size = UDim2.new(0.28, 0, 0.12, 0)
+	completeFrame.Size = UDim2.new(0.25, 0, 0.11, 0)
 	completeFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 	completeFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 	completeFrame.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
@@ -311,8 +311,8 @@ local function showQuestCompleteAnimation(quest)
 
 	-- Constraint para la notificación de completado
 	local completeConstraint = Instance.new("UISizeConstraint")
-	completeConstraint.MinSize = Vector2.new(300, 90)
-	completeConstraint.MaxSize = Vector2.new(500, 130)
+	completeConstraint.MinSize = Vector2.new(240, 80)
+	completeConstraint.MaxSize = Vector2.new(420, 120)
 	completeConstraint.Parent = completeFrame
 
 	local corner = Instance.new("UICorner")
@@ -354,7 +354,7 @@ local function showQuestCompleteAnimation(quest)
 	local tween = TweenService:Create(
 		completeFrame,
 		TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-		{Size = UDim2.new(0.28, 0, 0.12, 0)}
+		{Size = UDim2.new(0.25, 0, 0.11, 0)}
 	)
 	tween:Play()
 
