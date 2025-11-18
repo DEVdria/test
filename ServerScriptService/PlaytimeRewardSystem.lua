@@ -4,10 +4,10 @@
     Ubicación: ServerScriptService
 
     Funcionalidad:
-    - Rastrea el tiempo jugado de cada jugador
+    - Rastrea el tiempo jugado de cada jugador POR SESIÓN
     - Otorga recompensas de dinero por tiempo jugado
-    - Guarda progreso en DataStore
-    - Permite reclamar recompensas una sola vez
+    - El tiempo y las recompensas SE REINICIAN cada sesión
+    - Los jugadores pueden reclamar recompensas cada vez que juegan
 ═══════════════════════════════════════════════════════════════
 --]]
 
@@ -84,29 +84,18 @@ end
     Función: Cargar datos del jugador desde DataStore
     Parámetros: player - El jugador
     Retorna: Tabla con TotalPlaytime y ClaimedRewards
+
+    NOTA: SIEMPRE empieza con datos frescos cada sesión
+          - TotalPlaytime = 0
+          - ClaimedRewards = {} (vacío, pueden reclamar todo de nuevo)
 --]]
 local function loadPlayerData(player)
 	local data = {
-		TotalPlaytime = 0, -- En segundos
-		ClaimedRewards = {} -- Array de índices de recompensas reclamadas
+		TotalPlaytime = 0, -- SIEMPRE empieza en 0 cada sesión
+		ClaimedRewards = {} -- SIEMPRE vacío cada sesión
 	}
 
-	if not dataStoreEnabled then
-		print("⚠️ DataStore deshabilitado para " .. player.Name)
-		return data
-	end
-
-	local success, savedData = pcall(function()
-		return PlaytimeDataStore:GetAsync(player.UserId .. "_playtime")
-	end)
-
-	if success and savedData then
-		data.TotalPlaytime = savedData.TotalPlaytime or 0
-		data.ClaimedRewards = savedData.ClaimedRewards or {}
-		print("✅ Datos de playtime cargados para " .. player.Name .. " (" .. math.floor(data.TotalPlaytime/60) .. " minutos)")
-	else
-		print("📝 Nuevos datos de playtime para " .. player.Name)
-	end
+	print("📝 Nueva sesión de playtime para " .. player.Name .. " (tiempo y recompensas reiniciados)")
 
 	return data
 end
@@ -114,35 +103,32 @@ end
 --[[
     Función: Guardar datos del jugador en DataStore
     Parámetros: player - El jugador
+
+    NOTA: NO guarda nada ya que todo se reinicia cada sesión
+          Esta función se mantiene por compatibilidad pero no hace nada
 --]]
 local function savePlayerData(player)
-	if not dataStoreEnabled then return end
-	if not playerData[player.UserId] then return end
-
-	local success, err = pcall(function()
-		PlaytimeDataStore:SetAsync(player.UserId .. "_playtime", {
-			TotalPlaytime = playerData[player.UserId].TotalPlaytime,
-			ClaimedRewards = playerData[player.UserId].ClaimedRewards
-		})
-	end)
-
-	if success then
-		print("💾 Datos de playtime guardados para " .. player.Name)
-	else
-		warn("❌ Error al guardar playtime de " .. player.Name .. ": " .. tostring(err))
-	end
+	-- No se guarda nada porque todo se reinicia cada sesión
+	-- Esta función existe solo por compatibilidad con el código existente
+	return
 end
 
 --[[
     Función: Obtener estado de todas las recompensas para un jugador
     Parámetros: player - El jugador
     Retorna: Array de recompensas con estado
+
+    NOTA: Calcula el tiempo de la sesión actual únicamente
 --]]
 local function getRewardStatus(player)
 	if not playerData[player.UserId] then return {} end
 
 	local data = playerData[player.UserId]
-	local playtimeMinutes = data.TotalPlaytime / 60
+
+	-- Calcular tiempo de sesión actual
+	local sessionTime = tick() - data.JoinTime
+	local playtimeMinutes = sessionTime / 60
+
 	local rewards = {}
 
 	for index, milestone in ipairs(REWARD_MILESTONES) do
@@ -168,6 +154,8 @@ end
     Parámetros:
         player - El jugador
         rewardIndex - Índice de la recompensa
+
+    NOTA: Verifica el tiempo de la sesión actual únicamente
 --]]
 local function claimReward(player, rewardIndex)
 	if not playerData[player.UserId] then return false end
@@ -186,8 +174,11 @@ local function claimReward(player, rewardIndex)
 		return false
 	end
 
-	-- Verificar si el jugador tiene suficiente tiempo jugado
-	local playtimeMinutes = data.TotalPlaytime / 60
+	-- Calcular tiempo de sesión actual
+	local sessionTime = tick() - data.JoinTime
+	local playtimeMinutes = sessionTime / 60
+
+	-- Verificar si el jugador tiene suficiente tiempo jugado en esta sesión
 	if playtimeMinutes < milestone.Time then
 		warn("⚠️ " .. player.Name .. " no tiene suficiente tiempo jugado")
 		return false
@@ -223,29 +214,28 @@ end
 
 --[[
     Evento: Cuando un jugador se une
+    NOTA: El tiempo siempre empieza en 0 cada sesión
 --]]
 Players.PlayerAdded:Connect(function(player)
-	-- Cargar datos
+	-- Cargar datos (solo recompensas reclamadas)
 	local data = loadPlayerData(player)
 	playerData[player.UserId] = data
-	playerData[player.UserId].JoinTime = tick()
+	playerData[player.UserId].JoinTime = tick() -- Inicio de la sesión
 
-	-- Enviar estado inicial
+	-- Enviar estado inicial (tiempo = 0)
 	task.wait(1)
 	local rewards = getRewardStatus(player)
-	updatePlaytimeEvent:FireClient(player, math.floor(data.TotalPlaytime), rewards)
+	updatePlaytimeEvent:FireClient(player, 0, rewards) -- Tiempo inicial = 0
 end)
 
 --[[
     Evento: Cuando un jugador sale
+    NOTA: Solo guarda las recompensas reclamadas
+          El tiempo jugado NO se guarda (se reinicia cada sesión)
 --]]
 Players.PlayerRemoving:Connect(function(player)
 	if playerData[player.UserId] then
-		-- Actualizar tiempo total jugado
-		local sessionTime = tick() - playerData[player.UserId].JoinTime
-		playerData[player.UserId].TotalPlaytime = playerData[player.UserId].TotalPlaytime + sessionTime
-
-		-- Guardar datos
+		-- Guardar solo las recompensas reclamadas
 		savePlayerData(player)
 
 		-- Limpiar de memoria
@@ -258,12 +248,11 @@ end)
 --]]
 getRewardsEvent.OnServerEvent:Connect(function(player)
 	if playerData[player.UserId] then
-		-- Actualizar tiempo actual
+		-- Calcular tiempo de sesión actual
 		local sessionTime = tick() - playerData[player.UserId].JoinTime
-		local currentPlaytime = playerData[player.UserId].TotalPlaytime + sessionTime
 
 		local rewards = getRewardStatus(player)
-		updatePlaytimeEvent:FireClient(player, math.floor(currentPlaytime), rewards)
+		updatePlaytimeEvent:FireClient(player, math.floor(sessionTime), rewards)
 	end
 end)
 
@@ -271,17 +260,15 @@ end)
     Evento: Cliente intenta reclamar recompensa
 --]]
 claimRewardEvent.OnServerEvent:Connect(function(player, rewardIndex)
-	-- Actualizar tiempo actual antes de reclamar
 	if playerData[player.UserId] then
+		-- Calcular tiempo actual de la sesión
 		local sessionTime = tick() - playerData[player.UserId].JoinTime
-		playerData[player.UserId].TotalPlaytime = playerData[player.UserId].TotalPlaytime + sessionTime
-		playerData[player.UserId].JoinTime = tick() -- Resetear join time
+		local currentPlaytime = sessionTime -- Solo tiempo de esta sesión
 
 		-- Intentar reclamar
 		local success = claimReward(player, rewardIndex)
 
 		-- Enviar estado actualizado
-		local currentPlaytime = playerData[player.UserId].TotalPlaytime
 		local rewards = getRewardStatus(player)
 		updatePlaytimeEvent:FireClient(player, math.floor(currentPlaytime), rewards)
 	end
@@ -289,6 +276,7 @@ end)
 
 --[[
     Loop: Actualizar tiempo de juego cada minuto
+    NOTA: Solo cuenta el tiempo de la sesión actual
 --]]
 task.spawn(function()
 	while true do
@@ -296,13 +284,12 @@ task.spawn(function()
 
 		for _, player in pairs(Players:GetPlayers()) do
 			if playerData[player.UserId] then
-				-- Actualizar tiempo actual
+				-- Calcular tiempo de sesión actual
 				local sessionTime = tick() - playerData[player.UserId].JoinTime
-				local currentPlaytime = playerData[player.UserId].TotalPlaytime + sessionTime
 
 				-- Enviar actualización al cliente
 				local rewards = getRewardStatus(player)
-				updatePlaytimeEvent:FireClient(player, math.floor(currentPlaytime), rewards)
+				updatePlaytimeEvent:FireClient(player, math.floor(sessionTime), rewards)
 			end
 		end
 	end
@@ -310,13 +297,12 @@ end)
 
 --[[
     Guardar datos cuando el servidor se cierra
+    NOTA: Solo guarda las recompensas reclamadas
 --]]
 game:BindToClose(function()
-	print("💾 Guardando datos de playtime antes de cerrar servidor...")
+	print("💾 Guardando recompensas antes de cerrar servidor...")
 	for _, player in pairs(Players:GetPlayers()) do
 		if playerData[player.UserId] then
-			local sessionTime = tick() - playerData[player.UserId].JoinTime
-			playerData[player.UserId].TotalPlaytime = playerData[player.UserId].TotalPlaytime + sessionTime
 			savePlayerData(player)
 		end
 	end
