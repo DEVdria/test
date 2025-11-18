@@ -1,9 +1,15 @@
 --[[
 	TimerBarrierClient.lua
-	LocalScript para mostrar temporizador individual en la barrera
+	Cliente del sistema de barrera con temporizador individual
 
 	Coloca este script en: StarterPlayer > StarterPlayerScripts
-	IMPORTANTE: Este debe ser un LocalScript, NO un Script normal
+	IMPORTANTE: Debe ser un LocalScript
+
+	CÓMO FUNCIONA:
+	- Al entrar al juego, pregunta al servidor si ya completó el timer
+	- Si no ha completado, inicia el temporizador de 15 minutos
+	- Muestra el tiempo restante en la barrera (SurfaceGui)
+	- Cuando termina, notifica al servidor para desactivar la colisión
 ]]
 
 local Players = game:GetService("Players")
@@ -12,23 +18,42 @@ local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
--- Configuración
-local BARRIER_NAME = "TimerBarrier" -- Nombre de la Part en Workspace
+-- ============================================
+-- CONFIGURACIÓN
+-- ============================================
+local BARRIER_NAME = "TimerBarrier"
+
+-- ============================================
+-- VARIABLES
+-- ============================================
+local timeRemaining = 0
+local isRunning = false
+local hasCompleted = false
+
+-- Referencias UI
+local barrier = nil
+local surfaceGui = nil
+local mainFrame = nil
+local timerLabel = nil
+local statusLabel = nil
 
 print("🕐 Timer Barrier Client iniciado para: " .. player.Name)
 
--- Esperar a que los recursos estén disponibles
-local remoteEvent = ReplicatedStorage:WaitForChild("TimerBarrierEvent")
-local timerDurationValue = ReplicatedStorage:WaitForChild("TimerDuration")
+-- ============================================
+-- ESPERAR RECURSOS
+-- ============================================
+local remoteEvent = ReplicatedStorage:WaitForChild("TimerBarrierEvent", 10)
+local timerDuration = ReplicatedStorage:WaitForChild("TimerDuration", 10)
 
--- Variables del temporizador
-local timeRemaining = timerDurationValue.Value -- 15 minutos en segundos
-local timerActive = false -- Empieza en false, esperará respuesta del servidor
-local barrierDisabled = false
-local timerStarted = false -- Nueva variable para rastrear si ya inició
+if not remoteEvent or not timerDuration then
+	warn("⚠️ No se encontraron los recursos del servidor")
+	return
+end
 
--- Encontrar la barrera en Workspace
-local barrier = workspace:WaitForChild(BARRIER_NAME, 10)
+-- ============================================
+-- ENCONTRAR BARRERA
+-- ============================================
+barrier = workspace:WaitForChild(BARRIER_NAME, 10)
 
 if not barrier then
 	warn("⚠️ No se encontró la barrera '" .. BARRIER_NAME .. "' en Workspace")
@@ -37,147 +62,214 @@ end
 
 print("✅ Barrera encontrada: " .. barrier.Name)
 
--- Crear o encontrar el SurfaceGui
-local surfaceGui = barrier:FindFirstChild("TimerSurfaceGui")
+-- ============================================
+-- CREAR UI EN LA BARRERA
+-- ============================================
+local function CreateUI()
+	-- Buscar o crear SurfaceGui
+	surfaceGui = barrier:FindFirstChild("TimerSurfaceGui")
 
-if not surfaceGui then
-	-- Crear nuevo SurfaceGui
-	surfaceGui = Instance.new("SurfaceGui")
-	surfaceGui.Name = "TimerSurfaceGui"
-	surfaceGui.Face = Enum.NormalId.Front -- Cara frontal de la Part
-	surfaceGui.AlwaysOnTop = false
-	surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	surfaceGui.PixelsPerStud = 50
-	surfaceGui.Parent = barrier
+	if not surfaceGui then
+		surfaceGui = Instance.new("SurfaceGui")
+		surfaceGui.Name = "TimerSurfaceGui"
+		surfaceGui.Face = Enum.NormalId.Front
+		surfaceGui.AlwaysOnTop = false
+		surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		surfaceGui.PixelsPerStud = 50
+		surfaceGui.Parent = barrier
+	end
+
+	-- Buscar o crear MainFrame
+	mainFrame = surfaceGui:FindFirstChild("MainFrame")
+
+	if not mainFrame then
+		mainFrame = Instance.new("Frame")
+		mainFrame.Name = "MainFrame"
+		mainFrame.Size = UDim2.new(1, 0, 1, 0)
+		mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+		mainFrame.BackgroundTransparency = 0.3
+		mainFrame.BorderSizePixel = 0
+		mainFrame.Parent = surfaceGui
+
+		-- Esquinas redondeadas
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0.05, 0)
+		corner.Parent = mainFrame
+
+		-- Borde
+		local stroke = Instance.new("UIStroke")
+		stroke.Name = "BorderStroke"
+		stroke.Color = Color3.fromRGB(255, 100, 100)
+		stroke.Thickness = 3
+		stroke.Transparency = 0.2
+		stroke.Parent = mainFrame
+	end
+
+	-- Buscar o crear TimerLabel (tiempo grande)
+	timerLabel = mainFrame:FindFirstChild("TimerLabel")
+
+	if not timerLabel then
+		timerLabel = Instance.new("TextLabel")
+		timerLabel.Name = "TimerLabel"
+		timerLabel.Size = UDim2.new(0.9, 0, 0.45, 0)
+		timerLabel.Position = UDim2.new(0.05, 0, 0.15, 0)
+		timerLabel.BackgroundTransparency = 1
+		timerLabel.Text = "15:00"
+		timerLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+		timerLabel.TextScaled = true
+		timerLabel.Font = Enum.Font.GothamBold
+		timerLabel.TextStrokeTransparency = 0.5
+		timerLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		timerLabel.Parent = mainFrame
+	end
+
+	-- Buscar o crear StatusLabel (texto inferior)
+	statusLabel = mainFrame:FindFirstChild("StatusLabel")
+
+	if not statusLabel then
+		statusLabel = Instance.new("TextLabel")
+		statusLabel.Name = "StatusLabel"
+		statusLabel.Size = UDim2.new(0.9, 0, 0.25, 0)
+		statusLabel.Position = UDim2.new(0.05, 0, 0.65, 0)
+		statusLabel.BackgroundTransparency = 1
+		statusLabel.Text = "⏰ BARRERA ACTIVA"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		statusLabel.TextScaled = true
+		statusLabel.Font = Enum.Font.GothamBold
+		statusLabel.TextStrokeTransparency = 0.3
+		statusLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		statusLabel.Parent = mainFrame
+	end
+
+	print("✅ UI creada en la barrera")
 end
 
--- Crear o encontrar el Frame contenedor
-local mainFrame = surfaceGui:FindFirstChild("MainFrame")
-
-if not mainFrame then
-	mainFrame = Instance.new("Frame")
-	mainFrame.Name = "MainFrame"
-	mainFrame.Size = UDim2.new(1, 0, 1, 0)
-	mainFrame.Position = UDim2.new(0, 0, 0, 0)
-	mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	mainFrame.BackgroundTransparency = 0.3
-	mainFrame.BorderSizePixel = 0
-	mainFrame.Parent = surfaceGui
-
-	-- Esquinas redondeadas
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0.05, 0)
-	corner.Parent = mainFrame
-
-	-- Borde
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(255, 100, 100)
-	stroke.Thickness = 3
-	stroke.Transparency = 0.2
-	stroke.Parent = mainFrame
-end
-
--- Crear o encontrar el TextLabel del temporizador
-local timerLabel = mainFrame:FindFirstChild("TimerLabel")
-
-if not timerLabel then
-	timerLabel = Instance.new("TextLabel")
-	timerLabel.Name = "TimerLabel"
-	timerLabel.Size = UDim2.new(0.9, 0, 0.4, 0)
-	timerLabel.Position = UDim2.new(0.05, 0, 0.15, 0)
-	timerLabel.BackgroundTransparency = 1
-	timerLabel.Text = "15:00"
-	timerLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-	timerLabel.TextScaled = true
-	timerLabel.Font = Enum.Font.GothamBold
-	timerLabel.TextStrokeTransparency = 0.5
-	timerLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-	timerLabel.Parent = mainFrame
-end
-
--- Crear o encontrar el TextLabel del título
-local titleLabel = mainFrame:FindFirstChild("TitleLabel")
-
-if not titleLabel then
-	titleLabel = Instance.new("TextLabel")
-	titleLabel.Name = "TitleLabel"
-	titleLabel.Size = UDim2.new(0.9, 0, 0.2, 0)
-	titleLabel.Position = UDim2.new(0.05, 0, 0.65, 0)
-	titleLabel.BackgroundTransparency = 1
-	titleLabel.Text = "⏰ BARRERA ACTIVA"
-	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	titleLabel.TextScaled = true
-	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.TextStrokeTransparency = 0.3
-	titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-	titleLabel.Parent = mainFrame
-end
-
--- Función para formatear tiempo (segundos a MM:SS)
+-- ============================================
+-- FORMATEAR TIEMPO (segundos → MM:SS)
+-- ============================================
 local function FormatTime(seconds)
 	local minutes = math.floor(seconds / 60)
 	local secs = seconds % 60
 	return string.format("%02d:%02d", minutes, secs)
 end
 
--- Función para actualizar el color según el tiempo restante
-local function UpdateTimerColor()
-	if timeRemaining <= 60 then
-		-- Últimos 60 segundos - Rojo parpadeante
+-- ============================================
+-- ACTUALIZAR COLORES SEGÚN TIEMPO
+-- ============================================
+local function UpdateColors()
+	local stroke = mainFrame:FindFirstChild("BorderStroke")
+
+	if hasCompleted then
+		-- Verde - Completado
+		timerLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+		if stroke then
+			stroke.Color = Color3.fromRGB(100, 255, 100)
+		end
+	elseif timeRemaining <= 60 then
+		-- Rojo intenso - Últimos 60 segundos
 		timerLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-		mainFrame:FindFirstChild("UIStroke").Color = Color3.fromRGB(255, 50, 50)
+		if stroke then
+			stroke.Color = Color3.fromRGB(255, 50, 50)
+		end
 	elseif timeRemaining <= 300 then
-		-- Últimos 5 minutos - Naranja
+		-- Naranja - Últimos 5 minutos
 		timerLabel.TextColor3 = Color3.fromRGB(255, 150, 50)
-		mainFrame:FindFirstChild("UIStroke").Color = Color3.fromRGB(255, 150, 50)
+		if stroke then
+			stroke.Color = Color3.fromRGB(255, 150, 50)
+		end
 	else
-		-- Tiempo normal - Rojo
+		-- Rojo normal
 		timerLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-		mainFrame:FindFirstChild("UIStroke").Color = Color3.fromRGB(255, 100, 100)
+		if stroke then
+			stroke.Color = Color3.fromRGB(255, 100, 100)
+		end
 	end
 end
 
--- Función para cuando el temporizador termina
-local function OnTimerEnd()
-	if barrierDisabled then
-		return
+-- ============================================
+-- ACTUALIZAR UI
+-- ============================================
+local function UpdateUI()
+	if hasCompleted then
+		timerLabel.Text = "00:00"
+		statusLabel.Text = "✅ BARRERA DESACTIVADA"
+		statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+		mainFrame.BackgroundColor3 = Color3.fromRGB(20, 100, 20)
+	else
+		timerLabel.Text = FormatTime(timeRemaining)
+		statusLabel.Text = "⏰ BARRERA ACTIVA"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 	end
 
-	barrierDisabled = true
-	timerActive = false
+	UpdateColors()
+end
 
-	print("✅ Temporizador terminado para " .. player.Name)
+-- ============================================
+-- CUANDO EL TEMPORIZADOR TERMINA
+-- ============================================
+local function OnTimerComplete()
+	if hasCompleted then
+		return -- Ya completado
+	end
+
+	hasCompleted = true
+	isRunning = false
+
+	print("✅ Temporizador completado para " .. player.Name)
 
 	-- Actualizar UI
-	timerLabel.Text = "00:00"
-	timerLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-	titleLabel.Text = "✅ BARRERA DESACTIVADA"
-	titleLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-	mainFrame:FindFirstChild("UIStroke").Color = Color3.fromRGB(100, 255, 100)
+	UpdateUI()
 
 	-- Notificar al servidor
-	remoteEvent:FireServer("TimerEnded")
+	remoteEvent:FireServer("TimerCompleted")
 
-	-- Efecto visual de éxito
+	-- Efecto visual
 	task.spawn(function()
 		for i = 1, 3 do
 			mainFrame.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
 			task.wait(0.3)
-			mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+			mainFrame.BackgroundColor3 = Color3.fromRGB(20, 100, 20)
 			task.wait(0.3)
 		end
-
-		-- Después de 5 segundos, ocultar la UI
-		task.wait(5)
-		surfaceGui.Enabled = false
 	end)
 end
 
--- Actualizar temporizador cada segundo
+-- ============================================
+-- INICIAR TEMPORIZADOR
+-- ============================================
+local function StartTimer(duration)
+	timeRemaining = duration
+	isRunning = true
+	hasCompleted = false
+
+	print("⏰ Temporizador iniciado: " .. FormatTime(timeRemaining))
+
+	-- Actualizar UI inicial
+	UpdateUI()
+end
+
+-- ============================================
+-- MARCAR COMO COMPLETADO (sin temporizador)
+-- ============================================
+local function MarkAsCompleted()
+	hasCompleted = true
+	isRunning = false
+	timeRemaining = 0
+
+	print("✅ Barrera ya completada anteriormente")
+
+	-- Actualizar UI
+	UpdateUI()
+end
+
+-- ============================================
+-- LOOP DE ACTUALIZACIÓN DEL TEMPORIZADOR
+-- ============================================
 local lastUpdate = tick()
 
 RunService.RenderStepped:Connect(function()
-	if not timerActive then
+	if not isRunning then
 		return
 	end
 
@@ -190,76 +282,62 @@ RunService.RenderStepped:Connect(function()
 
 		if timeRemaining <= 0 then
 			timeRemaining = 0
-			OnTimerEnd()
+			OnTimerComplete()
 		else
-			-- Actualizar UI
-			timerLabel.Text = FormatTime(timeRemaining)
-			UpdateTimerColor()
+			UpdateUI()
 
-			-- Efecto de parpadeo en los últimos 10 segundos
+			-- Parpadeo en los últimos 10 segundos
 			if timeRemaining <= 10 then
 				timerLabel.TextTransparency = (timeRemaining % 2 == 0) and 0 or 0.5
+			else
+				timerLabel.TextTransparency = 0
 			end
 		end
 	end
 end)
 
--- Escuchar confirmación del servidor
+-- ============================================
+-- ESCUCHAR RESPUESTAS DEL SERVIDOR
+-- ============================================
 remoteEvent.OnClientEvent:Connect(function(action, data)
-	if action == "BarrierDisabled" then
-		print("✅ Confirmación del servidor: Barrera desactivada")
+	if action == "StatusResponse" then
+		-- Respuesta del servidor con el estado
+		local completed = data.hasCompleted
+		local duration = data.timerDuration
 
-	elseif action == "InitialState" then
-		-- Recibir el estado inicial del servidor
-		local hasCompleted = data.hasCompleted
-		local remainingTime = data.timeRemaining
+		print("📡 Estado recibido del servidor:")
+		print("   Completado: " .. tostring(completed))
+		print("   Duración: " .. duration .. " segundos")
 
-		print("📡 Estado inicial recibido del servidor:")
-		print("   - Timer completado: " .. tostring(hasCompleted))
-		print("   - Tiempo restante: " .. remainingTime .. " segundos")
-
-		if hasCompleted then
-			-- El jugador ya completó su temporizador antes
-			barrierDisabled = true
-			timerActive = false
-			timeRemaining = 0
-
-			-- Actualizar UI para mostrar que está desactivada
-			timerLabel.Text = "00:00"
-			timerLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-			titleLabel.Text = "✅ BARRERA DESACTIVADA"
-			titleLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-			mainFrame:FindFirstChild("UIStroke").Color = Color3.fromRGB(100, 255, 100)
-			mainFrame.BackgroundColor3 = Color3.fromRGB(20, 100, 20)
-
-			print("✅ UI actualizada: Barrera ya estaba desactivada")
+		if completed then
+			MarkAsCompleted()
 		else
-			-- El jugador AÚN tiene el temporizador activo
-			timeRemaining = remainingTime
-			timerActive = true
-			timerStarted = true
-
-			-- Actualizar UI inicial
-			timerLabel.Text = FormatTime(timeRemaining)
-			UpdateTimerColor()
-
-			print("⏰ Temporizador iniciado: " .. FormatTime(timeRemaining))
+			StartTimer(duration)
 		end
+
+	elseif action == "BarrierDisabled" then
+		print("✅ Confirmación del servidor: Barrera desactivada")
 	end
 end)
 
--- Solicitar estado inicial al servidor
-print("📡 Solicitando estado inicial al servidor...")
-remoteEvent:FireServer("RequestInitialState")
-
--- Resetear cuando el jugador respawnea
+-- ============================================
+-- MANEJAR RESPAWN
+-- ============================================
 player.CharacterAdded:Connect(function(character)
-	print("🔄 Jugador respawneó, solicitando estado actualizado...")
-	-- Solicitar estado actualizado al servidor
-	task.wait(1) -- Esperar un momento para que el personaje se inicialice
-	remoteEvent:FireServer("RequestInitialState")
+	print("🔄 Personaje respawneado, solicitando estado...")
+
+	-- Esperar un momento y solicitar estado
+	task.wait(1)
+	remoteEvent:FireServer("GetStatus")
 end)
 
-print("✅ Timer Barrier Client configurado")
-print("   - Tiempo inicial: " .. FormatTime(timeRemaining))
-print("   - Barrera: " .. barrier.Name)
+-- ============================================
+-- INICIALIZACIÓN
+-- ============================================
+CreateUI()
+
+-- Solicitar estado inicial al servidor
+print("📡 Solicitando estado inicial al servidor...")
+remoteEvent:FireServer("GetStatus")
+
+print("✅ Timer Barrier Client listo")
