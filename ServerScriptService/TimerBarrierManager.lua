@@ -146,6 +146,27 @@ remoteEvent.OnServerEvent:Connect(function(player, action)
 
 		-- Opcional: Enviar confirmación al cliente
 		remoteEvent:FireClient(player, "BarrierDisabled")
+
+	elseif action == "RequestInitialState" then
+		-- El cliente solicita el estado inicial/actualizado
+		print("📡 " .. player.Name .. " solicitó estado inicial")
+
+		local hasCompleted = PlayersWithCompletedTimer[player.UserId] or false
+		local remainingTime = TIMER_DURATION
+
+		-- Si ya completó, el tiempo restante es 0
+		if hasCompleted then
+			remainingTime = 0
+		end
+
+		-- Enviar estado al cliente
+		local stateData = {
+			hasCompleted = hasCompleted,
+			timeRemaining = remainingTime
+		}
+
+		remoteEvent:FireClient(player, "InitialState", stateData)
+		print("📡 Estado enviado a " .. player.Name .. ": Completado=" .. tostring(hasCompleted) .. ", Tiempo=" .. remainingTime)
 	end
 end)
 

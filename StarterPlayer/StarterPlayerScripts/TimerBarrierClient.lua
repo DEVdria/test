@@ -23,8 +23,9 @@ local timerDurationValue = ReplicatedStorage:WaitForChild("TimerDuration")
 
 -- Variables del temporizador
 local timeRemaining = timerDurationValue.Value -- 15 minutos en segundos
-local timerActive = true
+local timerActive = false -- Empieza en false, esperará respuesta del servidor
 local barrierDisabled = false
+local timerStarted = false -- Nueva variable para rastrear si ya inició
 
 -- Encontrar la barrera en Workspace
 local barrier = workspace:WaitForChild(BARRIER_NAME, 10)
@@ -204,19 +205,59 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- Escuchar confirmación del servidor
-remoteEvent.OnClientEvent:Connect(function(action)
+remoteEvent.OnClientEvent:Connect(function(action, data)
 	if action == "BarrierDisabled" then
 		print("✅ Confirmación del servidor: Barrera desactivada")
+
+	elseif action == "InitialState" then
+		-- Recibir el estado inicial del servidor
+		local hasCompleted = data.hasCompleted
+		local remainingTime = data.timeRemaining
+
+		print("📡 Estado inicial recibido del servidor:")
+		print("   - Timer completado: " .. tostring(hasCompleted))
+		print("   - Tiempo restante: " .. remainingTime .. " segundos")
+
+		if hasCompleted then
+			-- El jugador ya completó su temporizador antes
+			barrierDisabled = true
+			timerActive = false
+			timeRemaining = 0
+
+			-- Actualizar UI para mostrar que está desactivada
+			timerLabel.Text = "00:00"
+			timerLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+			titleLabel.Text = "✅ BARRERA DESACTIVADA"
+			titleLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+			mainFrame:FindFirstChild("UIStroke").Color = Color3.fromRGB(100, 255, 100)
+			mainFrame.BackgroundColor3 = Color3.fromRGB(20, 100, 20)
+
+			print("✅ UI actualizada: Barrera ya estaba desactivada")
+		else
+			-- El jugador AÚN tiene el temporizador activo
+			timeRemaining = remainingTime
+			timerActive = true
+			timerStarted = true
+
+			-- Actualizar UI inicial
+			timerLabel.Text = FormatTime(timeRemaining)
+			UpdateTimerColor()
+
+			print("⏰ Temporizador iniciado: " .. FormatTime(timeRemaining))
+		end
 	end
 end)
 
+-- Solicitar estado inicial al servidor
+print("📡 Solicitando estado inicial al servidor...")
+remoteEvent:FireServer("RequestInitialState")
+
 -- Resetear cuando el jugador respawnea
 player.CharacterAdded:Connect(function(character)
-	-- Reiniciar temporizador (opcional - puedes comentar esto si quieres que persista)
-	-- timeRemaining = timerDurationValue.Value
-	-- timerActive = true
-	-- barrierDisabled = false
-	-- surfaceGui.Enabled = true
+	print("🔄 Jugador respawneó, solicitando estado actualizado...")
+	-- Solicitar estado actualizado al servidor
+	task.wait(1) -- Esperar un momento para que el personaje se inicialice
+	remoteEvent:FireServer("RequestInitialState")
 end)
 
 print("✅ Timer Barrier Client configurado")
