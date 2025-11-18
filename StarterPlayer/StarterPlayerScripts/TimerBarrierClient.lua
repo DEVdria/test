@@ -1,15 +1,9 @@
 --[[
 	TimerBarrierClient.lua
-	Cliente del sistema de barrera con temporizador individual
+	Cliente del temporizador individual
 
 	Coloca este script en: StarterPlayer > StarterPlayerScripts
 	IMPORTANTE: Debe ser un LocalScript
-
-	CÓMO FUNCIONA:
-	- Al entrar al juego, pregunta al servidor si ya completó el timer
-	- Si no ha completado, inicia el temporizador de 15 minutos
-	- Muestra el tiempo restante en la barrera (SurfaceGui)
-	- Cuando termina, notifica al servidor para desactivar la colisión
 ]]
 
 local Players = game:GetService("Players")
@@ -37,7 +31,7 @@ local mainFrame = nil
 local timerLabel = nil
 local statusLabel = nil
 
-print("🕐 Timer Barrier Client iniciado para: " .. player.Name)
+print("🕐 Timer Client iniciado: " .. player.Name)
 
 -- ============================================
 -- ESPERAR RECURSOS
@@ -46,7 +40,7 @@ local remoteEvent = ReplicatedStorage:WaitForChild("TimerBarrierEvent", 10)
 local timerDuration = ReplicatedStorage:WaitForChild("TimerDuration", 10)
 
 if not remoteEvent or not timerDuration then
-	warn("⚠️ No se encontraron los recursos del servidor")
+	warn("⚠️ No se encontraron recursos del servidor")
 	return
 end
 
@@ -56,17 +50,16 @@ end
 barrier = workspace:WaitForChild(BARRIER_NAME, 10)
 
 if not barrier then
-	warn("⚠️ No se encontró la barrera '" .. BARRIER_NAME .. "' en Workspace")
+	warn("⚠️ No se encontró '" .. BARRIER_NAME .. "' en Workspace")
 	return
 end
 
 print("✅ Barrera encontrada: " .. barrier.Name)
 
 -- ============================================
--- CREAR UI EN LA BARRERA
+-- CREAR UI
 -- ============================================
 local function CreateUI()
-	-- Buscar o crear SurfaceGui
 	surfaceGui = barrier:FindFirstChild("TimerSurfaceGui")
 
 	if not surfaceGui then
@@ -79,7 +72,6 @@ local function CreateUI()
 		surfaceGui.Parent = barrier
 	end
 
-	-- Buscar o crear MainFrame
 	mainFrame = surfaceGui:FindFirstChild("MainFrame")
 
 	if not mainFrame then
@@ -91,12 +83,10 @@ local function CreateUI()
 		mainFrame.BorderSizePixel = 0
 		mainFrame.Parent = surfaceGui
 
-		-- Esquinas redondeadas
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(0.05, 0)
 		corner.Parent = mainFrame
 
-		-- Borde
 		local stroke = Instance.new("UIStroke")
 		stroke.Name = "BorderStroke"
 		stroke.Color = Color3.fromRGB(255, 100, 100)
@@ -105,7 +95,6 @@ local function CreateUI()
 		stroke.Parent = mainFrame
 	end
 
-	-- Buscar o crear TimerLabel (tiempo grande)
 	timerLabel = mainFrame:FindFirstChild("TimerLabel")
 
 	if not timerLabel then
@@ -123,7 +112,6 @@ local function CreateUI()
 		timerLabel.Parent = mainFrame
 	end
 
-	-- Buscar o crear StatusLabel (texto inferior)
 	statusLabel = mainFrame:FindFirstChild("StatusLabel")
 
 	if not statusLabel then
@@ -132,7 +120,7 @@ local function CreateUI()
 		statusLabel.Size = UDim2.new(0.9, 0, 0.25, 0)
 		statusLabel.Position = UDim2.new(0.05, 0, 0.65, 0)
 		statusLabel.BackgroundTransparency = 1
-		statusLabel.Text = "⏰ BARRERA ACTIVA"
+		statusLabel.Text = "🚫 BARRERA ACTIVA"
 		statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		statusLabel.TextScaled = true
 		statusLabel.Font = Enum.Font.GothamBold
@@ -141,11 +129,11 @@ local function CreateUI()
 		statusLabel.Parent = mainFrame
 	end
 
-	print("✅ UI creada en la barrera")
+	print("✅ UI creada")
 end
 
 -- ============================================
--- FORMATEAR TIEMPO (segundos → MM:SS)
+-- FORMATEAR TIEMPO
 -- ============================================
 local function FormatTime(seconds)
 	local minutes = math.floor(seconds / 60)
@@ -154,35 +142,23 @@ local function FormatTime(seconds)
 end
 
 -- ============================================
--- ACTUALIZAR COLORES SEGÚN TIEMPO
+-- ACTUALIZAR COLORES
 -- ============================================
 local function UpdateColors()
 	local stroke = mainFrame:FindFirstChild("BorderStroke")
 
 	if hasCompleted then
-		-- Verde - Completado
 		timerLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-		if stroke then
-			stroke.Color = Color3.fromRGB(100, 255, 100)
-		end
+		if stroke then stroke.Color = Color3.fromRGB(100, 255, 100) end
 	elseif timeRemaining <= 60 then
-		-- Rojo intenso - Últimos 60 segundos
 		timerLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-		if stroke then
-			stroke.Color = Color3.fromRGB(255, 50, 50)
-		end
+		if stroke then stroke.Color = Color3.fromRGB(255, 50, 50) end
 	elseif timeRemaining <= 300 then
-		-- Naranja - Últimos 5 minutos
 		timerLabel.TextColor3 = Color3.fromRGB(255, 150, 50)
-		if stroke then
-			stroke.Color = Color3.fromRGB(255, 150, 50)
-		end
+		if stroke then stroke.Color = Color3.fromRGB(255, 150, 50) end
 	else
-		-- Rojo normal
 		timerLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-		if stroke then
-			stroke.Color = Color3.fromRGB(255, 100, 100)
-		end
+		if stroke then stroke.Color = Color3.fromRGB(255, 100, 100) end
 	end
 end
 
@@ -192,12 +168,12 @@ end
 local function UpdateUI()
 	if hasCompleted then
 		timerLabel.Text = "00:00"
-		statusLabel.Text = "✅ BARRERA DESACTIVADA"
+		statusLabel.Text = "✅ PUEDE PASAR"
 		statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
 		mainFrame.BackgroundColor3 = Color3.fromRGB(20, 100, 20)
 	else
 		timerLabel.Text = FormatTime(timeRemaining)
-		statusLabel.Text = "⏰ BARRERA ACTIVA"
+		statusLabel.Text = "🚫 BARRERA ACTIVA"
 		statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 	end
@@ -206,22 +182,19 @@ local function UpdateUI()
 end
 
 -- ============================================
--- CUANDO EL TEMPORIZADOR TERMINA
+-- CUANDO TERMINA EL TIMER
 -- ============================================
 local function OnTimerComplete()
-	if hasCompleted then
-		return -- Ya completado
-	end
+	if hasCompleted then return end
 
 	hasCompleted = true
 	isRunning = false
 
-	print("✅ Temporizador completado para " .. player.Name)
+	print("✅ Timer completado")
 
-	-- Actualizar UI
 	UpdateUI()
 
-	-- Notificar al servidor
+	-- Notificar servidor
 	remoteEvent:FireServer("TimerCompleted")
 
 	-- Efecto visual
@@ -236,42 +209,36 @@ local function OnTimerComplete()
 end
 
 -- ============================================
--- INICIAR TEMPORIZADOR
+-- INICIAR TIMER
 -- ============================================
 local function StartTimer(duration)
 	timeRemaining = duration
 	isRunning = true
 	hasCompleted = false
 
-	print("⏰ Temporizador iniciado: " .. FormatTime(timeRemaining))
-
-	-- Actualizar UI inicial
+	print("⏰ Timer iniciado: " .. FormatTime(timeRemaining))
 	UpdateUI()
 end
 
 -- ============================================
--- MARCAR COMO COMPLETADO (sin temporizador)
+-- MARCAR COMPLETADO
 -- ============================================
 local function MarkAsCompleted()
 	hasCompleted = true
 	isRunning = false
 	timeRemaining = 0
 
-	print("✅ Barrera ya completada anteriormente")
-
-	-- Actualizar UI
+	print("✅ Ya completado")
 	UpdateUI()
 end
 
 -- ============================================
--- LOOP DE ACTUALIZACIÓN DEL TEMPORIZADOR
+-- LOOP DE ACTUALIZACIÓN
 -- ============================================
 local lastUpdate = tick()
 
 RunService.RenderStepped:Connect(function()
-	if not isRunning then
-		return
-	end
+	if not isRunning then return end
 
 	local currentTime = tick()
 	local deltaTime = currentTime - lastUpdate
@@ -286,7 +253,6 @@ RunService.RenderStepped:Connect(function()
 		else
 			UpdateUI()
 
-			-- Parpadeo en los últimos 10 segundos
 			if timeRemaining <= 10 then
 				timerLabel.TextTransparency = (timeRemaining % 2 == 0) and 0 or 0.5
 			else
@@ -297,17 +263,15 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ============================================
--- ESCUCHAR RESPUESTAS DEL SERVIDOR
+-- ESCUCHAR SERVIDOR
 -- ============================================
 remoteEvent.OnClientEvent:Connect(function(action, data)
 	if action == "StatusResponse" then
-		-- Respuesta del servidor con el estado
 		local completed = data.hasCompleted
 		local duration = data.timerDuration
 
-		print("📡 Estado recibido del servidor:")
+		print("📡 Estado recibido:")
 		print("   Completado: " .. tostring(completed))
-		print("   Duración: " .. duration .. " segundos")
 
 		if completed then
 			MarkAsCompleted()
@@ -316,7 +280,7 @@ remoteEvent.OnClientEvent:Connect(function(action, data)
 		end
 
 	elseif action == "BarrierDisabled" then
-		print("✅ Confirmación del servidor: Barrera desactivada")
+		print("✅ Confirmación: Puede pasar")
 	end
 end)
 
@@ -324,20 +288,15 @@ end)
 -- MANEJAR RESPAWN
 -- ============================================
 player.CharacterAdded:Connect(function(character)
-	print("🔄 Personaje respawneado, solicitando estado...")
-
-	-- Esperar un momento y solicitar estado
+	print("🔄 Respawneado, solicitando estado...")
 	task.wait(1)
 	remoteEvent:FireServer("GetStatus")
 end)
 
 -- ============================================
--- INICIALIZACIÓN
+-- INICIALIZAR
 -- ============================================
 CreateUI()
-
--- Solicitar estado inicial al servidor
-print("📡 Solicitando estado inicial al servidor...")
+print("📡 Solicitando estado...")
 remoteEvent:FireServer("GetStatus")
-
-print("✅ Timer Barrier Client listo")
+print("✅ Cliente listo")
