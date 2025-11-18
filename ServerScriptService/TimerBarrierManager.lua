@@ -1,37 +1,29 @@
 --[[
 	TimerBarrierManager.lua
-	Sistema de barrera invisible individual por jugador
+	Servidor del sistema de temporizador con barrera local
 
 	Coloca este script en: ServerScriptService
 
 	IMPORTANTE:
 	- La Part "TimerBarrier" en Workspace debe tener CanCollide = false
-	- Este script crea una barrera INVISIBLE que solo bloquea durante 15 minutos
-	- Cada jugador tiene su propia barrera invisible
-	- Después de 15 minutos, la barrera invisible se desactiva para ese jugador
+	- Cada cliente crea su propia barrera LOCAL que solo él ve
+	- El servidor solo rastrea quién completó el timer
+	- Al completar, la barrera local se destruye para ese jugador
 ]]
 
-local PhysicsService = game:GetService("PhysicsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 -- ============================================
 -- CONFIGURACIÓN
 -- ============================================
-local BARRIER_NAME = "TimerBarrier" -- Nombre de la Part VISIBLE en Workspace (con CanCollide = false)
 local TIMER_DURATION = 15 * 60 -- 15 minutos en segundos
 
 -- ============================================
 -- TABLA DE ESTADO
 -- ============================================
 -- Rastrear qué jugadores completaron el timer
--- Key: UserId, Value: true si completó
 local CompletedPlayers = {}
-
--- ============================================
--- BARRERA INVISIBLE
--- ============================================
-local invisibleBarrier = nil
 
 -- ============================================
 -- CREAR REMOTEEVENT
@@ -46,118 +38,20 @@ timerDuration.Value = TIMER_DURATION
 timerDuration.Parent = ReplicatedStorage
 
 print("=== Timer Barrier System Iniciado ===")
-
--- ============================================
--- CONFIGURAR COLLISION GROUPS
--- ============================================
-local function SetupCollisionGroups()
-	-- Jugadores que AÚN tienen barrera (colisionan con barrera invisible)
-	if not PhysicsService:IsCollisionGroupRegistered("PlayersWithBarrier") then
-		PhysicsService:RegisterCollisionGroup("PlayersWithBarrier")
-	end
-
-	-- Jugadores que ya NO tienen barrera (NO colisionan)
-	if not PhysicsService:IsCollisionGroupRegistered("PlayersWithoutBarrier") then
-		PhysicsService:RegisterCollisionGroup("PlayersWithoutBarrier")
-	end
-
-	-- Grupo para la barrera invisible
-	if not PhysicsService:IsCollisionGroupRegistered("InvisibleBarrier") then
-		PhysicsService:RegisterCollisionGroup("InvisibleBarrier")
-	end
-
-	-- Configurar colisiones
-	PhysicsService:CollisionGroupSetCollidable("PlayersWithBarrier", "InvisibleBarrier", true)  -- SÍ colisionan
-	PhysicsService:CollisionGroupSetCollidable("PlayersWithoutBarrier", "InvisibleBarrier", false)  -- NO colisionan
-
-	print("✅ Collision Groups configurados")
-end
-
--- ============================================
--- CREAR BARRERA INVISIBLE
--- ============================================
-local function CreateInvisibleBarrier()
-	-- Buscar la barrera visible en Workspace
-	local visibleBarrier = workspace:FindFirstChild(BARRIER_NAME)
-
-	if not visibleBarrier then
-		warn("⚠️ ERROR: No se encontró '" .. BARRIER_NAME .. "' en Workspace")
-		return false
-	end
-
-	print("✅ Barrera visible encontrada: " .. visibleBarrier.Name)
-	print("   CanCollide debe estar en false (verificar en propiedades)")
-
-	-- Crear barrera invisible en la misma posición
-	invisibleBarrier = Instance.new("Part")
-	invisibleBarrier.Name = "InvisibleTimerBarrier"
-	invisibleBarrier.Size = visibleBarrier.Size
-	invisibleBarrier.Position = visibleBarrier.Position
-	invisibleBarrier.Rotation = visibleBarrier.Rotation
-	invisibleBarrier.Anchored = true
-	invisibleBarrier.CanCollide = true  -- Esta SÍ tiene colisión
-	invisibleBarrier.Transparency = 1  -- Completamente invisible
-	invisibleBarrier.Material = Enum.Material.ForceField
-	invisibleBarrier.CollisionGroup = "InvisibleBarrier"
-	invisibleBarrier.Parent = workspace
-
-	print("✅ Barrera invisible creada")
-	print("   Posición: " .. tostring(invisibleBarrier.Position))
-	print("   Tamaño: " .. tostring(invisibleBarrier.Size))
-
-	return true
-end
-
--- ============================================
--- ASIGNAR COLLISION GROUP A JUGADOR
--- ============================================
-local function SetPlayerCollisionGroup(player, groupName)
-	local character = player.Character
-	if not character then
-		return
-	end
-
-	-- Asignar a todas las partes
-	for _, part in pairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.CollisionGroup = groupName
-		end
-	end
-
-	-- Nuevas partes que se agreguen
-	character.DescendantAdded:Connect(function(descendant)
-		if descendant:IsA("BasePart") then
-			descendant.CollisionGroup = groupName
-		end
-	end)
-end
+print("Duración del timer: " .. TIMER_DURATION .. " segundos (" .. (TIMER_DURATION/60) .. " minutos)")
 
 -- ============================================
 -- CUANDO JUGADOR ENTRA
 -- ============================================
 local function OnPlayerAdded(player)
-	print("👤 Jugador conectado: " .. player.Name)
-
-	player.CharacterAdded:Connect(function(character)
-		task.wait(0.5)
-
-		-- Verificar si ya completó
-		if CompletedPlayers[player.UserId] then
-			-- Ya completó - NO colisiona con barrera invisible
-			SetPlayerCollisionGroup(player, "PlayersWithoutBarrier")
-			print("✅ " .. player.Name .. " - Puede pasar (ya completó)")
-		else
-			-- No ha completado - SÍ colisiona con barrera invisible
-			SetPlayerCollisionGroup(player, "PlayersWithBarrier")
-			print("🚫 " .. player.Name .. " - Bloqueado por 15 minutos")
-		end
-	end)
+	print("👤 " .. player.Name .. " conectado")
 end
 
 -- ============================================
 -- CUANDO JUGADOR SALE
 -- ============================================
 local function OnPlayerRemoving(player)
+	-- Limpiar estado cuando el jugador sale
 	CompletedPlayers[player.UserId] = nil
 	print("👋 " .. player.Name .. " salió - Estado limpiado")
 end
@@ -167,23 +61,20 @@ end
 -- ============================================
 remoteEvent.OnServerEvent:Connect(function(player, action)
 	if action == "TimerCompleted" then
-		print("⏰ Timer completado: " .. player.Name)
+		-- El cliente notifica que completó el timer
+		print("⏰ " .. player.Name .. " completó el timer")
 
 		-- Marcar como completado
 		CompletedPlayers[player.UserId] = true
-
-		-- Cambiar collision group (ahora NO colisiona con barrera invisible)
-		SetPlayerCollisionGroup(player, "PlayersWithoutBarrier")
-
-		print("✅ " .. player.Name .. " ahora puede pasar la barrera")
 
 		-- Confirmar al cliente
 		remoteEvent:FireClient(player, "BarrierDisabled")
 
 	elseif action == "GetStatus" then
-		-- Cliente solicita estado
+		-- El cliente solicita su estado
 		local hasCompleted = CompletedPlayers[player.UserId] or false
 
+		-- Enviar respuesta
 		remoteEvent:FireClient(player, "StatusResponse", {
 			hasCompleted = hasCompleted,
 			timerDuration = TIMER_DURATION
@@ -194,18 +85,8 @@ remoteEvent.OnServerEvent:Connect(function(player, action)
 end)
 
 -- ============================================
--- INICIALIZAR
+-- CONECTAR EVENTOS
 -- ============================================
-SetupCollisionGroups()
-
-if not CreateInvisibleBarrier() then
-	warn("⚠️ El sistema no pudo inicializarse")
-	warn("⚠️ Crea una Part llamada '" .. BARRIER_NAME .. "' en Workspace")
-	warn("⚠️ Y asegúrate de que CanCollide = false")
-	return
-end
-
--- Conectar eventos
 Players.PlayerAdded:Connect(OnPlayerAdded)
 Players.PlayerRemoving:Connect(OnPlayerRemoving)
 
@@ -216,13 +97,12 @@ end
 
 print("=== Timer Barrier System Listo ===")
 print("")
-print("📋 La Part '" .. BARRIER_NAME .. "' debe tener CanCollide = false")
-print("📋 La barrera invisible bloquea a los jugadores por 15 minutos")
-print("")
-print("🎮 Comandos:")
-print("   _G.CheckPlayer('nombre') - Ver estado")
-print("   _G.ForceComplete('nombre') - Completar timer")
-print("   _G.ResetAll() - Resetear todos")
+print("🎮 Comandos de Debug:")
+print("   _G.CheckPlayer('nombre') - Ver estado de un jugador")
+print("   _G.ForceComplete('nombre') - Forzar completar timer")
+print("   _G.ResetPlayer('nombre') - Resetear timer de un jugador")
+print("   _G.ResetAll() - Resetear todos los timers")
+print("   _G.ListPlayers() - Ver estado de todos los jugadores")
 
 -- ============================================
 -- COMANDOS DE DEBUG
@@ -230,37 +110,71 @@ print("   _G.ResetAll() - Resetear todos")
 _G.CheckPlayer = function(playerName)
 	local player = Players:FindFirstChild(playerName)
 	if not player then
-		warn("⚠️ Jugador no encontrado")
+		warn("⚠️ Jugador no encontrado: " .. playerName)
 		return
 	end
 
 	local completed = CompletedPlayers[player.UserId] or false
 
-	print("━━━━━━━━━━━━━━━━━━━━")
+	print("━━━━━━━━━━━━━━━━━━━━━━")
 	print("Jugador: " .. player.Name)
+	print("UserId: " .. player.UserId)
 	print("Estado: " .. (completed and "✅ Completado" or "⏰ Activo"))
-	print("Puede pasar: " .. (completed and "SÍ" or "NO"))
-	print("━━━━━━━━━━━━━━━━━━━━")
+	print("Barrera: " .. (completed and "Destruida" or "Presente"))
+	print("━━━━━━━━━━━━━━━━━━━━━━")
 end
 
 _G.ForceComplete = function(playerName)
 	local player = Players:FindFirstChild(playerName)
 	if not player then
-		warn("⚠️ Jugador no encontrado")
+		warn("⚠️ Jugador no encontrado: " .. playerName)
 		return
 	end
 
 	CompletedPlayers[player.UserId] = true
-	SetPlayerCollisionGroup(player, "PlayersWithoutBarrier")
-	print("✅ Forzado: " .. player.Name .. " puede pasar")
+
+	-- Notificar al cliente para que destruya su barrera
+	remoteEvent:FireClient(player, "ForceDestroy")
+
+	print("✅ Forzado: " .. player.Name .. " - Barrera destruida")
+end
+
+_G.ResetPlayer = function(playerName)
+	local player = Players:FindFirstChild(playerName)
+	if not player then
+		warn("⚠️ Jugador no encontrado: " .. playerName)
+		return
+	end
+
+	CompletedPlayers[player.UserId] = nil
+
+	-- Notificar al cliente para que recree su barrera
+	remoteEvent:FireClient(player, "ForceReset")
+
+	print("🔄 Reseteado: " .. player.Name .. " - Barrera recreada")
 end
 
 _G.ResetAll = function()
-	print("🔄 Reseteando todos...")
+	print("🔄 Reseteando todos los timers...")
 	CompletedPlayers = {}
 
 	for _, player in pairs(Players:GetPlayers()) do
-		SetPlayerCollisionGroup(player, "PlayersWithBarrier")
-		print("   🚫 " .. player.Name .. " - Bloqueado")
+		remoteEvent:FireClient(player, "ForceReset")
+		print("   🔄 " .. player.Name .. " - Timer reseteado")
 	end
+
+	print("✅ Todos los timers han sido reseteados")
+end
+
+_G.ListPlayers = function()
+	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	print("JUGADORES CONECTADOS:")
+	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+	for _, player in pairs(Players:GetPlayers()) do
+		local completed = CompletedPlayers[player.UserId] or false
+		print(player.Name .. " → " .. (completed and "✅ Completado" or "⏰ Activo"))
+	end
+
+	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 end

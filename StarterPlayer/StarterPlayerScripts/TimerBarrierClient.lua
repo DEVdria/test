@@ -1,9 +1,16 @@
 --[[
 	TimerBarrierClient.lua
-	Cliente del temporizador individual
+	Cliente del sistema de temporizador con barrera local
 
 	Coloca este script en: StarterPlayer > StarterPlayerScripts
 	IMPORTANTE: Debe ser un LocalScript
+
+	CÓMO FUNCIONA:
+	- Crea una barrera LOCAL (solo visible para este jugador)
+	- La barrera bloquea durante 15 minutos
+	- Al terminar el timer, la barrera se DESTRUYE
+	- Al respawnear, verifica con el servidor si ya completó
+	- Si ya completó, NO crea la barrera
 ]]
 
 local Players = game:GetService("Players")
@@ -24,8 +31,9 @@ local timeRemaining = 0
 local isRunning = false
 local hasCompleted = false
 
--- Referencias UI
-local barrier = nil
+-- Referencias
+local visibleBarrier = nil  -- La barrera en Workspace (decorativa)
+local localBarrier = nil     -- La barrera LOCAL de este jugador
 local surfaceGui = nil
 local mainFrame = nil
 local timerLabel = nil
@@ -45,22 +53,62 @@ if not remoteEvent or not timerDuration then
 end
 
 -- ============================================
--- ENCONTRAR BARRERA
+-- ENCONTRAR BARRERA VISIBLE
 -- ============================================
-barrier = workspace:WaitForChild(BARRIER_NAME, 10)
+visibleBarrier = workspace:WaitForChild(BARRIER_NAME, 10)
 
-if not barrier then
+if not visibleBarrier then
 	warn("⚠️ No se encontró '" .. BARRIER_NAME .. "' en Workspace")
 	return
 end
 
-print("✅ Barrera encontrada: " .. barrier.Name)
+print("✅ Barrera visible encontrada: " .. visibleBarrier.Name)
+print("   (Esta es solo decorativa, la barrera real es local)")
 
 -- ============================================
--- CREAR UI
+-- CREAR BARRERA LOCAL (solo para este jugador)
+-- ============================================
+local function CreateLocalBarrier()
+	if localBarrier then
+		-- Ya existe, no crear otra
+		return
+	end
+
+	print("🔨 Creando barrera LOCAL para " .. player.Name)
+
+	-- Crear una copia LOCAL de la barrera visible
+	localBarrier = Instance.new("Part")
+	localBarrier.Name = "LocalBarrier_" .. player.Name
+	localBarrier.Size = visibleBarrier.Size
+	localBarrier.CFrame = visibleBarrier.CFrame
+	localBarrier.Anchored = true
+	localBarrier.CanCollide = true  -- Esta SÍ bloquea
+	localBarrier.Transparency = 1   -- Invisible (la visible es decorativa)
+	localBarrier.Material = Enum.Material.ForceField
+	localBarrier.Parent = workspace
+
+	print("✅ Barrera LOCAL creada")
+	print("   - Solo " .. player.Name .. " la ve y colisiona con ella")
+	print("   - Se destruirá en 15 minutos")
+end
+
+-- ============================================
+-- DESTRUIR BARRERA LOCAL
+-- ============================================
+local function DestroyLocalBarrier()
+	if localBarrier then
+		print("💥 Destruyendo barrera LOCAL de " .. player.Name)
+		localBarrier:Destroy()
+		localBarrier = nil
+		print("✅ Barrera LOCAL destruida - Ahora puedes pasar")
+	end
+end
+
+-- ============================================
+-- CREAR UI EN LA BARRERA VISIBLE
 -- ============================================
 local function CreateUI()
-	surfaceGui = barrier:FindFirstChild("TimerSurfaceGui")
+	surfaceGui = visibleBarrier:FindFirstChild("TimerSurfaceGui")
 
 	if not surfaceGui then
 		surfaceGui = Instance.new("SurfaceGui")
@@ -69,7 +117,7 @@ local function CreateUI()
 		surfaceGui.AlwaysOnTop = false
 		surfaceGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 		surfaceGui.PixelsPerStud = 50
-		surfaceGui.Parent = barrier
+		surfaceGui.Parent = visibleBarrier
 	end
 
 	mainFrame = surfaceGui:FindFirstChild("MainFrame")
@@ -190,8 +238,12 @@ local function OnTimerComplete()
 	hasCompleted = true
 	isRunning = false
 
-	print("✅ Timer completado")
+	print("✅ Timer completado para " .. player.Name)
 
+	-- DESTRUIR LA BARRERA LOCAL
+	DestroyLocalBarrier()
+
+	-- Actualizar UI
 	UpdateUI()
 
 	-- Notificar servidor
@@ -217,18 +269,26 @@ local function StartTimer(duration)
 	hasCompleted = false
 
 	print("⏰ Timer iniciado: " .. FormatTime(timeRemaining))
+
+	-- CREAR BARRERA LOCAL
+	CreateLocalBarrier()
+
+	-- Actualizar UI
 	UpdateUI()
 end
 
 -- ============================================
--- MARCAR COMPLETADO
+-- MARCAR COMO COMPLETADO
 -- ============================================
 local function MarkAsCompleted()
 	hasCompleted = true
 	isRunning = false
 	timeRemaining = 0
 
-	print("✅ Ya completado")
+	print("✅ Ya completado anteriormente - No crear barrera")
+
+	-- NO crear barrera local
+	-- Actualizar UI
 	UpdateUI()
 end
 
@@ -270,7 +330,7 @@ remoteEvent.OnClientEvent:Connect(function(action, data)
 		local completed = data.hasCompleted
 		local duration = data.timerDuration
 
-		print("📡 Estado recibido:")
+		print("📡 Estado recibido del servidor:")
 		print("   Completado: " .. tostring(completed))
 
 		if completed then
@@ -280,7 +340,22 @@ remoteEvent.OnClientEvent:Connect(function(action, data)
 		end
 
 	elseif action == "BarrierDisabled" then
-		print("✅ Confirmación: Puede pasar")
+		print("✅ Confirmación del servidor: Barrera destruida")
+
+	elseif action == "ForceDestroy" then
+		-- Comando forzado del servidor para destruir barrera
+		print("🔨 Servidor forzó destrucción de barrera")
+		hasCompleted = true
+		isRunning = false
+		DestroyLocalBarrier()
+		UpdateUI()
+
+	elseif action == "ForceReset" then
+		-- Comando forzado del servidor para resetear
+		print("🔨 Servidor forzó reset del timer")
+		hasCompleted = false
+		DestroyLocalBarrier()
+		StartTimer(timerDuration.Value)
 	end
 end)
 
@@ -297,6 +372,6 @@ end)
 -- INICIALIZAR
 -- ============================================
 CreateUI()
-print("📡 Solicitando estado...")
+print("📡 Solicitando estado del servidor...")
 remoteEvent:FireServer("GetStatus")
 print("✅ Cliente listo")
