@@ -169,6 +169,34 @@ local DEVELOPER_PRODUCTS = {
 }
 
 -- ====================================
+-- VERIFICACIÓN DE CONFIGURACIÓN
+-- ====================================
+
+-- Verificar que los IDs estén configurados
+print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+print("🔍 VERIFICANDO CONFIGURACIÓN DE DEVELOPER PRODUCTS")
+local hasInvalidIds = false
+for key, data in pairs(DEVELOPER_PRODUCTS) do
+	if data.ID == 0 then
+		warn("⚠️ " .. key .. ": ID NO CONFIGURADO (actualmente 0)")
+		hasInvalidIds = true
+	else
+		print("✅ " .. key .. ": ID configurado (" .. data.ID .. ")")
+	end
+end
+
+if hasInvalidIds then
+	warn("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	warn("⚠️ ADVERTENCIA: Hay Developer Products sin configurar")
+	warn("⚠️ Los productos con ID = 0 NO funcionarán")
+	warn("⚠️ Configura los IDs reales en DeveloperProductManager.lua")
+	warn("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+else
+	print("✅ Todos los Developer Products tienen IDs configurados")
+end
+print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+-- ====================================
 -- MANEJO DE COMPRAS
 -- ====================================
 
@@ -211,15 +239,24 @@ end)
 
 -- Callback de procesamiento de compras
 local function processReceipt(receiptInfo)
+	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	print("📦 PROCESANDO COMPRA DE DEVELOPER PRODUCT")
+	print("PlayerId: " .. tostring(receiptInfo.PlayerId))
+	print("ProductId: " .. tostring(receiptInfo.ProductId))
+	print("PurchaseId: " .. tostring(receiptInfo.PurchaseId))
+	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
 	local userId = receiptInfo.PlayerId
 	local productId = receiptInfo.ProductId
 
 	-- Buscar al jugador
 	local player = Players:GetPlayerByUserId(userId)
 	if not player then
-		-- Jugador se desconectó, guardar para después si es necesario
+		warn("⚠️ Jugador no encontrado (UserId: " .. userId .. ") - Intentará procesar después")
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
+
+	print("✅ Jugador encontrado: " .. player.Name)
 
 	-- Buscar qué producto fue comprado
 	local productKey = nil
@@ -234,12 +271,20 @@ local function processReceipt(receiptInfo)
 	end
 
 	if not productData then
-		warn("Producto no reconocido: " .. productId)
+		warn("❌ Producto no reconocido con ID: " .. productId)
+		warn("⚠️ Verifica que el ID en DeveloperProductManager coincida con el de Roblox.com")
+		warn("⚠️ IDs configurados actualmente:")
+		for key, data in pairs(DEVELOPER_PRODUCTS) do
+			warn("   - " .. key .. ": " .. tostring(data.ID))
+		end
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 
+	print("✅ Producto identificado: " .. productData.Name .. " (Key: " .. productKey .. ")")
+
 	-- Ejecutar el efecto del producto
-	local success, error = pcall(function()
+	print("🔄 Ejecutando efecto del producto...")
+	local success, errorMsg = pcall(function()
 		productData.Effect(player)
 	end)
 
@@ -248,16 +293,28 @@ local function processReceipt(receiptInfo)
 	purchasesInProgress[purchaseKey] = nil
 
 	if success then
-		print(player.Name .. " compró y usó: " .. productData.Name)
+		print("✅ ¡Efecto ejecutado correctamente!")
+		print("✅ " .. player.Name .. " compró y usó: " .. productData.Name)
+		print("✅ Compra marcada como PurchaseGranted")
+		print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	else
-		warn("Error al ejecutar efecto del producto: " .. tostring(error))
+		warn("❌ Error al ejecutar efecto del producto: " .. tostring(errorMsg))
+		warn("❌ La compra NO se procesó - el jugador recibirá reembolso")
+		warn("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 end
 
+-- Verificar si ya existe un ProcessReceipt
+if MarketplaceService.ProcessReceipt ~= nil then
+	warn("⚠️ ADVERTENCIA: Ya existe un ProcessReceipt configurado!")
+	warn("⚠️ Esto puede causar conflictos. Asegúrate de que no haya otros scripts manejando compras.")
+end
+
 -- Asignar el callback
 MarketplaceService.ProcessReceipt = processReceipt
+print("✅ ProcessReceipt configurado correctamente para Developer Products")
 
 -- Limpiar compras en progreso cuando un jugador se va
 Players.PlayerRemoving:Connect(function(player)
