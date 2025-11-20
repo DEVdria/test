@@ -269,13 +269,11 @@ end
 -- ASIGNAR PROCESSRECEIPT
 -- ====================================
 
--- Verificar si ya existe un ProcessReceipt
-if MarketplaceService.ProcessReceipt ~= nil then
-	warn("⚠️ ADVERTENCIA: Ya existe un ProcessReceipt configurado!")
-	warn("⚠️ Será sobrescrito por el UnifiedProcessReceipt")
-end
+-- NOTA: No podemos verificar si ya existe un ProcessReceipt porque Roblox
+-- no permite leer callbacks, solo asignarlos. Si hay conflictos, asegúrate
+-- de comentar la línea "market.ProcessReceipt = receipt" en DonoBoard
+-- y deshabilitar DeveloperProductManager.lua
 
--- Asignar el ProcessReceipt unificado
 MarketplaceService.ProcessReceipt = unifiedProcessReceipt
 
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

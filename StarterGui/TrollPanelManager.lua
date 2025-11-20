@@ -195,7 +195,7 @@ local function createProductButton(productData)
 
 			-- Feedback visual especial para modo de prueba
 			button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-			wait(0.2)
+			task.wait(0.2)
 			button.BackgroundColor3 = productData.Color or Color3.fromRGB(60, 60, 60)
 		else
 			-- Modo normal: Solicitar compra al servidor
@@ -203,7 +203,7 @@ local function createProductButton(productData)
 
 			-- Feedback visual
 			button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			wait(0.1)
+			task.wait(0.1)
 			button.BackgroundColor3 = productData.Color or Color3.fromRGB(60, 60, 60)
 		end
 	end)
