@@ -184,13 +184,28 @@ local function createProductButton(productData)
 
 	-- Evento de clic
 	button.MouseButton1Click:Connect(function()
-		-- Solicitar compra al servidor
-		PurchaseDeveloperProduct:FireServer(productData.Key)
+		-- Verificar si existe el modo de testing
+		local testRemote = ReplicatedStorage.ShopRemotes:FindFirstChild("TestDeveloperProduct")
+		local userInputService = game:GetService("UserInputService")
 
-		-- Feedback visual
-		button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		wait(0.1)
-		button.BackgroundColor3 = productData.Color or Color3.fromRGB(60, 60, 60)
+		-- Si mantiene SHIFT presionado y existe el modo de testing, ejecutar prueba
+		if testRemote and userInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+			print("🧪 Modo de prueba: Ejecutando " .. productData.Key)
+			testRemote:FireServer(productData.Key)
+
+			-- Feedback visual especial para modo de prueba
+			button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+			wait(0.2)
+			button.BackgroundColor3 = productData.Color or Color3.fromRGB(60, 60, 60)
+		else
+			-- Modo normal: Solicitar compra al servidor
+			PurchaseDeveloperProduct:FireServer(productData.Key)
+
+			-- Feedback visual
+			button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			wait(0.1)
+			button.BackgroundColor3 = productData.Color or Color3.fromRGB(60, 60, 60)
+		end
 	end)
 
 	button.Parent = trollFrame.ScrollingFrame
