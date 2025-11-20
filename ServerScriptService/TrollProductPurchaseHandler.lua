@@ -16,16 +16,16 @@ local PurchaseDeveloperProduct = ShopRemotesModule.PurchaseDeveloperProduct
 
 local DEVELOPER_PRODUCTS = {
 	KillAll = {
-		ID = 0, -- ⬅️ REEMPLAZAR con el ID real (debe coincidir con UnifiedProcessReceipt)
+		ID = 3458498800,
 	},
 	RagdollAll = {
-		ID = 0, -- ⬅️ REEMPLAZAR con el ID real
+		ID = 3458498799,
 	},
 	Explosion = {
-		ID = 0, -- ⬅️ REEMPLAZAR con el ID real
+		ID = 3458498802,
 	},
 	SpeedBoostAll = {
-		ID = 0, -- ⬅️ REEMPLAZAR con el ID real
+		ID = 3458498801,
 	}
 }
 

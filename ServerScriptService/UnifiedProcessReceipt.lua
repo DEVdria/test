@@ -35,7 +35,7 @@ local DONOBOARD_PRODUCTS = {
 
 local DEVELOPER_PRODUCTS = {
 	KillAll = {
-		ID = 0, -- ⬅️ REEMPLAZAR con ID real
+		ID = 3458498800,
 		Name = "Kill All Players",
 		Effect = function(player)
 			print(player.Name .. " usó Kill All!")
@@ -58,7 +58,7 @@ local DEVELOPER_PRODUCTS = {
 	},
 
 	RagdollAll = {
-		ID = 0, -- ⬅️ REEMPLAZAR con ID real
+		ID = 3458498799,
 		Name = "Launch All",
 		Effect = function(player)
 			print(player.Name .. " usó Launch All!")
@@ -116,7 +116,7 @@ local DEVELOPER_PRODUCTS = {
 	},
 
 	Explosion = {
-		ID = 0, -- ⬅️ REEMPLAZAR con ID real
+		ID = 3458498802,
 		Name = "Explosion",
 		Effect = function(player)
 			print(player.Name .. " usó Explosion!")
@@ -135,7 +135,7 @@ local DEVELOPER_PRODUCTS = {
 	},
 
 	SpeedBoostAll = {
-		ID = 0, -- ⬅️ REEMPLAZAR con ID real
+		ID = 3458498801,
 		Name = "Speed Boost All",
 		Effect = function(player)
 			print(player.Name .. " usó Speed Boost All!")
