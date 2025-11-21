@@ -24,7 +24,7 @@ function GlassPanel.new(position, isSafe, rowNumber, side)
 	self.Part = nil
 	self.IsDestroyed = false -- Rastrear si está destruido
 	self.RegenerationScheduled = false -- Rastrear si hay regeneración pendiente
-	self.PlayersOnPanel = {} -- NUEVO: Tabla para rastrear jugadores actualmente en el panel
+	self.PlayersWhoActivated = {} -- Tabla para rastrear jugadores que ya activaron el efecto
 
 	self:CreatePart()
 	self:SetupTouchDetection()
@@ -103,11 +103,6 @@ function GlassPanel:SetupTouchDetection()
 	self.Part.Touched:Connect(function(hit)
 		self:OnTouch(hit)
 	end)
-
-	-- NUEVO: Detectar cuando un jugador deja el panel
-	self.Part.TouchEnded:Connect(function(hit)
-		self:OnTouchEnded(hit)
-	end)
 end
 
 -- Manejador de eventos de toque
@@ -128,17 +123,27 @@ function GlassPanel:OnTouch(hit)
 	if self.IsSafe then
 		-- Panel seguro - efectos locales solo para el jugador que pisa
 
-		-- NUEVO: Verificar si este jugador ya ha activado el efecto en este panel
-		if player and self.PlayersOnPanel[player.UserId] then
-			-- El jugador ya está en el panel, no activar efectos de nuevo
+		-- Verificar si este jugador ya activó el efecto en este panel
+		if player and self.PlayersWhoActivated[player.UserId] then
+			-- El jugador ya activó el efecto, no activar de nuevo
 			return
 		end
 
 		print(hit.Parent.Name .. " pisó un panel SEGURO (Fila " .. self.RowNumber .. " - " .. self.Side .. ")")
 
-		-- Marcar que este jugador está ahora en el panel
+		-- Marcar que este jugador ya activó el efecto
 		if player then
-			self.PlayersOnPanel[player.UserId] = true
+			self.PlayersWhoActivated[player.UserId] = true
+
+			-- Conectar evento de muerte para resetear cuando muera
+			local humanoid = hit.Parent:FindFirstChild("Humanoid")
+			if humanoid then
+				humanoid.Died:Connect(function()
+					-- Resetear para que pueda activar de nuevo al respawnear
+					self.PlayersWhoActivated[player.UserId] = nil
+					print(player.Name .. " murió - Reset de activación para panel (Fila " .. self.RowNumber .. " - " .. self.Side .. ")")
+				end)
+			end
 
 			-- Disparar evento al cliente específico para efectos locales
 			local effectEvent = ReplicatedStorage:FindFirstChild("GlassBridgeEffectEvent")
@@ -199,22 +204,8 @@ function GlassPanel:OnTouch(hit)
 	end
 end
 
--- NUEVO: Manejador cuando el jugador deja el panel
-function GlassPanel:OnTouchEnded(hit)
-	-- Verificar si es un jugador
-	local humanoid = hit.Parent:FindFirstChild("Humanoid")
-	if not humanoid then
-		return
-	end
-
-	local player = game.Players:GetPlayerFromCharacter(hit.Parent)
-
-	-- Remover al jugador de la lista de jugadores en el panel
-	if player and self.PlayersOnPanel[player.UserId] then
-		self.PlayersOnPanel[player.UserId] = nil
-		print(hit.Parent.Name .. " dejó el panel (Fila " .. self.RowNumber .. " - " .. self.Side .. ")")
-	end
-end
+-- NOTA: Ya no necesitamos OnTouchEnded porque rastreamos activación, no presencia
+-- El reset se hace cuando el jugador muere, no cuando deja el panel
 
 -- Regenerar el panel después de ser destruido
 function GlassPanel:Regenerate()
@@ -229,7 +220,7 @@ function GlassPanel:Regenerate()
 	self.HasBeenTouched = false
 	self.IsDestroyed = false
 	self.RegenerationScheduled = false
-	self.PlayersOnPanel = {} -- Limpiar la lista de jugadores
+	self.PlayersWhoActivated = {} -- Limpiar la lista de jugadores que activaron
 
 	-- Recrear el panel
 	self:CreatePart()
