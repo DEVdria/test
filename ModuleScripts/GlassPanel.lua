@@ -24,7 +24,7 @@ function GlassPanel.new(position, isSafe, rowNumber, side)
 	self.Part = nil
 	self.IsDestroyed = false -- Rastrear si está destruido
 	self.RegenerationScheduled = false -- Rastrear si hay regeneración pendiente
-	self.PlayersWhoActivated = {} -- Tabla para rastrear jugadores que ya activaron el efecto
+	self.PlayersLastActivation = {} -- Tabla para rastrear el último tiempo de activación por jugador
 
 	self:CreatePart()
 	self:SetupTouchDetection()
@@ -123,27 +123,23 @@ function GlassPanel:OnTouch(hit)
 	if self.IsSafe then
 		-- Panel seguro - efectos locales solo para el jugador que pisa
 
-		-- Verificar si este jugador ya activó el efecto en este panel
-		if player and self.PlayersWhoActivated[player.UserId] then
-			-- El jugador ya activó el efecto, no activar de nuevo
-			return
-		end
-
-		print(hit.Parent.Name .. " pisó un panel SEGURO (Fila " .. self.RowNumber .. " - " .. self.Side .. ")")
-
-		-- Marcar que este jugador ya activó el efecto
 		if player then
-			self.PlayersWhoActivated[player.UserId] = true
+			local currentTime = tick()
+			local lastActivation = self.PlayersLastActivation[player.UserId]
 
-			-- Conectar evento de muerte para resetear cuando muera
-			local humanoid = hit.Parent:FindFirstChild("Humanoid")
-			if humanoid then
-				humanoid.Died:Connect(function()
-					-- Resetear para que pueda activar de nuevo al respawnear
-					self.PlayersWhoActivated[player.UserId] = nil
-					print(player.Name .. " murió - Reset de activación para panel (Fila " .. self.RowNumber .. " - " .. self.Side .. ")")
-				end)
+			-- Verificar si el jugador está en cooldown
+			if lastActivation then
+				local timeSinceLastActivation = currentTime - lastActivation
+				if timeSinceLastActivation < Config.SafePanelCooldown then
+					-- Jugador en cooldown, no activar efecto
+					return
+				end
 			end
+
+			print(hit.Parent.Name .. " pisó un panel SEGURO (Fila " .. self.RowNumber .. " - " .. self.Side .. ")")
+
+			-- Guardar el tiempo de activación actual
+			self.PlayersLastActivation[player.UserId] = currentTime
 
 			-- Disparar evento al cliente específico para efectos locales
 			local effectEvent = ReplicatedStorage:FindFirstChild("GlassBridgeEffectEvent")
@@ -204,8 +200,8 @@ function GlassPanel:OnTouch(hit)
 	end
 end
 
--- NOTA: Ya no necesitamos OnTouchEnded porque rastreamos activación, no presencia
--- El reset se hace cuando el jugador muere, no cuando deja el panel
+-- Sistema de cooldown: Los efectos se pueden reactivar después de X segundos
+-- No necesitamos OnTouchEnded porque usamos timestamps para controlar el cooldown
 
 -- Regenerar el panel después de ser destruido
 function GlassPanel:Regenerate()
@@ -220,7 +216,7 @@ function GlassPanel:Regenerate()
 	self.HasBeenTouched = false
 	self.IsDestroyed = false
 	self.RegenerationScheduled = false
-	self.PlayersWhoActivated = {} -- Limpiar la lista de jugadores que activaron
+	self.PlayersLastActivation = {} -- Limpiar la lista de tiempos de activación
 
 	-- Recrear el panel
 	self:CreatePart()
