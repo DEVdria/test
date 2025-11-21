@@ -36,6 +36,7 @@ GlassBridgeConfig.ExplosionForce = 100 -- Fuerza de la explosión
 GlassBridgeConfig.ExplosionRadius = 10 -- Radio de la explosión
 GlassBridgeConfig.RegenerateDelay = 15 -- Segundos para regenerar paneles falsos destruidos
 GlassBridgeConfig.AlwaysShowSafeGreen = false -- Paneles seguros NO permanecen verdes (efecto temporal)
+GlassBridgeConfig.SafePanelCooldown = 2 -- Segundos de cooldown para paneles seguros (evita spam)
 
 -- GAMEPLAY
 GlassBridgeConfig.FallHeight = 50 -- Altura de caída debajo del puente
