@@ -183,8 +183,8 @@ local function initializeSystem()
 	print("TIMED GLASS PANEL SYSTEM - INICIANDO")
 	print("═══════════════════════════════════════════════════════")
 
-	-- Buscar el folder
-	local folder = workspace:FindFirstChild(CONFIG.FOLDER_NAME)
+	-- Buscar el folder (esperar si no existe)
+	local folder = workspace:WaitForChild(CONFIG.FOLDER_NAME, 10)
 
 	if not folder then
 		warn("❌ ERROR: No se encontró el folder '" .. CONFIG.FOLDER_NAME .. "' en Workspace")
@@ -193,6 +193,19 @@ local function initializeSystem()
 	end
 
 	print("✅ Folder encontrado:", folder.Name)
+	print("⏳ Esperando a que los paneles se carguen...")
+
+	-- Esperar a que al menos un panel exista
+	local firstPanel = folder:WaitForChild(CONFIG.PANEL_PREFIX .. "1", 10)
+
+	if not firstPanel then
+		warn("❌ ERROR: No se encontró " .. CONFIG.PANEL_PREFIX .. "1")
+		warn("Ejecuta el script de servidor primero para crear los paneles")
+		return
+	end
+
+	-- Esperar un poco más para asegurar que todos los paneles se repliquen
+	task.wait(0.5)
 
 	-- Buscar todos los paneles
 	local panels = {}
