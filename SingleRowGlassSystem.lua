@@ -1,14 +1,17 @@
 --[[
-	Glass Panel System - Client Side
-	Sistema de paneles de cristal con caída temporal
+	Single Row Glass Panel System - Client Side
+	Sistema de paneles de cristal de una sola fila con caída temporal
+
+	⚠️ IMPORTANTE: Este sistema es INDEPENDIENTE del Glass Bridge
+	No interfiere con el sistema de Glass Bridge existente en tu juego.
 
 	Autor: Claude AI
 	Fecha: 2025-11-22
 
 	INSTALACIÓN:
 	1. Coloca este script en StarterPlayer > StarterPlayerScripts
-	2. Crea un Folder en Workspace llamado "GlassRow"
-	3. Dentro del folder, crea partes llamadas Panel1, Panel2, Panel3, etc.
+	2. Crea un Folder en Workspace llamado "SingleRowGlass"
+	3. Dentro del folder, crea partes llamadas SinglePanel1, SinglePanel2, SinglePanel3, etc.
 	4. Asegúrate de que las partes tengan CanCollide = true inicialmente
 
 	FUNCIONAMIENTO:
@@ -18,6 +21,12 @@
 	- Cada panel reduce 0.1 segundos respecto al anterior
 	- La caída es solo visual del lado del cliente
 	- Los paneles reaparecen después de 15 segundos
+
+	DIFERENCIAS CON GLASS BRIDGE:
+	- Este sistema es para una sola fila (no es un puente de dos columnas)
+	- Cada panel tiene un tiempo de caída diferente
+	- No requiere ModuleScripts ni RemoteEvents
+	- Completamente independiente y aislado
 ]]
 
 local Players = game:GetService("Players")
@@ -28,8 +37,8 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Configuración
-local GLASS_FOLDER_NAME = "GlassRow"
+-- Configuración - NOMBRES ÚNICOS PARA NO CHOCAR CON GLASS BRIDGE
+local GLASS_FOLDER_NAME = "SingleRowGlass" -- ⚠️ CAMBIADO de "GlassRow"
 local BASE_FALL_TIME = 5.0 -- Tiempo de caída del primer panel
 local TIME_REDUCTION = 0.1 -- Reducción de tiempo por cada panel
 local RESPAWN_TIME = 15 -- Tiempo en segundos para que el panel reaparezca
@@ -237,7 +246,7 @@ local function setupPanels()
 	-- Obtener todos los paneles y ordenarlos por número
 	local panels = {}
 	for _, child in ipairs(glassFolder:GetChildren()) do
-		if child:IsA("BasePart") and string.match(child.Name, "Panel%d+") then
+		if child:IsA("BasePart") and string.match(child.Name, "SinglePanel%d+") then
 			table.insert(panels, child)
 		end
 	end

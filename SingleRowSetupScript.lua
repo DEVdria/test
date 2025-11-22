@@ -1,6 +1,9 @@
 --[[
-	Panel Setup Script
-	Script para crear automáticamente paneles de cristal
+	Single Row Glass Panel Setup Script
+	Script para crear automáticamente paneles de cristal de una sola fila
+
+	⚠️ IMPORTANTE: Este sistema es INDEPENDIENTE del Glass Bridge
+	No interfiere con el sistema de Glass Bridge existente en tu juego.
 
 	INSTRUCCIONES:
 	1. Copia este script en ServerScriptService (o pégalo en la Command Bar)
@@ -38,7 +41,7 @@ local CONFIG = {
 	CAN_COLLIDE = true, -- Los paneles deben tener colisión
 
 	-- Configuración del folder
-	FOLDER_NAME = "GlassRow", -- Nombre del folder en Workspace
+	FOLDER_NAME = "SingleRowGlass", -- ⚠️ CAMBIADO de "GlassRow" - Nombre del folder en Workspace
 }
 
 -- ========================================
@@ -75,7 +78,7 @@ local function createPanel(index, parent)
 	local panel = Instance.new("Part")
 
 	-- Configuración básica
-	panel.Name = "Panel" .. index
+	panel.Name = "SinglePanel" .. index -- ⚠️ CAMBIADO de "Panel" a "SinglePanel"
 	panel.Size = CONFIG.PANEL_SIZE
 	panel.Position = calculatePosition(index)
 

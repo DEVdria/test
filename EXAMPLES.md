@@ -1,6 +1,12 @@
-# Ejemplos de Configuración - Glass Panel System
+# Ejemplos de Configuración - Single Row Glass Panel System
 
-Este documento contiene ejemplos de diferentes configuraciones y variaciones del sistema de paneles de cristal.
+Este documento contiene ejemplos de diferentes configuraciones y variaciones del sistema de paneles de cristal de una sola fila.
+
+## ⚠️ IMPORTANTE
+
+Este sistema es **completamente independiente** del Glass Bridge. Todos los ejemplos usan:
+- Folder: `SingleRowGlass` (NO `GlassBridge`)
+- Paneles: `SinglePanel1`, `SinglePanel2`, etc. (NO `Panel1`, `Panel2`)
 
 ## 📚 Tabla de Contenidos
 
@@ -19,13 +25,14 @@ Este documento contiene ejemplos de diferentes configuraciones y variaciones del
 Configuración para un puente corto ideal para principiantes:
 
 ```lua
--- En PanelSetupScript.lua
+-- En SingleRowSetupScript.lua
 local CONFIG = {
     NUM_PANELS = 10,
     PANEL_SIZE = Vector3.new(4, 0.5, 4),
     START_POSITION = Vector3.new(0, 5, 0),
     SPACING = 5,
     DIRECTION = "Z",
+    FOLDER_NAME = "SingleRowGlass", -- ⚠️ Nombre único
 }
 ```
 
@@ -60,11 +67,11 @@ local CONFIG = {
 Mayor dificultad al reducir el tamaño de los paneles:
 
 ```lua
--- Ajustar en GlassPanelSystem.lua
+-- Ajustar en SingleRowGlassSystem.lua
 local BASE_FALL_TIME = 4.0 -- Tiempo más corto
 local TIME_REDUCTION = 0.15 -- Reducción más agresiva
 
--- En PanelSetupScript.lua
+-- En SingleRowSetupScript.lua
 local CONFIG = {
     NUM_PANELS = 15,
     PANEL_SIZE = Vector3.new(3, 0.5, 3), -- Paneles más pequeños
@@ -103,6 +110,7 @@ end
 Para crear un puente con forma de arco:
 
 ```lua
+-- Modificar en SingleRowSetupScript.lua
 local function calculatePosition(index)
     local offset = (index - 1) * CONFIG.SPACING
     local angle = math.rad(offset * 5) -- Ángulo de curvatura
@@ -123,7 +131,8 @@ end
 ### Modo Fácil
 
 ```lua
--- En GlassPanelSystem.lua
+-- En SingleRowGlassSystem.lua
+local GLASS_FOLDER_NAME = "SingleRowGlass" -- ⚠️ No cambiar este nombre
 local BASE_FALL_TIME = 7.0 -- Mucho tiempo
 local TIME_REDUCTION = 0.05 -- Reducción lenta
 local RESPAWN_TIME = 10 -- Respawn más rápido
@@ -253,10 +262,10 @@ end
 
 ### Script de Testing - Mostrar Tiempos
 
-Agregar esto al LocalScript para ver los tiempos en pantalla:
+Agregar esto al LocalScript (SingleRowGlassSystem.lua) para ver los tiempos en pantalla:
 
 ```lua
--- Crear GUI para mostrar información (agregar al final del LocalScript)
+-- Crear GUI para mostrar información (agregar al final de SingleRowGlassSystem.lua)
 local function createDebugGUI()
     local player = Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
@@ -321,7 +330,7 @@ end)
 Útil para probar rápidamente:
 
 ```lua
--- Agregar al LocalScript
+-- Agregar a SingleRowGlassSystem.lua
 local UserInputService = game:GetService("UserInputService")
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -332,7 +341,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if humanoidRootPart then
             local glassFolder = workspace:FindFirstChild(GLASS_FOLDER_NAME)
             if glassFolder then
-                local firstPanel = glassFolder:FindFirstChild("Panel1")
+                local firstPanel = glassFolder:FindFirstChild("SinglePanel1") -- ⚠️ Nombre correcto
                 if firstPanel then
                     humanoidRootPart.CFrame = firstPanel.CFrame + Vector3.new(0, 5, 0)
                     print("Teleportado al inicio")
