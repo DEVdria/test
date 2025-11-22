@@ -213,16 +213,7 @@ local function isPlayerOnPanel(panel, character)
 		return false
 	end
 
-	local panelTop = panel.Position.Y + (panel.Size.Y / 2)
-	local playerBottom = humanoidRootPart.Position.Y - (humanoidRootPart.Size.Y / 2)
-
-	-- Verificar altura (debe estar pisando el panel)
-	local heightDiff = math.abs(playerBottom - panelTop)
-	if heightDiff > 0.5 then
-		return false
-	end
-
-	-- Verificar área XZ (debe estar dentro del panel)
+	-- Verificar primero el área XZ (horizontal)
 	local panelX = panel.Position.X
 	local panelZ = panel.Position.Z
 	local panelSizeX = panel.Size.X / 2
@@ -231,8 +222,21 @@ local function isPlayerOnPanel(panel, character)
 	local playerX = humanoidRootPart.Position.X
 	local playerZ = humanoidRootPart.Position.Z
 
-	if playerX >= (panelX - panelSizeX) and playerX <= (panelX + panelSizeX) and
-	   playerZ >= (panelZ - panelSizeZ) and playerZ <= (panelZ + panelSizeZ) then
+	-- El jugador debe estar dentro del área horizontal del panel
+	local inXRange = playerX >= (panelX - panelSizeX) and playerX <= (panelX + panelSizeX)
+	local inZRange = playerZ >= (panelZ - panelSizeZ) and playerZ <= (panelZ + panelSizeZ)
+
+	if not (inXRange and inZRange) then
+		return false
+	end
+
+	-- Ahora verificar altura (más tolerante)
+	local panelTop = panel.Position.Y + (panel.Size.Y / 2)
+	local playerPos = humanoidRootPart.Position.Y
+
+	-- El jugador debe estar cerca de la altura del panel (más o menos 3 studs arriba)
+	local heightDiff = playerPos - panelTop
+	if heightDiff >= -1 and heightDiff <= 4 then
 		return true
 	end
 
