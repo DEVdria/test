@@ -23,7 +23,7 @@ local CONFIG = {
 	-- Paneles
 	FOLDER_NAME = "TimedGlassRow",      -- Nombre del folder
 	PANEL_PREFIX = "TimedPanel",        -- Prefijo de los paneles
-	NUM_PANELS = 15,                    -- Cuántos paneles crear
+	NUM_PANELS = 42,                    -- Cuántos paneles crear
 
 	-- Tamaño y posición
 	PANEL_SIZE = Vector3.new(5, 0.5, 5), -- Tamaño de cada panel

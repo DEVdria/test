@@ -282,8 +282,38 @@ local function initializeSystem()
 		return
 	end
 
-	-- Esperar un poco más para asegurar que todos los paneles se repliquen
-	task.wait(0.5)
+	-- Esperar hasta que todos los paneles esperados se hayan replicado
+	local expectedPanelCount = 42  -- Número de paneles que esperamos
+	local maxWaitTime = 10  -- Máximo 10 segundos de espera
+	local startWait = tick()
+
+	print(string.format("⏳ Esperando a que se repliquen los %d paneles...", expectedPanelCount))
+
+	while true do
+		local currentPanels = {}
+		for _, child in ipairs(folder:GetChildren()) do
+			if child:IsA("BasePart") and string.match(child.Name, CONFIG.PANEL_PREFIX .. "%d+") then
+				table.insert(currentPanels, child)
+			end
+		end
+
+		print(string.format("📊 Paneles replicados: %d/%d", #currentPanels, expectedPanelCount))
+
+		-- Si ya tenemos todos los paneles, salir del loop
+		if #currentPanels >= expectedPanelCount then
+			print("✅ Todos los paneles han sido replicados")
+			break
+		end
+
+		-- Si ya pasó el tiempo máximo de espera, continuar con los que tengamos
+		if tick() - startWait > maxWaitTime then
+			warn(string.format("⚠️ Solo se replicaron %d de %d paneles después de %d segundos",
+				#currentPanels, expectedPanelCount, maxWaitTime))
+			break
+		end
+
+		task.wait(0.1)  -- Esperar un poquito antes de revisar de nuevo
+	end
 
 	-- Buscar todos los paneles
 	local panels = {}
