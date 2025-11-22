@@ -31,17 +31,49 @@ local CONFIG = {
 	SPAWN_INTERVAL = 3,                 -- Segundos entre cada obstáculo
 	MAX_OBSTACLES = 10,                 -- Máximo de obstáculos simultáneos
 
-	-- Obstáculo
-	OBSTACLE_SIZE = Vector3.new(4, 4, 4), -- Tamaño del obstáculo
-	OBSTACLE_SHAPE = "Ball",            -- "Ball" o "Block"
-	OBSTACLE_COLOR = Color3.fromRGB(255, 0, 0), -- Rojo
-	OBSTACLE_MATERIAL = Enum.Material.Neon,
-	HEIGHT_ABOVE_PANELS = 2,            -- Studs arriba de los paneles
-
-	-- Movimiento
+	-- Movimiento general
 	MOVEMENT_DURATION = 15,             -- Segundos para recorrer toda la fila
 	EASING_STYLE = Enum.EasingStyle.Linear,
 	EASING_DIRECTION = Enum.EasingDirection.InOut,
+	HEIGHT_ABOVE_PANELS = 2,            -- Studs arriba de los paneles
+
+	-- TIPOS DE OBSTÁCULOS
+	OBSTACLE_TYPES = {
+		-- Tipo 1: Esfera que gira de izquierda a derecha
+		SPINNING_BALL = {
+			name = "Esfera Giratoria",
+			shape = "Ball",
+			size = Vector3.new(4, 4, 4),
+			color = Color3.fromRGB(255, 0, 0),     -- Rojo
+			material = Enum.Material.Neon,
+			heightOffset = 2,                      -- Altura sobre paneles
+			lateralMovement = true,                -- Se mueve de lado a lado
+			lateralDistance = 8,                   -- Distancia lateral (studs)
+			lateralSpeed = 2,                      -- Segundos para ir de un lado al otro
+		},
+
+		-- Tipo 2: Block bajo que se puede saltar
+		LOW_BLOCK = {
+			name = "Muro Bajo",
+			shape = "Block",
+			size = Vector3.new(6, 3, 1),           -- Ancho, Alto, Profundo
+			color = Color3.fromRGB(255, 100, 0),   -- Naranja
+			material = Enum.Material.Neon,
+			heightOffset = 1.5,                    -- Más cerca del suelo
+			lateralMovement = false,
+		},
+
+		-- Tipo 3: Block alto que NO se puede saltar
+		HIGH_BLOCK = {
+			name = "Muro Alto",
+			shape = "Block",
+			size = Vector3.new(6, 8, 1),           -- Muy alto
+			color = Color3.fromRGB(150, 0, 255),   -- Morado
+			material = Enum.Material.Neon,
+			heightOffset = 4,                      -- Más alto
+			lateralMovement = false,
+		},
+	},
 }
 
 -- ═══════════════════════════════════════════════════════════
@@ -85,24 +117,35 @@ local function getPanelPositions()
 	return firstPanel.Position, lastPanel.Position
 end
 
--- Crear obstáculo
-local function createObstacle()
-	local obstacle
+-- Seleccionar tipo de obstáculo aleatorio
+local function getRandomObstacleType()
+	local types = {}
+	for _, obstacleType in pairs(CONFIG.OBSTACLE_TYPES) do
+		table.insert(types, obstacleType)
+	end
 
-	if CONFIG.OBSTACLE_SHAPE == "Ball" then
-		obstacle = Instance.new("Part")
+	local randomIndex = math.random(1, #types)
+	return types[randomIndex]
+end
+
+-- Crear obstáculo según el tipo
+local function createObstacle(obstacleType)
+	local obstacle = Instance.new("Part")
+
+	-- Configurar forma
+	if obstacleType.shape == "Ball" then
 		obstacle.Shape = Enum.PartType.Ball
 	else
-		obstacle = Instance.new("Part")
 		obstacle.Shape = Enum.PartType.Block
 	end
 
-	obstacle.Size = CONFIG.OBSTACLE_SIZE
-	obstacle.Material = CONFIG.OBSTACLE_MATERIAL
-	obstacle.Color = CONFIG.OBSTACLE_COLOR
+	-- Configurar propiedades
+	obstacle.Size = obstacleType.size
+	obstacle.Material = obstacleType.material
+	obstacle.Color = obstacleType.color
 	obstacle.CanCollide = false  -- No bloquea físicamente
 	obstacle.Anchored = true
-	obstacle.Name = "MovingObstacle"
+	obstacle.Name = "MovingObstacle_" .. obstacleType.name
 
 	return obstacle
 end
@@ -154,11 +197,14 @@ local function spawnObstacle()
 		return
 	end
 
+	-- Seleccionar tipo aleatorio
+	local obstacleType = getRandomObstacleType()
+
 	-- Crear obstáculo
-	local obstacle = createObstacle()
+	local obstacle = createObstacle(obstacleType)
 
 	-- Posición inicial (al final, arriba de los paneles)
-	local startPos = lastPos + Vector3.new(0, CONFIG.HEIGHT_ABOVE_PANELS, 0)
+	local startPos = lastPos + Vector3.new(0, obstacleType.heightOffset, 0)
 	obstacle.Position = startPos
 
 	-- Parent y configurar
@@ -168,12 +214,12 @@ local function spawnObstacle()
 	-- Agregar a lista activa
 	table.insert(activeObstacles, obstacle)
 
-	print(string.format("🔴 Obstáculo spawneado | Total activos: %d", #activeObstacles))
+	print(string.format("🔴 %s spawneado | Total activos: %d", obstacleType.name, #activeObstacles))
 
 	-- Posición final (al principio)
-	local endPos = firstPos + Vector3.new(0, CONFIG.HEIGHT_ABOVE_PANELS, 0)
+	local endPos = firstPos + Vector3.new(0, obstacleType.heightOffset, 0)
 
-	-- Crear tween de movimiento
+	-- Crear tween de movimiento principal (hacia adelante)
 	local tweenInfo = TweenInfo.new(
 		CONFIG.MOVEMENT_DURATION,
 		CONFIG.EASING_STYLE,
@@ -184,13 +230,46 @@ local function spawnObstacle()
 		Position = endPos
 	})
 
-	-- Cuando termine el tween, destruir el obstáculo
+	-- Si tiene movimiento lateral (esfera giratoria)
+	if obstacleType.lateralMovement then
+		-- Crear movimiento de lado a lado
+		task.spawn(function()
+			local direction = 1  -- 1 = derecha, -1 = izquierda
+			local lateralOffset = 0
+
+			while obstacle and obstacle.Parent do
+				-- Alternar dirección
+				direction = direction * -1
+				lateralOffset = direction * obstacleType.lateralDistance
+
+				-- Calcular nueva posición (mantener Y, cambiar X)
+				local currentPos = obstacle.Position
+				local targetX = currentPos.X + lateralOffset
+
+				-- Crear tween lateral
+				local lateralTweenInfo = TweenInfo.new(
+					obstacleType.lateralSpeed,
+					Enum.EasingStyle.Sine,
+					Enum.EasingDirection.InOut
+				)
+
+				local lateralTween = TweenService:Create(obstacle, lateralTweenInfo, {
+					Position = Vector3.new(targetX, currentPos.Y, currentPos.Z)
+				})
+
+				lateralTween:Play()
+				lateralTween.Completed:Wait()
+			end
+		end)
+	end
+
+	-- Cuando termine el tween principal, destruir el obstáculo
 	tween.Completed:Connect(function()
-		print("🔴 Obstáculo llegó al final y será destruido")
+		print(string.format("🔴 %s llegó al final y será destruido", obstacleType.name))
 		cleanupObstacle(obstacle)
 	end)
 
-	-- Iniciar movimiento
+	-- Iniciar movimiento principal
 	tween:Play()
 end
 
@@ -251,6 +330,15 @@ local function initialize()
 	print("   Intervalo de spawn:", CONFIG.SPAWN_INTERVAL, "segundos")
 	print("   Duración de movimiento:", CONFIG.MOVEMENT_DURATION, "segundos")
 	print("   Máximo simultáneo:", CONFIG.MAX_OBSTACLES)
+	print("───────────────────────────────────────────────────────")
+	print("🎯 TIPOS DE OBSTÁCULOS:")
+	for typeName, obstacleType in pairs(CONFIG.OBSTACLE_TYPES) do
+		if obstacleType.lateralMovement then
+			print(string.format("   🔴 %s - Se mueve lateralmente", obstacleType.name))
+		else
+			print(string.format("   🔴 %s - Tamaño: %s", obstacleType.name, tostring(obstacleType.size)))
+		end
+	end
 	print("───────────────────────────────────────────────────────")
 	print("✅ SISTEMA INICIADO - Spawneando obstáculos...")
 	print("═══════════════════════════════════════════════════════")
