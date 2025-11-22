@@ -199,28 +199,44 @@ local function activatePanel(panel, panelNumber, fallTime)
 end
 
 -- ═══════════════════════════════════════════════════════════
--- CONFIGURACIÓN DE EVENTOS TOUCHED
+-- DETECCIÓN DE POSICIÓN DEL JUGADOR
 -- ═══════════════════════════════════════════════════════════
 
-local function setupPanelTouched(panel, panelNumber, fallTime)
-	panel.Touched:Connect(function(hit)
-		-- Verificar si es el jugador local
-		if hit.Parent and hit.Parent:FindFirstChild("Humanoid") then
-			local character = hit.Parent
-			local touchedPlayer = Players:GetPlayerFromCharacter(character)
+-- Verificar si el jugador está sobre un panel
+local function isPlayerOnPanel(panel, character)
+	if not character or not character.Parent then
+		return false
+	end
 
-			-- Solo procesar si es el jugador local
-			if touchedPlayer == player then
-				print(string.format(
-					"👟 PISASTE PANEL %d | Tiempo: %.1fs",
-					panelNumber,
-					fallTime
-				))
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then
+		return false
+	end
 
-				activatePanel(panel, panelNumber, fallTime)
-			end
-		end
-	end)
+	local panelTop = panel.Position.Y + (panel.Size.Y / 2)
+	local playerBottom = humanoidRootPart.Position.Y - (humanoidRootPart.Size.Y / 2)
+
+	-- Verificar altura (debe estar pisando el panel)
+	local heightDiff = math.abs(playerBottom - panelTop)
+	if heightDiff > 0.5 then
+		return false
+	end
+
+	-- Verificar área XZ (debe estar dentro del panel)
+	local panelX = panel.Position.X
+	local panelZ = panel.Position.Z
+	local panelSizeX = panel.Size.X / 2
+	local panelSizeZ = panel.Size.Z / 2
+
+	local playerX = humanoidRootPart.Position.X
+	local playerZ = humanoidRootPart.Position.Z
+
+	if playerX >= (panelX - panelSizeX) and playerX <= (panelX + panelSizeX) and
+	   playerZ >= (panelZ - panelSizeZ) and playerZ <= (panelZ + panelSizeZ) then
+		return true
+	end
+
+	return false
 end
 
 -- ═══════════════════════════════════════════════════════════
@@ -289,11 +305,9 @@ local function initializeSystem()
 			fallTime = fallTime,
 			originalCFrame = panel.CFrame,
 			isActive = false,
-			startTime = nil
+			startTime = nil,
+			wasPlayerOn = false  -- Para detectar cuando el jugador acaba de pisar
 		}
-
-		-- Configurar evento Touched
-		setupPanelTouched(panel, panelNumber, fallTime)
 
 		print(string.format(
 			"📦 %s | Tiempo de caída: %.1fs",
@@ -305,10 +319,55 @@ local function initializeSystem()
 	print("───────────────────────────────────────────────────────")
 	print("✅ SISTEMA LISTO - Camina sobre los paneles")
 	print("═══════════════════════════════════════════════════════")
+
+	return panels  -- Retornar la lista de paneles
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- LOOP DE DETECCIÓN CONTINUA
+-- ═══════════════════════════════════════════════════════════
+
+local function startDetectionLoop(panels)
+	local RunService = game:GetService("RunService")
+
+	-- Actualizar cada frame
+	RunService.Heartbeat:Connect(function()
+		local character = player.Character
+		if not character then return end
+
+		-- Verificar cada panel
+		for _, panel in ipairs(panels) do
+			if panel and panel.Parent then
+				local data = panelData[panel]
+				if data then
+					local isOn = isPlayerOnPanel(panel, character)
+
+					-- Si el jugador acaba de pisar el panel
+					if isOn and not data.wasPlayerOn then
+						print(string.format(
+							"👟 PISASTE PANEL %d | Tiempo: %.1fs",
+							data.number,
+							data.fallTime
+						))
+
+						activatePanel(panel, data.number, data.fallTime)
+					end
+
+					-- Actualizar estado
+					data.wasPlayerOn = isOn
+				end
+			end
+		end
+	end)
 end
 
 -- ═══════════════════════════════════════════════════════════
 -- EJECUTAR SISTEMA
 -- ═══════════════════════════════════════════════════════════
 
-initializeSystem()
+local panels = initializeSystem()
+
+if panels then
+	startDetectionLoop(panels)
+	print("🔄 Sistema de detección continua activado")
+end
