@@ -39,20 +39,7 @@ local CONFIG = {
 
 	-- TIPOS DE OBSTÁCULOS
 	OBSTACLE_TYPES = {
-		-- Tipo 1: Esfera que gira de izquierda a derecha
-		SPINNING_BALL = {
-			name = "Esfera Giratoria",
-			shape = "Ball",
-			size = Vector3.new(4, 4, 4),
-			color = Color3.fromRGB(255, 0, 0),     -- Rojo
-			material = Enum.Material.Neon,
-			heightOffset = 2,                      -- Altura sobre paneles
-			lateralMovement = true,                -- Se mueve de lado a lado
-			lateralDistance = 8,                   -- Distancia lateral (studs)
-			lateralSpeed = 2,                      -- Segundos para ir de un lado al otro
-		},
-
-		-- Tipo 2: Block bajo que se puede saltar
+		-- Tipo 1: Block bajo que se puede saltar
 		LOW_BLOCK = {
 			name = "Muro Bajo",
 			shape = "Block",
@@ -63,7 +50,7 @@ local CONFIG = {
 			lateralMovement = false,
 		},
 
-		-- Tipo 3: Block alto que NO se puede saltar
+		-- Tipo 2: Block alto que NO se puede saltar
 		HIGH_BLOCK = {
 			name = "Muro Alto",
 			shape = "Block",
@@ -130,54 +117,16 @@ end
 
 -- Crear obstáculo según el tipo
 local function createObstacle(obstacleType)
-	-- Si tiene movimiento lateral, crear un modelo contenedor
-	if obstacleType.lateralMovement then
-		-- Crear modelo contenedor
-		local container = Instance.new("Model")
-		container.Name = "ObstacleContainer_" .. obstacleType.name
+	local obstacle = Instance.new("Part")
+	obstacle.Shape = Enum.PartType.Block
+	obstacle.Size = obstacleType.size
+	obstacle.Material = obstacleType.material
+	obstacle.Color = obstacleType.color
+	obstacle.CanCollide = false
+	obstacle.Anchored = true
+	obstacle.Name = "MovingObstacle_" .. obstacleType.name
 
-		-- Crear la parte del obstáculo
-		local obstacle = Instance.new("Part")
-		obstacle.Shape = Enum.PartType.Ball
-		obstacle.Size = obstacleType.size
-		obstacle.Material = obstacleType.material
-		obstacle.Color = obstacleType.color
-		obstacle.CanCollide = false
-		obstacle.Anchored = false  -- No anclado dentro del modelo
-		obstacle.Name = "Obstacle"
-		obstacle.Parent = container
-
-		-- Crear PrimaryPart invisible para controlar el modelo
-		local primaryPart = Instance.new("Part")
-		primaryPart.Size = Vector3.new(0.1, 0.1, 0.1)
-		primaryPart.Transparency = 1
-		primaryPart.CanCollide = false
-		primaryPart.Anchored = true
-		primaryPart.Name = "Primary"
-		primaryPart.Parent = container
-
-		container.PrimaryPart = primaryPart
-
-		-- Crear WeldConstraint para mantener el obstáculo relativo al primaryPart
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = primaryPart
-		weld.Part1 = obstacle
-		weld.Parent = obstacle
-
-		return container, obstacle  -- Retornar ambos
-	else
-		-- Para obstáculos sin movimiento lateral, crear normalmente
-		local obstacle = Instance.new("Part")
-		obstacle.Shape = Enum.PartType.Block
-		obstacle.Size = obstacleType.size
-		obstacle.Material = obstacleType.material
-		obstacle.Color = obstacleType.color
-		obstacle.CanCollide = false
-		obstacle.Anchored = true
-		obstacle.Name = "MovingObstacle_" .. obstacleType.name
-
-		return obstacle, obstacle  -- Retornar el mismo para ambos
-	end
+	return obstacle
 end
 
 -- Matar jugador al tocar el obstáculo
@@ -230,96 +179,44 @@ local function spawnObstacle()
 	-- Seleccionar tipo aleatorio
 	local obstacleType = getRandomObstacleType()
 
-	-- Crear obstáculo (retorna container y obstaclePart)
-	local container, obstaclePart = createObstacle(obstacleType)
+	-- Crear obstáculo
+	local obstacle = createObstacle(obstacleType)
 
 	-- Posición inicial (al final, arriba de los paneles)
 	local startPos = lastPos + Vector3.new(0, obstacleType.heightOffset, 0)
-
-	-- Configurar posición según si es un modelo o una parte
-	if obstacleType.lateralMovement then
-		-- Es un modelo, posicionar el PrimaryPart
-		container.PrimaryPart.Position = startPos
-	else
-		-- Es una parte simple
-		container.Position = startPos
-	end
+	obstacle.Position = startPos
 
 	-- Parent y configurar
-	container.Parent = obstaclesFolder
-	setupTouchKill(obstaclePart)  -- El evento Touched va en la parte visible
+	obstacle.Parent = obstaclesFolder
+	setupTouchKill(obstacle)
 
 	-- Agregar a lista activa
-	table.insert(activeObstacles, container)
+	table.insert(activeObstacles, obstacle)
 
 	print(string.format("🔴 %s spawneado | Total activos: %d", obstacleType.name, #activeObstacles))
 
 	-- Posición final (al principio)
 	local endPos = firstPos + Vector3.new(0, obstacleType.heightOffset, 0)
 
-	-- Crear tween de movimiento principal (hacia adelante)
+	-- Crear tween de movimiento
 	local tweenInfo = TweenInfo.new(
 		CONFIG.MOVEMENT_DURATION,
 		CONFIG.EASING_STYLE,
 		CONFIG.EASING_DIRECTION
 	)
 
-	-- El tween principal mueve el container (o la parte si no es lateral)
-	local mainTween
-	if obstacleType.lateralMovement then
-		mainTween = TweenService:Create(container.PrimaryPart, tweenInfo, {
-			Position = endPos
-		})
-	else
-		mainTween = TweenService:Create(container, tweenInfo, {
-			Position = endPos
-		})
-	end
+	local tween = TweenService:Create(obstacle, tweenInfo, {
+		Position = endPos
+	})
 
-	-- Si tiene movimiento lateral (esfera giratoria)
-	if obstacleType.lateralMovement then
-		-- Crear movimiento de lado a lado DENTRO del modelo
-		task.spawn(function()
-			local direction = 1  -- 1 = derecha, -1 = izquierda
-
-			while container and container.Parent do
-				-- Alternar dirección
-				direction = direction * -1
-				local lateralOffset = direction * obstacleType.lateralDistance
-
-				-- Mover la PARTE del obstáculo relativamente al contenedor
-				local lateralTweenInfo = TweenInfo.new(
-					obstacleType.lateralSpeed,
-					Enum.EasingStyle.Sine,
-					Enum.EasingDirection.InOut
-				)
-
-				-- Mover en el eje X (lateral)
-				local lateralTween = TweenService:Create(obstaclePart, lateralTweenInfo, {
-					CFrame = CFrame.new(lateralOffset, 0, 0)
-				})
-
-				lateralTween:Play()
-
-				local success = pcall(function()
-					lateralTween.Completed:Wait()
-				end)
-
-				if not success then
-					break
-				end
-			end
-		end)
-	end
-
-	-- Cuando termine el tween principal, destruir el obstáculo
-	mainTween.Completed:Connect(function()
+	-- Cuando termine el tween, destruir el obstáculo
+	tween.Completed:Connect(function()
 		print(string.format("🔴 %s llegó al final y será destruido", obstacleType.name))
-		cleanupObstacle(container)
+		cleanupObstacle(obstacle)
 	end)
 
-	-- Iniciar movimiento principal
-	mainTween:Play()
+	-- Iniciar movimiento
+	tween:Play()
 end
 
 -- Loop de spawn continuo
@@ -382,11 +279,7 @@ local function initialize()
 	print("───────────────────────────────────────────────────────")
 	print("🎯 TIPOS DE OBSTÁCULOS:")
 	for typeName, obstacleType in pairs(CONFIG.OBSTACLE_TYPES) do
-		if obstacleType.lateralMovement then
-			print(string.format("   🔴 %s - Se mueve lateralmente", obstacleType.name))
-		else
-			print(string.format("   🔴 %s - Tamaño: %s", obstacleType.name, tostring(obstacleType.size)))
-		end
+		print(string.format("   🔴 %s - Tamaño: %s", obstacleType.name, tostring(obstacleType.size)))
 	end
 	print("───────────────────────────────────────────────────────")
 	print("✅ SISTEMA INICIADO - Spawneando obstáculos...")
