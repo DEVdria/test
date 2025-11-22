@@ -38,6 +38,16 @@ local CONFIG = {
 	TRANSPARENCY = 0.3,
 	COLOR = Color3.fromRGB(100, 200, 255), -- Azul claro
 	REFLECTANCE = 0.4,
+
+	-- Decals (3 texturas que se aplicarán a cada panel)
+	-- ⚠️ IMPORTANTE: Cambia estos IDs por los de tus texturas
+	DECAL_TEXTURES = {
+		"rbxassetid://11673555479",  -- Textura 1
+		"rbxassetid://8257933359",   -- Textura 2
+		"rbxassetid://6372755229",   -- Textura 3
+	},
+	DECAL_TRANSPARENCY = 0.5,
+	DECAL_COLOR = Color3.fromRGB(100, 200, 255), -- Color de los decals
 }
 
 -- ═══════════════════════════════════════════════════════════
@@ -59,6 +69,68 @@ local function calculatePosition(index)
 		warn("⚠️ Dirección no válida, usando Z por defecto")
 		return pos + Vector3.new(0, 0, offset)
 	end
+end
+
+-- Crear decals en el panel
+local function createDecals(panel)
+	-- Crear 3 decals en la parte superior
+	for i, textureId in ipairs(CONFIG.DECAL_TEXTURES) do
+		local decalTop = Instance.new("Decal")
+		decalTop.Name = "GlassDecalTop" .. i
+		decalTop.Face = Enum.NormalId.Top
+		decalTop.Texture = textureId
+		decalTop.Transparency = CONFIG.DECAL_TRANSPARENCY
+		decalTop.Color3 = CONFIG.DECAL_COLOR
+		decalTop.Parent = panel
+	end
+
+	-- Crear 3 decals en la parte inferior
+	for i, textureId in ipairs(CONFIG.DECAL_TEXTURES) do
+		local decalBottom = Instance.new("Decal")
+		decalBottom.Name = "GlassDecalBottom" .. i
+		decalBottom.Face = Enum.NormalId.Bottom
+		decalBottom.Texture = textureId
+		decalBottom.Transparency = CONFIG.DECAL_TRANSPARENCY
+		decalBottom.Color3 = CONFIG.DECAL_COLOR
+		decalBottom.Parent = panel
+	end
+end
+
+-- Crear contador de tiempo encima del panel
+local function createTimerDisplay(panel, panelNumber)
+	-- Calcular tiempo de caída
+	local fallTime = 5.0 - ((panelNumber - 1) * 0.1)
+
+	-- Crear BillboardGui
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "TimerDisplay"
+	billboard.Size = UDim2.new(4, 0, 2, 0)
+	billboard.StudsOffset = Vector3.new(0, 3, 0)  -- Encima del panel
+	billboard.AlwaysOnTop = true
+	billboard.Parent = panel
+
+	-- Crear TextLabel
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Name = "TimerText"
+	textLabel.Size = UDim2.new(1, 0, 1, 0)
+	textLabel.BackgroundTransparency = 0.3
+	textLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	textLabel.Text = string.format("%.1f", fallTime)
+	textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	textLabel.TextScaled = true
+	textLabel.Font = Enum.Font.GothamBold
+	textLabel.Parent = billboard
+
+	-- Agregar esquinas redondeadas
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0.2, 0)
+	corner.Parent = textLabel
+
+	-- Agregar stroke para mejor visibilidad
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 3
+	stroke.Color = Color3.fromRGB(0, 0, 0)
+	stroke.Parent = textLabel
 end
 
 -- Crear un panel individual
@@ -86,6 +158,12 @@ local function createPanel(index, parentFolder)
 
 	-- Parent
 	panel.Parent = parentFolder
+
+	-- Agregar decals
+	createDecals(panel)
+
+	-- Agregar display de tiempo
+	createTimerDisplay(panel, index)
 
 	return panel
 end

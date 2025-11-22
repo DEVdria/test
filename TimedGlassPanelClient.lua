@@ -113,10 +113,43 @@ local function activatePanel(panel, panelNumber, fallTime)
 		fallTime
 	))
 
-	-- Iniciar countdown
+	-- Obtener el TextLabel del timer
+	local timerDisplay = panel:FindFirstChild("TimerDisplay")
+	local timerText = timerDisplay and timerDisplay:FindFirstChild("TimerText")
+
+	-- Iniciar countdown con actualización del texto
 	task.spawn(function()
-		-- Esperar el tiempo de caída
-		task.wait(fallTime)
+		-- Actualizar el texto cada frame durante el countdown
+		local startTime = tick()
+		local endTime = startTime + fallTime
+
+		while tick() < endTime do
+			local remaining = endTime - tick()
+
+			if timerText then
+				timerText.Text = string.format("%.1f", remaining)
+
+				-- Cambiar color según el tiempo restante
+				if remaining <= 1 then
+					timerText.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- Rojo
+					timerText.TextColor3 = Color3.fromRGB(255, 255, 255)
+				elseif remaining <= 2 then
+					timerText.BackgroundColor3 = Color3.fromRGB(200, 100, 0) -- Naranja
+					timerText.TextColor3 = Color3.fromRGB(255, 255, 255)
+				elseif remaining <= 3 then
+					timerText.BackgroundColor3 = Color3.fromRGB(200, 200, 0) -- Amarillo
+					timerText.TextColor3 = Color3.fromRGB(0, 0, 0)
+				end
+			end
+
+			task.wait(0.05) -- Actualizar cada 0.05 segundos
+		end
+
+		-- Cuando llega a 0
+		if timerText then
+			timerText.Text = "💥"
+			timerText.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+		end
 
 		print(string.format("💥 PANEL %d CAYENDO", panelNumber))
 
@@ -127,6 +160,11 @@ local function activatePanel(panel, panelNumber, fallTime)
 		local fallTween = createFallTween(panel, data.originalCFrame)
 		fallTween:Play()
 		fallTween.Completed:Wait()
+
+		-- Ocultar el timer mientras respawnea
+		if timerDisplay then
+			timerDisplay.Enabled = false
+		end
 
 		print(string.format("⌛ PANEL %d respawnea en %d segundos", panelNumber, CONFIG.RESPAWN_TIME))
 
@@ -140,6 +178,17 @@ local function activatePanel(panel, panelNumber, fallTime)
 		local respawnTween = createRespawnTween(panel, data.originalCFrame)
 		respawnTween:Play()
 		respawnTween.Completed:Wait()
+
+		-- Restaurar el timer
+		if timerDisplay then
+			timerDisplay.Enabled = true
+		end
+
+		if timerText then
+			timerText.Text = string.format("%.1f", fallTime)
+			timerText.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			timerText.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
 
 		print(string.format("✅ PANEL %d RESPAWNEADO - Listo de nuevo", panelNumber))
 
