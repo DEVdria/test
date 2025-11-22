@@ -117,8 +117,9 @@ local function activatePanel(panel, panelNumber, fallTime)
 	local timerDisplay = panel:FindFirstChild("TimerDisplay")
 	local timerText = timerDisplay and timerDisplay:FindFirstChild("TimerText")
 
-	-- Iniciar countdown con actualización del texto
+	-- Iniciar countdown con actualización del texto (con protección de errores)
 	task.spawn(function()
+		local success, err = pcall(function()
 		-- Actualizar el texto cada frame durante el countdown
 		local startTime = tick()
 		local endTime = startTime + fallTime
@@ -195,6 +196,14 @@ local function activatePanel(panel, panelNumber, fallTime)
 		-- Resetear estado
 		data.isActive = false
 		data.startTime = nil
+		end)
+
+		if not success then
+			warn(string.format("❌ Error en PANEL %d: %s", panelNumber, tostring(err)))
+			-- Resetear estado en caso de error
+			data.isActive = false
+			data.startTime = nil
+		end
 	end)
 end
 
@@ -341,25 +350,32 @@ local function startDetectionLoop(panels)
 
 		-- Verificar cada panel
 		for _, panel in ipairs(panels) do
-			if panel and panel.Parent then
-				local data = panelData[panel]
-				if data then
-					local isOn = isPlayerOnPanel(panel, character)
+			-- Usar pcall para que errores no rompan el loop
+			local success, err = pcall(function()
+				if panel and panel.Parent then
+					local data = panelData[panel]
+					if data then
+						local isOn = isPlayerOnPanel(panel, character)
 
-					-- Si el jugador acaba de pisar el panel
-					if isOn and not data.wasPlayerOn then
-						print(string.format(
-							"👟 PISASTE PANEL %d | Tiempo: %.1fs",
-							data.number,
-							data.fallTime
-						))
+						-- Si el jugador acaba de pisar el panel
+						if isOn and not data.wasPlayerOn then
+							print(string.format(
+								"👟 PISASTE PANEL %d | Tiempo: %.1fs",
+								data.number,
+								data.fallTime
+							))
 
-						activatePanel(panel, data.number, data.fallTime)
+							activatePanel(panel, data.number, data.fallTime)
+						end
+
+						-- Actualizar estado
+						data.wasPlayerOn = isOn
 					end
-
-					-- Actualizar estado
-					data.wasPlayerOn = isOn
 				end
+			end)
+
+			if not success then
+				warn("⚠️ Error en detección de panel:", err)
 			end
 		end
 	end)
