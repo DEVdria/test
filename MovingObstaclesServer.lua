@@ -130,24 +130,54 @@ end
 
 -- Crear obstáculo según el tipo
 local function createObstacle(obstacleType)
-	local obstacle = Instance.new("Part")
+	-- Si tiene movimiento lateral, crear un modelo contenedor
+	if obstacleType.lateralMovement then
+		-- Crear modelo contenedor
+		local container = Instance.new("Model")
+		container.Name = "ObstacleContainer_" .. obstacleType.name
 
-	-- Configurar forma
-	if obstacleType.shape == "Ball" then
+		-- Crear la parte del obstáculo
+		local obstacle = Instance.new("Part")
 		obstacle.Shape = Enum.PartType.Ball
+		obstacle.Size = obstacleType.size
+		obstacle.Material = obstacleType.material
+		obstacle.Color = obstacleType.color
+		obstacle.CanCollide = false
+		obstacle.Anchored = false  -- No anclado dentro del modelo
+		obstacle.Name = "Obstacle"
+		obstacle.Parent = container
+
+		-- Crear PrimaryPart invisible para controlar el modelo
+		local primaryPart = Instance.new("Part")
+		primaryPart.Size = Vector3.new(0.1, 0.1, 0.1)
+		primaryPart.Transparency = 1
+		primaryPart.CanCollide = false
+		primaryPart.Anchored = true
+		primaryPart.Name = "Primary"
+		primaryPart.Parent = container
+
+		container.PrimaryPart = primaryPart
+
+		-- Crear WeldConstraint para mantener el obstáculo relativo al primaryPart
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = primaryPart
+		weld.Part1 = obstacle
+		weld.Parent = obstacle
+
+		return container, obstacle  -- Retornar ambos
 	else
+		-- Para obstáculos sin movimiento lateral, crear normalmente
+		local obstacle = Instance.new("Part")
 		obstacle.Shape = Enum.PartType.Block
+		obstacle.Size = obstacleType.size
+		obstacle.Material = obstacleType.material
+		obstacle.Color = obstacleType.color
+		obstacle.CanCollide = false
+		obstacle.Anchored = true
+		obstacle.Name = "MovingObstacle_" .. obstacleType.name
+
+		return obstacle, obstacle  -- Retornar el mismo para ambos
 	end
-
-	-- Configurar propiedades
-	obstacle.Size = obstacleType.size
-	obstacle.Material = obstacleType.material
-	obstacle.Color = obstacleType.color
-	obstacle.CanCollide = false  -- No bloquea físicamente
-	obstacle.Anchored = true
-	obstacle.Name = "MovingObstacle_" .. obstacleType.name
-
-	return obstacle
 end
 
 -- Matar jugador al tocar el obstáculo
@@ -200,19 +230,27 @@ local function spawnObstacle()
 	-- Seleccionar tipo aleatorio
 	local obstacleType = getRandomObstacleType()
 
-	-- Crear obstáculo
-	local obstacle = createObstacle(obstacleType)
+	-- Crear obstáculo (retorna container y obstaclePart)
+	local container, obstaclePart = createObstacle(obstacleType)
 
 	-- Posición inicial (al final, arriba de los paneles)
 	local startPos = lastPos + Vector3.new(0, obstacleType.heightOffset, 0)
-	obstacle.Position = startPos
+
+	-- Configurar posición según si es un modelo o una parte
+	if obstacleType.lateralMovement then
+		-- Es un modelo, posicionar el PrimaryPart
+		container.PrimaryPart.Position = startPos
+	else
+		-- Es una parte simple
+		container.Position = startPos
+	end
 
 	-- Parent y configurar
-	obstacle.Parent = obstaclesFolder
-	setupTouchKill(obstacle)
+	container.Parent = obstaclesFolder
+	setupTouchKill(obstaclePart)  -- El evento Touched va en la parte visible
 
 	-- Agregar a lista activa
-	table.insert(activeObstacles, obstacle)
+	table.insert(activeObstacles, container)
 
 	print(string.format("🔴 %s spawneado | Total activos: %d", obstacleType.name, #activeObstacles))
 
@@ -226,51 +264,62 @@ local function spawnObstacle()
 		CONFIG.EASING_DIRECTION
 	)
 
-	local tween = TweenService:Create(obstacle, tweenInfo, {
-		Position = endPos
-	})
+	-- El tween principal mueve el container (o la parte si no es lateral)
+	local mainTween
+	if obstacleType.lateralMovement then
+		mainTween = TweenService:Create(container.PrimaryPart, tweenInfo, {
+			Position = endPos
+		})
+	else
+		mainTween = TweenService:Create(container, tweenInfo, {
+			Position = endPos
+		})
+	end
 
 	-- Si tiene movimiento lateral (esfera giratoria)
 	if obstacleType.lateralMovement then
-		-- Crear movimiento de lado a lado
+		-- Crear movimiento de lado a lado DENTRO del modelo
 		task.spawn(function()
 			local direction = 1  -- 1 = derecha, -1 = izquierda
-			local lateralOffset = 0
 
-			while obstacle and obstacle.Parent do
+			while container and container.Parent do
 				-- Alternar dirección
 				direction = direction * -1
-				lateralOffset = direction * obstacleType.lateralDistance
+				local lateralOffset = direction * obstacleType.lateralDistance
 
-				-- Calcular nueva posición (mantener Y, cambiar X)
-				local currentPos = obstacle.Position
-				local targetX = currentPos.X + lateralOffset
-
-				-- Crear tween lateral
+				-- Mover la PARTE del obstáculo relativamente al contenedor
 				local lateralTweenInfo = TweenInfo.new(
 					obstacleType.lateralSpeed,
 					Enum.EasingStyle.Sine,
 					Enum.EasingDirection.InOut
 				)
 
-				local lateralTween = TweenService:Create(obstacle, lateralTweenInfo, {
-					Position = Vector3.new(targetX, currentPos.Y, currentPos.Z)
+				-- Mover en el eje X (lateral)
+				local lateralTween = TweenService:Create(obstaclePart, lateralTweenInfo, {
+					CFrame = CFrame.new(lateralOffset, 0, 0)
 				})
 
 				lateralTween:Play()
-				lateralTween.Completed:Wait()
+
+				local success = pcall(function()
+					lateralTween.Completed:Wait()
+				end)
+
+				if not success then
+					break
+				end
 			end
 		end)
 	end
 
 	-- Cuando termine el tween principal, destruir el obstáculo
-	tween.Completed:Connect(function()
+	mainTween.Completed:Connect(function()
 		print(string.format("🔴 %s llegó al final y será destruido", obstacleType.name))
-		cleanupObstacle(obstacle)
+		cleanupObstacle(container)
 	end)
 
 	-- Iniciar movimiento principal
-	tween:Play()
+	mainTween:Play()
 end
 
 -- Loop de spawn continuo
