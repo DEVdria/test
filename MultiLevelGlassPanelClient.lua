@@ -179,12 +179,25 @@ local function activatePanel(panel, panelNumber, levelName, fallTime)
 			-- Deshabilitar colisión
 			panel.CanCollide = false
 
+			-- Hacer el panel completamente invisible
+			local originalTransparency = panel.Transparency
+			panel.Transparency = 1
+
+			-- Ocultar todos los decals
+			local decals = {}
+			for _, child in ipairs(panel:GetChildren()) do
+				if child:IsA("Decal") then
+					table.insert(decals, {decal = child, wasVisible = child.Transparency})
+					child.Transparency = 1
+				end
+			end
+
 			-- Animar caída
 			local fallTween = createFallTween(panel, data.originalCFrame)
 			fallTween:Play()
 			fallTween.Completed:Wait()
 
-			-- Ocultar el timer
+			-- Ocultar el timer mientras está abajo
 			if timerDisplay then
 				timerDisplay.Enabled = false
 			end
@@ -196,6 +209,14 @@ local function activatePanel(panel, panelNumber, levelName, fallTime)
 
 			-- Reactivar colisión
 			panel.CanCollide = true
+
+			-- Restaurar transparencia original
+			panel.Transparency = originalTransparency
+
+			-- Restaurar decals
+			for _, decalData in ipairs(decals) do
+				decalData.decal.Transparency = decalData.wasVisible
+			end
 
 			-- Animar respawn
 			local respawnTween = createRespawnTween(panel, data.originalCFrame)
