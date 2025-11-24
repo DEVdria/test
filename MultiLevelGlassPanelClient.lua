@@ -113,6 +113,21 @@ local function activatePanel(panel, panelNumber, levelName, fallTime)
 	data.isActive = true
 	data.startTime = tick()
 
+	-- Reproducir sonido con velocidad progresiva
+	local stepSound = panel:FindFirstChild("StepSound")
+	if stepSound then
+		-- Calcular posición en el ciclo de 20 paneles (0-19)
+		local cyclePosition = (panelNumber - 1) % 20
+
+		-- Velocidad base 1.0, incremento de 0.05 por panel
+		-- Panel 1: 1.0, Panel 2: 1.05, ..., Panel 20: 1.95
+		-- Panel 21: 1.0 (reinicia), Panel 22: 1.05, etc.
+		local playbackSpeed = 1.0 + (cyclePosition * 0.05)
+
+		stepSound.PlaybackSpeed = playbackSpeed
+		stepSound:Play()
+	end
+
 	print(string.format(
 		"⏱️ %s - PANEL %d ACTIVADO | Caerá en %.1f segundos",
 		levelName,

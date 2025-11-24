@@ -249,6 +249,13 @@ local function createPanel(index, levelConfig, parentFolder)
 	-- Agregar display de tiempo
 	createTimerDisplay(panel, fallTime)
 
+	-- Agregar sonido de paso
+	local stepSound = Instance.new("Sound")
+	stepSound.Name = "StepSound"
+	stepSound.SoundId = "rbxasset://sounds/impact_water.mp3"  -- Sonido de cristal/agua
+	stepSound.Volume = 0.5
+	stepSound.Parent = panel
+
 	return panel, fallTime
 end
 
