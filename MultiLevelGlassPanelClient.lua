@@ -262,6 +262,17 @@ end
 local function initializeLevel(levelFolder)
 	print(string.format("📂 Inicializando %s...", levelFolder.Name))
 
+	-- Esperar a que el primer panel se replique
+	local firstPanel = levelFolder:WaitForChild("Panel1", 10)
+	if not firstPanel then
+		warn(string.format("❌ No se encontró Panel1 en %s", levelFolder.Name))
+		return 0
+	end
+
+	-- Esperar un poco más para que todos los paneles se repliquen
+	print(string.format("⏳ Esperando replicación de paneles en %s...", levelFolder.Name))
+	task.wait(0.5)
+
 	-- Buscar todos los paneles en el nivel
 	local levelPanels = {}
 	for _, child in ipairs(levelFolder:GetChildren()) do
