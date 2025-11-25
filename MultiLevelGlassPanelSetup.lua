@@ -277,6 +277,18 @@ local function createLevel(levelConfig)
 	folder.Name = levelConfig.name
 	folder.Parent = workspace
 
+	-- Crear plataforma de INICIO
+	local startPlatform = Instance.new("Part")
+	startPlatform.Name = "StartPlatform"
+	startPlatform.Size = Vector3.new(10, 1, 10)
+	startPlatform.Position = calculatePosition(0, levelConfig) - Vector3.new(0, 0, levelConfig.spacing) -- Antes del primer panel
+	startPlatform.Anchored = true
+	startPlatform.CanCollide = true
+	startPlatform.Material = Enum.Material.Neon
+	startPlatform.Color = Color3.fromRGB(0, 255, 0) -- Verde = inicio
+	startPlatform.TopSurface = Enum.SurfaceType.Smooth
+	startPlatform.Parent = folder
+
 	-- Crear paneles
 	for i = 1, levelConfig.numPanels do
 		local panel, fallTime = createPanel(i, levelConfig, folder)
@@ -287,6 +299,18 @@ local function createLevel(levelConfig)
 			fallTime
 		))
 	end
+
+	-- Crear plataforma de FIN
+	local endPlatform = Instance.new("Part")
+	endPlatform.Name = "EndPlatform"
+	endPlatform.Size = Vector3.new(10, 1, 10)
+	endPlatform.Position = calculatePosition(levelConfig.numPanels + 1, levelConfig) -- Después del último panel
+	endPlatform.Anchored = true
+	endPlatform.CanCollide = true
+	endPlatform.Material = Enum.Material.Neon
+	endPlatform.Color = Color3.fromRGB(255, 215, 0) -- Dorado = meta
+	endPlatform.TopSurface = Enum.SurfaceType.Smooth
+	endPlatform.Parent = folder
 
 	print(string.format("✅ %s completado", levelConfig.name))
 	return folder

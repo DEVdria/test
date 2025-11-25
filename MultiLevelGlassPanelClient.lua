@@ -43,6 +43,13 @@ local player = Players.LocalPlayer
 local panelData = {} -- Almacena información de cada panel
 local allPanels = {} -- Lista de todos los paneles de todos los niveles
 
+-- Progress Bar
+local progressBarGui
+local progressBarFill
+local percentageText
+local currentLevel = nil -- Nivel activo actual
+local levelData = {} -- {levelName -> {startPos, endPos}}
+
 -- ═══════════════════════════════════════════════════════════
 -- FUNCIONES AUXILIARES
 -- ═══════════════════════════════════════════════════════════
@@ -292,6 +299,128 @@ local function isPlayerOnPanel(panel, character)
 end
 
 -- ═══════════════════════════════════════════════════════════
+-- SISTEMA DE PROGRESS BAR
+-- ═══════════════════════════════════════════════════════════
+
+local function initializeProgressBar()
+	-- Buscar la ProgressBarGui en PlayerGui
+	local playerGui = player:WaitForChild("PlayerGui")
+	progressBarGui = playerGui:FindFirstChild("ProgressBarGui")
+
+	if not progressBarGui then
+		warn("⚠️ No se encontró ProgressBarGui en StarterGui")
+		warn("Crea la interfaz siguiendo INSTRUCCIONES_PROGRESS_BAR.md")
+		return false
+	end
+
+	local progressBarFrame = progressBarGui:FindFirstChild("ProgressBarFrame")
+	if progressBarFrame then
+		progressBarFill = progressBarFrame:FindFirstChild("Fill")
+		percentageText = progressBarFrame:FindFirstChild("PercentageText") -- Opcional
+	end
+
+	if not progressBarFill then
+		warn("⚠️ No se encontró el Frame 'Fill' en la ProgressBarGui")
+		return false
+	end
+
+	-- Asegurar que empieza oculta
+	progressBarGui.Enabled = false
+
+	print("✅ Progress Bar inicializada")
+	return true
+end
+
+local function showProgressBar(levelName)
+	if not progressBarGui then return end
+
+	currentLevel = levelName
+	progressBarGui.Enabled = true
+	print(string.format("📊 Progress Bar activada para %s", levelName))
+end
+
+local function hideProgressBar()
+	if not progressBarGui then return end
+
+	currentLevel = nil
+	progressBarGui.Enabled = false
+	print("📊 Progress Bar ocultada")
+end
+
+local function updateProgressBar()
+	if not progressBarGui or not currentLevel or not progressBarFill then return end
+
+	local character = player.Character
+	if not character then return end
+
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then return end
+
+	local levelInfo = levelData[currentLevel]
+	if not levelInfo then return end
+
+	-- Calcular progreso basado en la dirección del nivel
+	local startPos = levelInfo.startPos
+	local endPos = levelInfo.endPos
+	local playerPos = humanoidRootPart.Position
+
+	-- Calcular progreso en el eje correcto (usualmente Z)
+	local totalDistance = (endPos - startPos).Magnitude
+	local currentDistance = (playerPos - startPos).Magnitude
+
+	local progress = math.clamp(currentDistance / totalDistance, 0, 1)
+
+	-- Actualizar el Fill
+	progressBarFill.Size = UDim2.new(progress, 0, 1, 0)
+
+	-- Actualizar texto de porcentaje si existe
+	if percentageText then
+		percentageText.Text = string.format("%d%%", math.floor(progress * 100))
+	end
+end
+
+local function detectPlatformTouch()
+	local character = player.Character
+	if not character then return end
+
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then return end
+
+	-- Verificar cada nivel
+	for levelName, levelInfo in pairs(levelData) do
+		local levelFolder = workspace:FindFirstChild(levelName)
+		if levelFolder then
+			local startPlatform = levelFolder:FindFirstChild("StartPlatform")
+
+			if startPlatform then
+				-- Verificar si el jugador está sobre la plataforma de inicio
+				local platformTop = startPlatform.Position.Y + (startPlatform.Size.Y / 2)
+				local playerY = humanoidRootPart.Position.Y
+
+				local platformX = startPlatform.Position.X
+				local platformZ = startPlatform.Position.Z
+				local platformSizeX = startPlatform.Size.X / 2
+				local platformSizeZ = startPlatform.Size.Z / 2
+
+				local playerX = humanoidRootPart.Position.X
+				local playerZ = humanoidRootPart.Position.Z
+
+				local inXRange = playerX >= (platformX - platformSizeX) and playerX <= (platformX + platformSizeX)
+				local inZRange = playerZ >= (platformZ - platformSizeZ) and playerZ <= (platformZ + platformSizeZ)
+				local inYRange = playerY >= platformTop - 1 and playerY <= platformTop + 4
+
+				if inXRange and inZRange and inYRange then
+					if currentLevel ~= levelName then
+						showProgressBar(levelName)
+					end
+					return
+				end
+			end
+		end
+	end
+end
+
+-- ═══════════════════════════════════════════════════════════
 -- INICIALIZACIÓN DE UN NIVEL
 -- ═══════════════════════════════════════════════════════════
 
@@ -347,6 +476,18 @@ local function initializeLevel(levelFolder)
 		table.insert(allPanels, panel)
 	end
 
+	-- Guardar posiciones de inicio y fin para la progress bar
+	local startPlatform = levelFolder:FindFirstChild("StartPlatform")
+	local endPlatform = levelFolder:FindFirstChild("EndPlatform")
+
+	if startPlatform and endPlatform then
+		levelData[levelFolder.Name] = {
+			startPos = startPlatform.Position,
+			endPos = endPlatform.Position
+		}
+		print(string.format("📍 Plataformas detectadas en %s", levelFolder.Name))
+	end
+
 	print(string.format("✅ %s: %d paneles cargados", levelFolder.Name, #levelPanels))
 	return #levelPanels
 end
@@ -359,6 +500,14 @@ local function startDetectionLoop()
 	RunService.Heartbeat:Connect(function()
 		local character = player.Character
 		if not character then return end
+
+		-- Actualizar progress bar si está activa
+		if currentLevel then
+			updateProgressBar()
+		end
+
+		-- Detectar si pisa una plataforma de inicio
+		detectPlatformTouch()
 
 		-- Verificar cada panel de todos los niveles
 		for _, panel in ipairs(allPanels) do
@@ -384,6 +533,26 @@ local function startDetectionLoop()
 			end
 		end
 	end)
+
+	-- Detectar cuando el jugador muere para ocultar la progress bar
+	player.CharacterAdded:Connect(function(character)
+		hideProgressBar() -- Ocultar al respawnear
+
+		local humanoid = character:WaitForChild("Humanoid")
+		humanoid.Died:Connect(function()
+			hideProgressBar()
+		end)
+	end)
+
+	-- También conectar para el personaje actual
+	if player.Character then
+		local humanoid = player.Character:FindFirstChild("Humanoid")
+		if humanoid then
+			humanoid.Died:Connect(function()
+				hideProgressBar()
+			end)
+		end
+	end
 end
 
 -- ═══════════════════════════════════════════════════════════
@@ -427,6 +596,9 @@ end
 -- ═══════════════════════════════════════════════════════════
 
 if initializeSystem() then
+	-- Inicializar progress bar (opcional, funcionará sin ella)
+	initializeProgressBar()
+
 	startDetectionLoop()
 	print("🔄 Sistema de detección continua activado")
 end
