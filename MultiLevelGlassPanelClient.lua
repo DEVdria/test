@@ -345,7 +345,31 @@ local function initializeProgressBar()
 end
 
 local function showProgressBar(levelName)
-	if not progressBarGui then return end
+	-- Buscar el GUI actualizado cada vez (por si se reseteó)
+	local playerGui = player:WaitForChild("PlayerGui")
+	progressBarGui = playerGui:FindFirstChild("ProgressBarGui")
+
+	if not progressBarGui then
+		warn("⚠️ No se encontró ProgressBarGui al intentar mostrar")
+		return
+	end
+
+	-- Re-obtener referencias
+	local progressBarFrame = progressBarGui:FindFirstChild("ProgressBarFrame")
+	if progressBarFrame then
+		progressBarFill = progressBarFrame:FindFirstChild("Fill")
+		playerIcon = progressBarFrame:FindFirstChild("PlayerIcon")
+		percentageText = progressBarFrame:FindFirstChild("PercentageText")
+	end
+
+	if not playerIcon then
+		warn("⚠️ PlayerIcon no encontrado al mostrar progress bar")
+		return
+	end
+
+	-- Re-configurar el avatar por si acaso
+	local userId = player.UserId
+	playerIcon.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=150&height=150&format=png"
 
 	currentLevel = levelName
 	progressBarGui.Enabled = true
@@ -353,10 +377,16 @@ local function showProgressBar(levelName)
 end
 
 local function hideProgressBar()
-	if not progressBarGui then return end
+	-- Buscar el GUI actualizado cada vez
+	local playerGui = player:FindFirstChild("PlayerGui")
+	if playerGui then
+		progressBarGui = playerGui:FindFirstChild("ProgressBarGui")
+		if progressBarGui then
+			progressBarGui.Enabled = false
+		end
+	end
 
 	currentLevel = nil
-	progressBarGui.Enabled = false
 	print("📊 Progress Bar ocultada")
 end
 
