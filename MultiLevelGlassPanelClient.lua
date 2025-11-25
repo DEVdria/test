@@ -46,9 +46,11 @@ local allPanels = {} -- Lista de todos los paneles de todos los niveles
 -- Progress Bar
 local progressBarGui
 local progressBarFill
+local playerIcon  -- Avatar icon del jugador
 local percentageText
 local currentLevel = nil -- Nivel activo actual
 local levelData = {} -- {levelName -> {startPos, endPos}}
+local diedConnection = nil -- Conexión del evento Died
 
 -- ═══════════════════════════════════════════════════════════
 -- FUNCIONES AUXILIARES
@@ -316,6 +318,7 @@ local function initializeProgressBar()
 	local progressBarFrame = progressBarGui:FindFirstChild("ProgressBarFrame")
 	if progressBarFrame then
 		progressBarFill = progressBarFrame:FindFirstChild("Fill")
+		playerIcon = progressBarFrame:FindFirstChild("PlayerIcon") -- Avatar del jugador
 		percentageText = progressBarFrame:FindFirstChild("PercentageText") -- Opcional
 	end
 
@@ -323,6 +326,16 @@ local function initializeProgressBar()
 		warn("⚠️ No se encontró el Frame 'Fill' en la ProgressBarGui")
 		return false
 	end
+
+	if not playerIcon then
+		warn("⚠️ No se encontró 'PlayerIcon' en la ProgressBarGui")
+		warn("Agrega un ImageLabel llamado 'PlayerIcon' con tu avatar")
+		return false
+	end
+
+	-- Configurar el avatar del jugador
+	local userId = player.UserId
+	playerIcon.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=150&height=150&format=png"
 
 	-- Asegurar que empieza oculta
 	progressBarGui.Enabled = false
@@ -348,7 +361,7 @@ local function hideProgressBar()
 end
 
 local function updateProgressBar()
-	if not progressBarGui or not currentLevel or not progressBarFill then return end
+	if not progressBarGui or not currentLevel or not playerIcon then return end
 
 	local character = player.Character
 	if not character then return end
@@ -370,8 +383,9 @@ local function updateProgressBar()
 
 	local progress = math.clamp(currentDistance / totalDistance, 0, 1)
 
-	-- Actualizar el Fill
-	progressBarFill.Size = UDim2.new(progress, 0, 1, 0)
+	-- Mover el avatar icon a lo largo de la barra
+	-- Position.X.Scale va de 0 (inicio) a 1 (fin)
+	playerIcon.Position = UDim2.new(progress, 0, 0.5, 0)
 
 	-- Actualizar texto de porcentaje si existe
 	if percentageText then
@@ -538,8 +552,15 @@ local function startDetectionLoop()
 	player.CharacterAdded:Connect(function(character)
 		hideProgressBar() -- Ocultar al respawnear
 
+		-- Desconectar conexión anterior si existe
+		if diedConnection then
+			diedConnection:Disconnect()
+			diedConnection = nil
+		end
+
+		-- Conectar nueva conexión al humanoid
 		local humanoid = character:WaitForChild("Humanoid")
-		humanoid.Died:Connect(function()
+		diedConnection = humanoid.Died:Connect(function()
 			hideProgressBar()
 		end)
 	end)
@@ -548,7 +569,12 @@ local function startDetectionLoop()
 	if player.Character then
 		local humanoid = player.Character:FindFirstChild("Humanoid")
 		if humanoid then
-			humanoid.Died:Connect(function()
+			-- Desconectar conexión anterior si existe
+			if diedConnection then
+				diedConnection:Disconnect()
+			end
+
+			diedConnection = humanoid.Died:Connect(function()
 				hideProgressBar()
 			end)
 		end

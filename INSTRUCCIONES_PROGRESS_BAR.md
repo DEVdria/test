@@ -31,15 +31,27 @@ ProgressBarGui (ScreenGui)
       │   └── UICorner
       │       CornerRadius = UDim.new(0.2, 0)
       │
-      └── Fill (Frame)
-          Name = "Fill"
-          Size = UDim2.new(0, 0, 1, 0)  ← Empieza en 0!
-          Position = UDim2.new(0, 0, 0, 0)
-          BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-          BorderSizePixel = 0
+      ├── Fill (Frame) - OPCIONAL, para fondo de color
+      │   Name = "Fill"
+      │   Size = UDim2.new(1, 0, 1, 0)
+      │   BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+      │   BackgroundTransparency = 0.5
+      │   BorderSizePixel = 0
+      │
+      │   └── UICorner
+      │       CornerRadius = UDim.new(0.2, 0)
+      │
+      └── PlayerIcon (ImageLabel) ← ¡IMPORTANTE!
+          Name = "PlayerIcon"
+          Size = UDim2.new(0, 40, 0, 40)  -- Tamaño del avatar
+          Position = UDim2.new(0, 0, 0.5, 0)  -- Empieza al inicio
+          AnchorPoint = Vector2.new(0.5, 0.5)
+          BackgroundTransparency = 1
+          ScaleType = Enum.ScaleType.Fit
+          ZIndex = 10
 
           └── UICorner
-              CornerRadius = UDim.new(0.2, 0)
+              CornerRadius = UDim.new(1, 0)  -- Circular
 ```
 
 ## 🎨 Personalización Recomendada:
@@ -117,7 +129,17 @@ UIStroke
 
 ## 🎮 El Script Actualiza Automáticamente:
 
-- `Fill.Size.X.Scale` - De 0 a 1 según el progreso
+- `PlayerIcon.Position.X.Scale` - De 0 (inicio) a 1 (fin) moviendo el avatar
+- `PlayerIcon.Image` - Se configura automáticamente con tu avatar de Roblox
 - `ProgressBarGui.Enabled` - true/false para mostrar/ocultar
 
+**NUEVO**: El avatar se MUEVE a lo largo de la barra mostrando tu progreso en tiempo real.
+
 Si agregas un TextLabel con nombre "PercentageText", el script también actualizará el texto del porcentaje.
+
+## 💡 Cómo Funciona:
+
+1. Al pisar la plataforma verde, la barra aparece
+2. Tu **avatar icon se mueve** de izquierda (0%) a derecha (100%)
+3. El avatar muestra exactamente dónde estás en el puente
+4. Al llegar al final o morir, la barra desaparece
