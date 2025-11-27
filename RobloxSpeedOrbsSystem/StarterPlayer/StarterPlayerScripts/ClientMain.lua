@@ -12,10 +12,12 @@ local player = Players.LocalPlayer
 -- Cargar módulos
 local OrbsModule = require(ReplicatedStorage.Modules.OrbsModule)
 local SprintModule = require(ReplicatedStorage.Modules.SprintModule)
+local JumpAnimationModule = require(ReplicatedStorage.Modules.JumpAnimationModule)
 
 -- Variables globales del jugador (accesibles desde otros scripts)
 _G.PlayerOrbsManager = nil
 _G.PlayerSprintManager = nil
+_G.PlayerJumpAnimManager = nil
 
 -- Función de inicialización
 local function Initialize()
@@ -30,6 +32,10 @@ local function Initialize()
 	_G.PlayerSprintManager = SprintModule.new(player, _G.PlayerOrbsManager)
 	_G.PlayerSprintManager:Initialize()
 
+	-- Inicializar módulo de animación de salto
+	_G.PlayerJumpAnimManager = JumpAnimationModule.new(player)
+	_G.PlayerJumpAnimManager:Initialize()
+
 	print("Sistema del cliente inicializado correctamente")
 end
 
@@ -42,6 +48,10 @@ player.CharacterAdded:Connect(function()
 
 	if _G.PlayerSprintManager then
 		_G.PlayerSprintManager:Cleanup()
+	end
+
+	if _G.PlayerJumpAnimManager then
+		_G.PlayerJumpAnimManager:Cleanup()
 	end
 
 	-- Reinicializar

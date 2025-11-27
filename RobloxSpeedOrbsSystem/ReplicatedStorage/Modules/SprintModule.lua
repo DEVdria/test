@@ -18,9 +18,11 @@ function SprintModule.new(player, orbsModule)
 
 	self.Player = player
 	self.OrbsModule = orbsModule
-	self.IsSprinting = false
+	self._isSprinting = false -- Propiedad privada (con guión bajo para evitar conflicto)
 	self.IsEnabled = true
 	self.Connection = nil
+	self.SprintAnimation = nil
+	self.SprintAnimTrack = nil
 
 	return self
 end
@@ -65,11 +67,14 @@ end
 
 function SprintModule:SetSprinting(sprinting)
 	if not self.IsEnabled then return end
-	self.IsSprinting = sprinting
+	self._isSprinting = sprinting
+
+	-- Gestionar animación de sprint
+	self:UpdateSprintAnimation()
 end
 
 function SprintModule:ToggleSprint()
-	self:SetSprinting(not self.IsSprinting)
+	self:SetSprinting(not self._isSprinting)
 end
 
 function SprintModule:StartSpeedUpdate()
@@ -98,7 +103,7 @@ function SprintModule:GetCurrentSpeed()
 	local baseSpeed = Config.BaseWalkSpeed
 	local speedBoost = self.OrbsModule:GetSpeedBoost()
 
-	if self.IsSprinting then
+	if self._isSprinting then
 		-- Sprint activado: Base + Boost
 		return Config.BaseSprintSpeed + speedBoost
 	else
@@ -108,7 +113,7 @@ function SprintModule:GetCurrentSpeed()
 end
 
 function SprintModule:IsSprinting()
-	return self.IsSprinting
+	return self._isSprinting
 end
 
 function SprintModule:Enable()
@@ -117,13 +122,76 @@ end
 
 function SprintModule:Disable()
 	self.IsEnabled = false
-	self.IsSprinting = false
+	self._isSprinting = false
+	self:StopSprintAnimation()
+end
+
+function SprintModule:LoadSprintAnimation()
+	-- Cargar animación de sprint
+	local character = self.Player.Character
+	if not character then return end
+
+	local humanoid = character:FindFirstChild("Humanoid")
+	if not humanoid then return end
+
+	-- Si ya hay una animación cargada, limpiarla
+	if self.SprintAnimTrack then
+		self.SprintAnimTrack:Stop()
+		self.SprintAnimTrack = nil
+	end
+
+	-- Buscar o crear la animación
+	-- Puedes cambiar el ID de animación aquí
+	if Config.SprintAnimationId and Config.SprintAnimationId ~= "" then
+		self.SprintAnimation = Instance.new("Animation")
+		self.SprintAnimation.AnimationId = Config.SprintAnimationId
+
+		self.SprintAnimTrack = humanoid:LoadAnimation(self.SprintAnimation)
+	end
+end
+
+function SprintModule:UpdateSprintAnimation()
+	local character = self.Player.Character
+	if not character then return end
+
+	-- Cargar animación si no existe
+	if not self.SprintAnimTrack then
+		self:LoadSprintAnimation()
+	end
+
+	if self._isSprinting then
+		-- Activar animación de sprint
+		if self.SprintAnimTrack and not self.SprintAnimTrack.IsPlaying then
+			self.SprintAnimTrack:Play()
+		end
+	else
+		-- Detener animación de sprint
+		self:StopSprintAnimation()
+	end
+end
+
+function SprintModule:StopSprintAnimation()
+	if self.SprintAnimTrack and self.SprintAnimTrack.IsPlaying then
+		self.SprintAnimTrack:Stop()
+	end
 end
 
 function SprintModule:Cleanup()
+	self:StopSprintAnimation()
+
 	if self.Connection then
 		self.Connection:Disconnect()
 		self.Connection = nil
+	end
+
+	if self.SprintAnimTrack then
+		self.SprintAnimTrack:Destroy()
+		self.SprintAnimTrack = nil
+	end
+
+	if self.SprintAnimation then
+		self.SprintAnimation:Destroy()
+		self.SprintAnimation = nil
 	end
 end
 

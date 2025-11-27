@@ -11,6 +11,17 @@ Config.BaseWalkSpeed = 16 -- Velocidad base al caminar
 Config.BaseSprintSpeed = 16 -- Velocidad base al correr (sin boost)
 
 -- CONFIGURACIÓN DE ORBS
+-- MODO DE SPAWN: "fixed" (posiciones fijas) o "zone" (zona aleatoria)
+Config.OrbSpawnMode = "zone" -- Cambia a "fixed" para usar posiciones predefinidas
+
+-- SPAWN EN ZONA ALEATORIA (solo se usa si OrbSpawnMode = "zone")
+Config.OrbSpawnZone = {
+	Center = Vector3.new(0, 5, 0), -- Centro de la zona
+	Size = Vector3.new(50, 10, 50), -- Tamaño de la zona (X, Y, Z)
+}
+Config.OrbCount = 20 -- Cantidad de orbs a generar en la zona
+
+-- SPAWN EN POSICIONES FIJAS (solo se usa si OrbSpawnMode = "fixed")
 Config.OrbSpawnLocations = {
 	-- Define aquí las posiciones donde aparecerán las orbs
 	-- Formato: Vector3.new(x, y, z)
@@ -32,6 +43,13 @@ Config.OrbRespawnTime = 30 -- Segundos para que reaparezca una orb
 
 -- CONFIGURACIÓN DE SPRINT
 Config.SprintKey = Enum.KeyCode.LeftShift -- Tecla para sprint en PC
+
+-- CONFIGURACIÓN DE ANIMACIONES
+-- Sprint Animation (déjalo vacío "" para desactivar)
+Config.SprintAnimationId = "" -- Ejemplo: "rbxassetid://1234567890"
+
+-- Jump Animation (déjalo vacío "" para desactivar)
+Config.JumpAnimationId = "" -- Ejemplo: "rbxassetid://0987654321"
 
 -- CONFIGURACIÓN DE ECONOMÍA
 Config.StartingMoney = 0

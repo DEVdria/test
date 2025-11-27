@@ -20,6 +20,7 @@ function OrbsModule.new(player)
 	self.PlayerSpeedBoost = 0 -- Velocidad acumulada
 	self.CollectedOrbs = {} -- Orbs que ya recogió este jugador
 	self.OrbInstances = {} -- Instancias de las orbs creadas
+	self.OrbPositions = {} -- Posiciones de las orbs (para respawn)
 	self.OrbFolder = nil
 
 	return self
@@ -36,8 +37,33 @@ function OrbsModule:Initialize()
 end
 
 function OrbsModule:SpawnAllOrbs()
-	for index, position in ipairs(Config.OrbSpawnLocations) do
+	if Config.OrbSpawnMode == "zone" then
+		-- Generar orbs en posiciones aleatorias dentro de una zona
+		self:GenerateRandomOrbPositions()
+	else
+		-- Usar posiciones predefinidas
+		for index, position in ipairs(Config.OrbSpawnLocations) do
+			self.OrbPositions[index] = position
+		end
+	end
+
+	-- Crear todas las orbs
+	for index, position in pairs(self.OrbPositions) do
 		self:CreateOrb(index, position)
+	end
+end
+
+function OrbsModule:GenerateRandomOrbPositions()
+	-- Generar posiciones aleatorias dentro de la zona definida
+	local zone = Config.OrbSpawnZone
+	local count = Config.OrbCount or 10
+
+	for i = 1, count do
+		local randomX = zone.Center.X + (math.random() - 0.5) * zone.Size.X
+		local randomY = zone.Center.Y + (math.random() - 0.5) * zone.Size.Y
+		local randomZ = zone.Center.Z + (math.random() - 0.5) * zone.Size.Z
+
+		self.OrbPositions[i] = Vector3.new(randomX, randomY, randomZ)
 	end
 end
 
@@ -123,7 +149,7 @@ function OrbsModule:OnOrbTouched(index, hit)
 	-- Respawnear después de un tiempo
 	task.delay(Config.OrbRespawnTime, function()
 		self.CollectedOrbs[index] = nil
-		self:CreateOrb(index, Config.OrbSpawnLocations[index])
+		self:CreateOrb(index, self.OrbPositions[index])
 	end)
 end
 
