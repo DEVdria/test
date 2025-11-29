@@ -7,7 +7,9 @@ local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 
-local OrbConfig = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("OrbConfig"))
+local Modules = ReplicatedStorage:WaitForChild("Modules")
+local OrbConfig = require(Modules:WaitForChild("OrbConfig"))
+local LevelManager = require(Modules:WaitForChild("LevelManager"))
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 local RequestRebirthPurchaseEvent = RemoteEvents:WaitForChild("RequestRebirthPurchase")
 
@@ -18,6 +20,10 @@ local priceLabel = rebirthFrame:WaitForChild("PriceLabel")
 local multiplierLabel = rebirthFrame:WaitForChild("MultiplierLabel")
 local purchaseButton = rebirthFrame:WaitForChild("PurchaseButton")
 local closeButton = rebirthFrame:WaitForChild("CloseButton")
+
+-- Nuevos TextLabels para mostrar level caps (opcional, crear estos en la GUI)
+local currentLevelCapLabel = rebirthFrame:FindFirstChild("CurrentLevelCapLabel")
+local nextLevelCapLabel = rebirthFrame:FindFirstChild("NextLevelCapLabel")
 
 -- Estado
 local isPurchasing = false
@@ -52,12 +58,23 @@ local function updateRebirthInfo()
 
 	-- Calcular información
 	local cost = OrbConfig.CalculateRebirthCost(rebirthsValue)
-	local currentMultiplier = OrbConfig.CalculateSpeedMultiplier(rebirthsValue)
-	local nextMultiplier = OrbConfig.CalculateSpeedMultiplier(rebirthsValue + 1)
+	local currentMultiplier = OrbConfig.CalculateEXPMultiplier(rebirthsValue)
+	local nextMultiplier = OrbConfig.CalculateEXPMultiplier(rebirthsValue + 1)
+	local currentMaxLevel = LevelManager.GetMaxLevel(rebirthsValue)
+	local nextMaxLevel = LevelManager.GetMaxLevel(rebirthsValue + 1)
 
 	-- Actualizar labels
 	priceLabel.Text = string.format("Precio: $%s", formatNumber(cost))
-	multiplierLabel.Text = string.format("Multiplicador: x%.2f → x%.2f", currentMultiplier, nextMultiplier)
+	multiplierLabel.Text = string.format("Multiplicador EXP: x%.2f → x%.2f", currentMultiplier, nextMultiplier)
+
+	-- Actualizar level caps si los labels existen
+	if currentLevelCapLabel then
+		currentLevelCapLabel.Text = string.format("Nivel Máximo Actual: %d", currentMaxLevel)
+	end
+
+	if nextLevelCapLabel then
+		nextLevelCapLabel.Text = string.format("Nivel Máximo con Rebirth: %d", nextMaxLevel)
+	end
 
 	-- Actualizar botón según si puede comprar
 	local canAfford = moneyValue >= cost

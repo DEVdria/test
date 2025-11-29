@@ -13,6 +13,7 @@ if not Modules then
 end
 
 local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
+local LevelManager = require(Modules:WaitForChild("LevelManager", 10))
 
 -- Esperar RemoteEvents
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
@@ -22,7 +23,6 @@ if not RemoteEvents then
 end
 
 local RequestRebirthPurchaseEvent = RemoteEvents:WaitForChild("RequestRebirthPurchase")
-local UpdateSpeedDisplayEvent = RemoteEvents:WaitForChild("UpdateSpeedDisplay")
 
 -- Esperar DataManager (se carga a través de _G)
 local DataManager
@@ -78,10 +78,12 @@ local function processRebirthPurchase(player)
 		return {Success = false, Message = "Error al cargar datos"}
 	end
 
-	-- Calcular costo y nuevo multiplicador
+	-- Calcular costo, nuevo multiplicador y level caps
 	local currentRebirths = playerData.Rebirths
 	local cost = OrbConfig.CalculateRebirthCost(currentRebirths)
-	local newMultiplier = OrbConfig.CalculateSpeedMultiplier(currentRebirths + 1)
+	local newMultiplier = OrbConfig.CalculateEXPMultiplier(currentRebirths + 1)
+	local currentMaxLevel = LevelManager.GetMaxLevel(currentRebirths)
+	local nextMaxLevel = LevelManager.GetMaxLevel(currentRebirths + 1)
 
 	-- Verificar si tiene suficiente dinero
 	if playerData.Money < cost then
@@ -96,9 +98,6 @@ local function processRebirthPurchase(player)
 	local success, message = DataManager.ProcessRebirth(player)
 
 	if success then
-		-- Actualizar display de velocidad (resetear a 0)
-		UpdateSpeedDisplayEvent:FireClient(player, 0)
-
 		-- Guardar datos inmediatamente
 		task.spawn(function()
 			DataManager.SaveData(player)
@@ -106,9 +105,11 @@ local function processRebirthPurchase(player)
 
 		return {
 			Success = true,
-			Message = string.format("Rebirth exitoso! Nuevo multiplicador: x%.2f", newMultiplier),
+			Message = string.format("¡Rebirth exitoso! Nivel máximo: %d → %d", currentMaxLevel, nextMaxLevel),
 			NewRebirths = currentRebirths + 1,
 			NewMultiplier = newMultiplier,
+			CurrentMaxLevel = currentMaxLevel,
+			NextMaxLevel = nextMaxLevel,
 			RemainingMoney = playerData.Money - cost
 		}
 	else
