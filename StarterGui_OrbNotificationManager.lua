@@ -1,6 +1,6 @@
 -- StarterGui > OrbNotificationManager (LocalScript)
 -- Sistema de notificaciones flotantes cuando recoges orbs
--- TÚ diseñas el estilo, este script solo genera y destruye las notificaciones
+-- TÚ diseñas la interfaz completa, este script solo actualiza los datos
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,97 +10,55 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
-
--- Crear RemoteEvent para notificaciones (añadirlo al servidor después)
 local ShowOrbNotificationEvent = RemoteEvents:WaitForChild("ShowOrbNotification", 10)
 
 -- ==================== CONFIGURACIÓN ====================
 local MAX_NOTIFICATIONS = 5           -- Máximo de notificaciones simultáneas
 local NOTIFICATION_LIFETIME = 2       -- Duración en pantalla (segundos)
-local NOTIFICATION_FADE_TIME = 0.5    -- Tiempo de desvanecimiento
 local NOTIFICATION_SPACING = 10       -- Espacio entre notificaciones (píxeles)
 
 -- ==================== VARIABLES ====================
-local activeNotifications = {}        -- Lista de notificaciones activas
+local activeNotifications = {}        -- Lista de notificaciones activas {frame, data}
 local notificationQueue = {}          -- Cola de notificaciones pendientes
 
--- ==================== CREAR CONTENEDOR ====================
--- Crea el ScreenGui que contendrá las notificaciones
-local notificationGui = Instance.new("ScreenGui")
-notificationGui.Name = "OrbNotifications"
-notificationGui.ResetOnSpawn = false
-notificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-notificationGui.Parent = playerGui
+-- ==================== BUSCAR CONTENEDOR GUI ====================
+-- TÚ debes crear una ScreenGui llamada "OrbNotifications" en StarterGui
+-- Dentro debe haber un Frame llamado "Container"
+-- Ver GUIA_DISEÑO_NOTIFICACIONES.md para más detalles
 
--- Contenedor para las notificaciones
-local notificationsContainer = Instance.new("Frame")
-notificationsContainer.Name = "Container"
-notificationsContainer.Size = UDim2.new(0, 300, 1, 0)
-notificationsContainer.Position = UDim2.new(1, -320, 0, 20)  -- Esquina superior derecha
-notificationsContainer.BackgroundTransparency = 1
-notificationsContainer.Parent = notificationGui
+local notificationGui = playerGui:WaitForChild("OrbNotifications", 10)
+if not notificationGui then
+	warn("[OrbNotificationManager] ❌ No se encontró ScreenGui 'OrbNotifications' en StarterGui")
+	warn("[OrbNotificationManager] 📘 Lee GUIA_DISEÑO_NOTIFICACIONES.md para crear la interfaz")
+	return
+end
+
+local notificationsContainer = notificationGui:WaitForChild("Container", 5)
+if not notificationsContainer then
+	warn("[OrbNotificationManager] ❌ No se encontró Frame 'Container' en OrbNotifications")
+	warn("[OrbNotificationManager] 📘 Lee GUIA_DISEÑO_NOTIFICACIONES.md para crear la interfaz")
+	return
+end
+
+-- Buscar el template de notificación (debe estar dentro del Container)
+local notificationTemplate = notificationsContainer:FindFirstChild("NotificationTemplate")
+if not notificationTemplate then
+	warn("[OrbNotificationManager] ❌ No se encontró 'NotificationTemplate' en Container")
+	warn("[OrbNotificationManager] 📘 Lee GUIA_DISEÑO_NOTIFICACIONES.md para crear el template")
+	return
+end
+
+-- El template debe estar oculto inicialmente
+notificationTemplate.Visible = false
 
 -- ==================== FUNCIONES ====================
 
--- Crea una notificación visual
--- TÚ PUEDES PERSONALIZAR ESTA FUNCIÓN PARA CAMBIAR EL DISEÑO
-local function createNotification(orbType, expAmount, orbColor)
-	local notification = Instance.new("Frame")
-	notification.Name = "Notification_" .. orbType
-	notification.Size = UDim2.new(1, 0, 0, 60)  -- Ancho 100%, Alto 60px
-	notification.BackgroundColor3 = orbColor
-	notification.BackgroundTransparency = 0.3
-	notification.BorderSizePixel = 0
-	notification.ClipsDescendants = true
-
-	-- Borde brillante (opcional, puedes quitarlo)
-	local border = Instance.new("UIStroke")
-	border.Color = orbColor
-	border.Thickness = 2
-	border.Transparency = 0
-	border.Parent = notification
-
-	-- Esquinas redondeadas (opcional, puedes quitarlo)
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
-	corner.Parent = notification
-
-	-- Texto de EXP
-	local expLabel = Instance.new("TextLabel")
-	expLabel.Name = "EXPLabel"
-	expLabel.Size = UDim2.new(1, -20, 1, 0)
-	expLabel.Position = UDim2.new(0, 10, 0, 0)
-	expLabel.BackgroundTransparency = 1
-	expLabel.Text = string.format("+%d EXP", expAmount)
-	expLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	expLabel.TextSize = 24
-	expLabel.TextXAlignment = Enum.TextXAlignment.Left
-	expLabel.TextYAlignment = Enum.TextYAlignment.Center
-	expLabel.Font = Enum.Font.GothamBold
-	expLabel.TextStrokeTransparency = 0.5
-	expLabel.Parent = notification
-
-	-- Ícono de orb (opcional)
-	local orbIcon = Instance.new("Frame")
-	orbIcon.Name = "OrbIcon"
-	orbIcon.Size = UDim2.new(0, 40, 0, 40)
-	orbIcon.Position = UDim2.new(1, -50, 0.5, -20)
-	orbIcon.BackgroundColor3 = orbColor
-	orbIcon.BorderSizePixel = 0
-	orbIcon.Parent = notification
-
-	local orbCorner = Instance.new("UICorner")
-	orbCorner.CornerRadius = UDim.new(1, 0)  -- Círculo perfecto
-	orbCorner.Parent = orbIcon
-
-	return notification
-end
-
 -- Actualiza las posiciones de todas las notificaciones activas
 local function updateNotificationPositions()
-	for i, notif in ipairs(activeNotifications) do
+	for i, notifData in ipairs(activeNotifications) do
+		local notif = notifData.frame
 		if notif and notif.Parent then
-			local targetPosition = UDim2.new(0, 0, 0, (i - 1) * (60 + NOTIFICATION_SPACING))
+			local targetPosition = UDim2.new(0, 0, 0, (i - 1) * (notif.Size.Y.Offset + NOTIFICATION_SPACING))
 
 			-- Animar movimiento suave
 			local tween = TweenService:Create(
@@ -113,43 +71,53 @@ local function updateNotificationPositions()
 	end
 end
 
--- Elimina una notificación con animación
-local function removeNotification(notification)
+-- Elimina una notificación
+local function removeNotification(notifData)
+	local notification = notifData.frame
 	if not notification or not notification.Parent then return end
 
 	-- Encontrar y eliminar de la lista activa
-	for i, notif in ipairs(activeNotifications) do
-		if notif == notification then
+	for i, data in ipairs(activeNotifications) do
+		if data == notifData then
 			table.remove(activeNotifications, i)
 			break
 		end
 	end
 
-	-- Animación de desvanecimiento
+	-- Animación de desvanecimiento (mueve a la derecha y desvanece)
 	local fadeTween = TweenService:Create(
 		notification,
-		TweenInfo.new(NOTIFICATION_FADE_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		{
 			BackgroundTransparency = 1,
-			Position = notification.Position + UDim2.new(0.2, 0, 0, 0)  -- Mover a la derecha
+			Position = notification.Position + UDim2.new(0.2, 0, 0, 0)
 		}
 	)
 
-	-- Desvanecer texto e ícono también
+	-- Desvanecer todos los elementos de texto e imagen
 	for _, child in ipairs(notification:GetDescendants()) do
-		if child:IsA("TextLabel") then
-			TweenService:Create(child, TweenInfo.new(NOTIFICATION_FADE_TIME), {TextTransparency = 1, TextStrokeTransparency = 1}):Play()
-		elseif child:IsA("Frame") and child.Name == "OrbIcon" then
-			TweenService:Create(child, TweenInfo.new(NOTIFICATION_FADE_TIME), {BackgroundTransparency = 1}):Play()
+		if child:IsA("TextLabel") or child:IsA("TextButton") then
+			TweenService:Create(child, TweenInfo.new(0.3), {
+				TextTransparency = 1,
+				TextStrokeTransparency = 1,
+				BackgroundTransparency = 1
+			}):Play()
+		elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
+			TweenService:Create(child, TweenInfo.new(0.3), {
+				ImageTransparency = 1,
+				BackgroundTransparency = 1
+			}):Play()
+		elseif child:IsA("Frame") then
+			TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
 		elseif child:IsA("UIStroke") then
-			TweenService:Create(child, TweenInfo.new(NOTIFICATION_FADE_TIME), {Transparency = 1}):Play()
+			TweenService:Create(child, TweenInfo.new(0.3), {Transparency = 1}):Play()
 		end
 	end
 
 	fadeTween:Play()
 
 	-- Destruir después de la animación
-	task.delay(NOTIFICATION_FADE_TIME, function()
+	task.delay(0.4, function()
 		if notification then
 			notification:Destroy()
 		end
@@ -166,6 +134,40 @@ local function removeNotification(notification)
 	end
 end
 
+-- Actualiza los elementos de la notificación con los datos del orb
+local function updateNotificationData(notification, orbType, expAmount, orbColor)
+	-- Buscar elementos por nombre (TÚ defines estos nombres en tu diseño)
+
+	-- TextLabel para mostrar EXP (busca "EXPLabel" o "ExpAmount")
+	local expLabel = notification:FindFirstChild("EXPLabel") or notification:FindFirstChild("ExpAmount")
+	if expLabel and expLabel:IsA("TextLabel") then
+		expLabel.Text = string.format("+%d EXP", expAmount)
+	end
+
+	-- TextLabel para mostrar tipo de orb (busca "OrbTypeLabel")
+	local orbTypeLabel = notification:FindFirstChild("OrbTypeLabel")
+	if orbTypeLabel and orbTypeLabel:IsA("TextLabel") then
+		orbTypeLabel.Text = orbType
+	end
+
+	-- Frame/ImageLabel para ícono del orb (busca "OrbIcon")
+	local orbIcon = notification:FindFirstChild("OrbIcon")
+	if orbIcon then
+		if orbIcon:IsA("Frame") or orbIcon:IsA("ImageLabel") then
+			orbIcon.BackgroundColor3 = orbColor
+		end
+	end
+
+	-- Cambiar color de fondo del frame principal si lo deseas
+	notification.BackgroundColor3 = orbColor
+
+	-- Cambiar color del borde si existe UIStroke
+	local stroke = notification:FindFirstChild("UIStroke")
+	if stroke then
+		stroke.Color = orbColor
+	end
+end
+
 -- Muestra una nueva notificación
 function showNotification(orbType, expAmount, orbColor)
 	-- Si ya hay el máximo de notificaciones, añadir a la cola
@@ -178,18 +180,30 @@ function showNotification(orbType, expAmount, orbColor)
 		return
 	end
 
-	-- Crear la notificación
-	local notification = createNotification(orbType, expAmount, orbColor)
+	-- Clonar el template
+	local notification = notificationTemplate:Clone()
+	notification.Name = "Notification_" .. orbType .. "_" .. tick()
+	notification.Visible = true
 	notification.Parent = notificationsContainer
 
+	-- Actualizar datos de la notificación
+	updateNotificationData(notification, orbType, expAmount, orbColor)
+
 	-- Posición inicial (fuera de pantalla a la derecha)
-	notification.Position = UDim2.new(1.2, 0, 0, #activeNotifications * (60 + NOTIFICATION_SPACING))
+	local notifHeight = notification.Size.Y.Offset
+	notification.Position = UDim2.new(1.2, 0, 0, #activeNotifications * (notifHeight + NOTIFICATION_SPACING))
 
 	-- Añadir a la lista activa
-	table.insert(activeNotifications, notification)
+	local notifData = {
+		frame = notification,
+		orbType = orbType,
+		expAmount = expAmount,
+		orbColor = orbColor
+	}
+	table.insert(activeNotifications, notifData)
 
 	-- Animación de entrada (desde la derecha)
-	local targetPosition = UDim2.new(0, 0, 0, (#activeNotifications - 1) * (60 + NOTIFICATION_SPACING))
+	local targetPosition = UDim2.new(0, 0, 0, (#activeNotifications - 1) * (notifHeight + NOTIFICATION_SPACING))
 	local enterTween = TweenService:Create(
 		notification,
 		TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
@@ -199,7 +213,7 @@ function showNotification(orbType, expAmount, orbColor)
 
 	-- Programar eliminación automática
 	task.delay(NOTIFICATION_LIFETIME, function()
-		removeNotification(notification)
+		removeNotification(notifData)
 	end)
 end
 
@@ -210,6 +224,7 @@ if ShowOrbNotificationEvent then
 		showNotification(orbType, expAmount, orbColor)
 	end)
 	print("[OrbNotificationManager] ✅ Sistema de notificaciones iniciado")
+	print("[OrbNotificationManager] 📦 Usando template: " .. notificationTemplate.Name)
 else
 	warn("[OrbNotificationManager] ❌ No se encontró el RemoteEvent ShowOrbNotification")
 end
