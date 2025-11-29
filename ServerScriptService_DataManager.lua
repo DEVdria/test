@@ -162,17 +162,51 @@ end
 
 -- Añade EXP al jugador
 function DataManager.AddEXP(player, expAmount)
-	return DataManager.IncrementValue(player, "CurrentEXP", expAmount)
+	local newEXP = DataManager.IncrementValue(player, "CurrentEXP", expAmount)
+	if newEXP then
+		-- Actualizar leaderstats
+		local leaderstats = player:FindFirstChild("leaderstats")
+		if leaderstats then
+			local expValue = leaderstats:FindFirstChild("CurrentEXP")
+			if expValue then
+				expValue.Value = newEXP
+			end
+		end
+		return newEXP
+	end
+	return nil
 end
 
 -- Actualiza el nivel del jugador
 function DataManager.SetLevel(player, newLevel)
-	return DataManager.SetValue(player, "Level", newLevel)
+	local success = DataManager.SetValue(player, "Level", newLevel)
+	if success then
+		-- Actualizar leaderstats
+		local leaderstats = player:FindFirstChild("leaderstats")
+		if leaderstats then
+			local levelValue = leaderstats:FindFirstChild("Level")
+			if levelValue then
+				levelValue.Value = newLevel
+			end
+		end
+	end
+	return success
 end
 
 -- Actualiza la EXP actual
 function DataManager.SetEXP(player, newEXP)
-	return DataManager.SetValue(player, "CurrentEXP", newEXP)
+	local success = DataManager.SetValue(player, "CurrentEXP", newEXP)
+	if success then
+		-- Actualizar leaderstats
+		local leaderstats = player:FindFirstChild("leaderstats")
+		if leaderstats then
+			local expValue = leaderstats:FindFirstChild("CurrentEXP")
+			if expValue then
+				expValue.Value = newEXP
+			end
+		end
+	end
+	return success
 end
 
 -- Resetea nivel y EXP (para rebirths)
@@ -217,6 +251,14 @@ function DataManager.ProcessRebirth(player)
 		if rebirthsValue then
 			rebirthsValue.Value = data.Rebirths
 		end
+		local levelValue = leaderstats:FindFirstChild("Level")
+		if levelValue then
+			levelValue.Value = data.Level
+		end
+		local expValue = leaderstats:FindFirstChild("CurrentEXP")
+		if expValue then
+			expValue.Value = data.CurrentEXP
+		end
 	end
 
 	return true, "Rebirth exitoso"
@@ -250,7 +292,18 @@ Players.PlayerAdded:Connect(function(player)
 	rebirths.Value = data.Rebirths
 	rebirths.Parent = leaderstats
 
-	print(string.format("[DataManager] ✅ Datos cargados para %s", player.Name))
+	local level = Instance.new("IntValue")
+	level.Name = "Level"
+	level.Value = data.Level
+	level.Parent = leaderstats
+
+	local currentEXP = Instance.new("IntValue")
+	currentEXP.Name = "CurrentEXP"
+	currentEXP.Value = data.CurrentEXP
+	currentEXP.Parent = leaderstats
+
+	print(string.format("[DataManager] ✅ Datos cargados para %s (Nivel: %d, EXP: %d)",
+		player.Name, data.Level, data.CurrentEXP))
 end)
 
 -- Manejar cuando un jugador se va
