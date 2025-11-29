@@ -1,17 +1,43 @@
 -- ServerScriptService > MoneyManager
 -- Gestiona el sistema de dinero y recompensas por orbs
+-- NOTA: Este es un Script normal, NO ModuleScript
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
 
-local DataManager = require(ServerScriptService:WaitForChild("DataManager"))
-local OrbConfig = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("OrbConfig"))
+-- Esperar a que los módulos estén disponibles
+print("[MoneyManager] Esperando módulos...")
+local Modules = ReplicatedStorage:WaitForChild("Modules", 10)
+if not Modules then
+	warn("[MoneyManager] ❌ No se encontró carpeta Modules")
+	return
+end
 
-local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
+local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
+
+-- Esperar RemoteEvents
+local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
+if not RemoteEvents then
+	warn("[MoneyManager] ❌ No se encontró carpeta RemoteEvents")
+	return
+end
+
 local OrbCollectedEvent = RemoteEvents:WaitForChild("OrbCollected")
 local UpdateSpeedDisplayEvent = RemoteEvents:WaitForChild("UpdateSpeedDisplay")
 
-local MoneyManager = {}
+-- Esperar DataManager (se carga a través de _G)
+local DataManager
+local maxWait = 10
+local waited = 0
+repeat
+	task.wait(0.5)
+	waited = waited + 0.5
+	DataManager = _G.DataManager
+until DataManager or waited >= maxWait
+
+if not DataManager then
+	warn("[MoneyManager] ❌ No se pudo acceder a DataManager")
+	return
+end
 
 -- Caché de cooldowns para prevenir spam
 local collectionCooldowns = {}
@@ -33,7 +59,7 @@ local function canCollect(player)
 end
 
 -- Procesa la recolección de un orb
-function MoneyManager.ProcessOrbCollection(player, orbType)
+local function processOrbCollection(player, orbType)
 	-- Validaciones de seguridad
 	if not player or not player:IsDescendantOf(game.Players) then
 		return false
@@ -85,15 +111,15 @@ local function cleanupCooldowns(player)
 	collectionCooldowns[player.UserId] = nil
 end
 
--- Inicializa el sistema de dinero
-function MoneyManager.Initialize()
-	-- Escuchar eventos de recolección de orbs
-	OrbCollectedEvent.OnServerEvent:Connect(function(player, orbType)
-		MoneyManager.ProcessOrbCollection(player, orbType)
-	end)
+-- Inicializar automáticamente
+print("[MoneyManager] Inicializando...")
 
-	-- Limpiar cooldowns al salir
-	game.Players.PlayerRemoving:Connect(cleanupCooldowns)
-end
+-- Escuchar eventos de recolección de orbs
+OrbCollectedEvent.OnServerEvent:Connect(function(player, orbType)
+	processOrbCollection(player, orbType)
+end)
 
-return MoneyManager
+-- Limpiar cooldowns al salir
+game.Players.PlayerRemoving:Connect(cleanupCooldowns)
+
+print("[MoneyManager] ✅ Sistema de dinero inicializado")

@@ -1,17 +1,28 @@
 -- ServerScriptService > OrbGenerator
 -- Genera datos de orbs para que los clientes los visualicen
+-- NOTA: Este es un Script normal, NO ModuleScript
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
 local HttpService = game:GetService("HttpService")
 
-local OrbConfig = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("OrbConfig"))
-local OrbManager = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("OrbManager"))
-local DataManager = require(ServerScriptService:WaitForChild("DataManager"))
-local MoneyManager = require(ServerScriptService:WaitForChild("MoneyManager"))
-local RebirthManager = require(ServerScriptService:WaitForChild("RebirthManager"))
+-- Esperar a que los módulos estén disponibles
+print("[OrbGenerator] Esperando módulos...")
+local Modules = ReplicatedStorage:WaitForChild("Modules", 10)
 
-local OrbGenerator = {}
+if not Modules then
+	warn("[OrbGenerator] ❌ No se encontró la carpeta Modules")
+	return
+end
+
+local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
+local OrbManager = require(Modules:WaitForChild("OrbManager", 10))
+
+if not OrbConfig or not OrbManager then
+	warn("[OrbGenerator] ❌ No se pudieron cargar los módulos")
+	return
+end
+
+print("[OrbGenerator] ✅ Módulos cargados correctamente")
 
 -- Tabla para almacenar orbs activos por zona
 local activeOrbs = {}
@@ -59,9 +70,6 @@ local function spawnOrbInZone(zoneConfig)
 	-- Añadir a la lista de orbs activos
 	table.insert(activeOrbs[zoneName], orbData)
 
-	-- Nota: Los clientes crearán sus propios orbs visuales basados en estos datos
-	-- Esto se hace a través de una función remota o replicación
-
 	return orbData
 end
 
@@ -82,43 +90,15 @@ local function cleanupExpiredOrbs()
 	end
 end
 
--- Elimina un orb específico por ID (cuando un jugador lo recoge)
-function OrbGenerator.RemoveOrb(orbId, zoneName)
-	if not activeOrbs[zoneName] then return false end
-
-	for i, orb in ipairs(activeOrbs[zoneName]) do
-		if orb.Id == orbId then
-			table.remove(activeOrbs[zoneName], i)
-			return true
-		end
-	end
-
-	return false
-end
-
--- Obtiene todos los orbs activos (para nuevos jugadores)
-function OrbGenerator.GetAllActiveOrbs()
-	local allOrbs = {}
-
-	for zoneName, orbs in pairs(activeOrbs) do
-		for _, orb in ipairs(orbs) do
-			table.insert(allOrbs, orb)
-		end
-	end
-
-	return allOrbs
-end
-
--- Obtiene orbs de una zona específica
-function OrbGenerator.GetOrbsInZone(zoneName)
-	return activeOrbs[zoneName] or {}
-end
-
 -- Inicia el generador de orbs para todas las zonas
-function OrbGenerator.StartGeneration()
+local function startGeneration()
+	print("[OrbGenerator] Iniciando generación de orbs...")
+
 	-- Generar orbs continuamente para cada zona
 	for _, zoneConfig in ipairs(OrbConfig.Zones) do
 		task.spawn(function()
+			print(string.format("[OrbGenerator] Iniciando generación para zona: %s", zoneConfig.Name))
+
 			-- Loop de generación para esta zona
 			while true do
 				-- Generar orb si es necesario
@@ -137,25 +117,12 @@ function OrbGenerator.StartGeneration()
 			cleanupExpiredOrbs()
 		end
 	end)
+
+	print("[OrbGenerator] ✅ Sistema de orbs iniciado correctamente")
 end
 
--- Inicializa el generador
-function OrbGenerator.Initialize()
-	-- Inicializar sistemas dependientes
-	DataManager.Initialize()
-	MoneyManager.Initialize()
-	RebirthManager.Initialize()
+-- Esperar a que las zonas estén configuradas (por AutoConfigureZones)
+task.wait(3)
 
-	-- Esperar a que las zonas estén configuradas
-	task.wait(2)
-
-	-- Iniciar generación
-	OrbGenerator.StartGeneration()
-
-	print("[OrbGenerator] ✅ Sistema de orbs iniciado")
-end
-
--- Iniciar automáticamente
-OrbGenerator.Initialize()
-
-return OrbGenerator
+-- Iniciar generación
+startGeneration()

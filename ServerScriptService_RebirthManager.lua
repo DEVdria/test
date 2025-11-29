@@ -1,17 +1,43 @@
 -- ServerScriptService > RebirthManager
 -- Gestiona el sistema de rebirths (renacimientos)
+-- NOTA: Este es un Script normal, NO ModuleScript
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
 
-local DataManager = require(ServerScriptService:WaitForChild("DataManager"))
-local OrbConfig = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("OrbConfig"))
+-- Esperar a que los módulos estén disponibles
+print("[RebirthManager] Esperando módulos...")
+local Modules = ReplicatedStorage:WaitForChild("Modules", 10)
+if not Modules then
+	warn("[RebirthManager] ❌ No se encontró carpeta Modules")
+	return
+end
 
-local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
+local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
+
+-- Esperar RemoteEvents
+local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
+if not RemoteEvents then
+	warn("[RebirthManager] ❌ No se encontró carpeta RemoteEvents")
+	return
+end
+
 local RequestRebirthPurchaseEvent = RemoteEvents:WaitForChild("RequestRebirthPurchase")
 local UpdateSpeedDisplayEvent = RemoteEvents:WaitForChild("UpdateSpeedDisplay")
 
-local RebirthManager = {}
+-- Esperar DataManager (se carga a través de _G)
+local DataManager
+local maxWait = 10
+local waited = 0
+repeat
+	task.wait(0.5)
+	waited = waited + 0.5
+	DataManager = _G.DataManager
+until DataManager or waited >= maxWait
+
+if not DataManager then
+	warn("[RebirthManager] ❌ No se pudo acceder a DataManager")
+	return
+end
 
 -- Caché de cooldowns para prevenir spam de compras
 local purchaseCooldowns = {}
@@ -33,7 +59,7 @@ local function canPurchase(player)
 end
 
 -- Procesa una solicitud de rebirth
-function RebirthManager.ProcessRebirthPurchase(player)
+local function processRebirthPurchase(player)
 	-- Validaciones de seguridad
 	if not player or not player:IsDescendantOf(game.Players) then
 		return {Success = false, Message = "Jugador inválido"}
@@ -93,43 +119,22 @@ function RebirthManager.ProcessRebirthPurchase(player)
 	end
 end
 
--- Obtiene información de rebirth para un jugador (para mostrar en GUI)
-function RebirthManager.GetRebirthInfo(player)
-	local playerData = DataManager.GetData(player)
-	if not playerData then
-		return nil
-	end
-
-	local currentRebirths = playerData.Rebirths
-	local cost = OrbConfig.CalculateRebirthCost(currentRebirths)
-	local currentMultiplier = OrbConfig.CalculateSpeedMultiplier(currentRebirths)
-	local nextMultiplier = OrbConfig.CalculateSpeedMultiplier(currentRebirths + 1)
-
-	return {
-		CurrentRebirths = currentRebirths,
-		Cost = cost,
-		CurrentMultiplier = currentMultiplier,
-		NextMultiplier = nextMultiplier,
-		CanAfford = playerData.Money >= cost
-	}
-end
-
 -- Limpia cooldowns de jugadores que se van
 local function cleanupCooldowns(player)
 	purchaseCooldowns[player.UserId] = nil
 end
 
--- Inicializa el sistema de rebirths
-function RebirthManager.Initialize()
-	-- Escuchar solicitudes de compra de rebirth
-	RequestRebirthPurchaseEvent.OnServerEvent:Connect(function(player)
-		local result = RebirthManager.ProcessRebirthPurchase(player)
-		-- Devolver resultado al cliente
-		RequestRebirthPurchaseEvent:FireClient(player, result)
-	end)
+-- Inicializar automáticamente
+print("[RebirthManager] Inicializando...")
 
-	-- Limpiar cooldowns al salir
-	game.Players.PlayerRemoving:Connect(cleanupCooldowns)
-end
+-- Escuchar solicitudes de compra de rebirth
+RequestRebirthPurchaseEvent.OnServerEvent:Connect(function(player)
+	local result = processRebirthPurchase(player)
+	-- Devolver resultado al cliente
+	RequestRebirthPurchaseEvent:FireClient(player, result)
+end)
 
-return RebirthManager
+-- Limpiar cooldowns al salir
+game.Players.PlayerRemoving:Connect(cleanupCooldowns)
+
+print("[RebirthManager] ✅ Sistema de rebirths inicializado")

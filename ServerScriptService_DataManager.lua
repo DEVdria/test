@@ -1,14 +1,26 @@
 -- ServerScriptService > DataManager
 -- Gestiona la persistencia de datos con DataStore
+-- NOTA: Este es un Script normal, NO ModuleScript
 
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_V1")
-local OrbConfig = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("OrbConfig"))
+-- Esperar a que los módulos estén disponibles
+print("[DataManager] Esperando módulos...")
+local Modules = ReplicatedStorage:WaitForChild("Modules", 10)
+if not Modules then
+	warn("[DataManager] ❌ No se encontró carpeta Modules")
+	return
+end
 
-local DataManager = {}
+local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
+local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_V1")
+
+-- Almacenar funciones globalmente para que otros scripts puedan acceder
+_G.DataManager = _G.DataManager or {}
+local DataManager = _G.DataManager
+
 local playerData = {}
 
 -- Configuración
@@ -197,54 +209,56 @@ function DataManager.UnloadData(player)
 	playerData[player.UserId] = nil
 end
 
--- Inicializa el sistema de datos
-function DataManager.Initialize()
-	-- Manejar cuando un jugador se une
-	Players.PlayerAdded:Connect(function(player)
-		-- Cargar datos
-		local data = DataManager.LoadData(player)
+-- Inicializar automáticamente
+print("[DataManager] Inicializando...")
 
-		-- Crear leaderstats
-		local leaderstats = Instance.new("Folder")
-		leaderstats.Name = "leaderstats"
-		leaderstats.Parent = player
+-- Manejar cuando un jugador se une
+Players.PlayerAdded:Connect(function(player)
+	-- Cargar datos
+	local data = DataManager.LoadData(player)
 
-		local money = Instance.new("IntValue")
-		money.Name = "Money"
-		money.Value = data.Money
-		money.Parent = leaderstats
+	-- Crear leaderstats
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = player
 
-		local rebirths = Instance.new("IntValue")
-		rebirths.Name = "Rebirths"
-		rebirths.Value = data.Rebirths
-		rebirths.Parent = leaderstats
-	end)
+	local money = Instance.new("IntValue")
+	money.Name = "Money"
+	money.Value = data.Money
+	money.Parent = leaderstats
 
-	-- Manejar cuando un jugador se va
-	Players.PlayerRemoving:Connect(function(player)
-		DataManager.SaveData(player)
-		DataManager.UnloadData(player)
-	end)
+	local rebirths = Instance.new("IntValue")
+	rebirths.Name = "Rebirths"
+	rebirths.Value = data.Rebirths
+	rebirths.Parent = leaderstats
 
-	-- Autoguardado periódico
-	task.spawn(function()
-		while true do
-			task.wait(AUTOSAVE_INTERVAL)
-			for _, player in ipairs(Players:GetPlayers()) do
-				task.spawn(function()
-					DataManager.SaveData(player)
-				end)
-			end
-		end
-	end)
+	print(string.format("[DataManager] ✅ Datos cargados para %s", player.Name))
+end)
 
-	-- Guardar todos los datos al cerrar el servidor
-	game:BindToClose(function()
+-- Manejar cuando un jugador se va
+Players.PlayerRemoving:Connect(function(player)
+	DataManager.SaveData(player)
+	DataManager.UnloadData(player)
+end)
+
+-- Autoguardado periódico
+task.spawn(function()
+	while true do
+		task.wait(AUTOSAVE_INTERVAL)
 		for _, player in ipairs(Players:GetPlayers()) do
-			DataManager.SaveData(player)
+			task.spawn(function()
+				DataManager.SaveData(player)
+			end)
 		end
-		task.wait(2) -- Dar tiempo para que se guarden los datos
-	end)
-end
+	end
+end)
 
-return DataManager
+-- Guardar todos los datos al cerrar el servidor
+game:BindToClose(function()
+	for _, player in ipairs(Players:GetPlayers()) do
+		DataManager.SaveData(player)
+	end
+	task.wait(2) -- Dar tiempo para que se guarden los datos
+end)
+
+print("[DataManager] ✅ Sistema de datos inicializado")
