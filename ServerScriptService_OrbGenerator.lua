@@ -22,17 +22,18 @@ local function generateOrbId()
 end
 
 -- Crea un nuevo orb en una zona específica
-local function spawnOrbInZone(zone)
-	if not zone then return end
+local function spawnOrbInZone(zoneConfig)
+	if not zoneConfig then return end
 
 	-- Obtener orbs activos en esta zona
-	local zoneName = zone.Name
+	local zoneName = zoneConfig.Name
 	if not activeOrbs[zoneName] then
 		activeOrbs[zoneName] = {}
 	end
 
 	-- Verificar si ya hay suficientes orbs
-	if #activeOrbs[zoneName] >= zone.MaxOrbs then
+	local maxOrbs = zoneConfig.MaxOrbs or 10
+	if #activeOrbs[zoneName] >= maxOrbs then
 		return
 	end
 
@@ -44,7 +45,7 @@ local function spawnOrbInZone(zone)
 	end
 
 	-- Generar posición aleatoria en la zona
-	local position = OrbManager.GetRandomPositionInZone(zone)
+	local position = OrbManager.GetRandomPositionInZone(zoneConfig)
 
 	-- Crear datos del orb
 	local orbData = {
@@ -118,35 +119,6 @@ function OrbGenerator.StartGeneration()
 	-- Generar orbs continuamente para cada zona
 	for _, zoneConfig in ipairs(OrbConfig.Zones) do
 		task.spawn(function()
-			-- Crear la zona si no existe en el workspace
-			local workspace = game:GetService("Workspace")
-			local zonesFolder = workspace:FindFirstChild("Zones")
-
-			if not zonesFolder then
-				zonesFolder = Instance.new("Folder")
-				zonesFolder.Name = "Zones"
-				zonesFolder.Parent = workspace
-			end
-
-			-- Buscar o crear la zona
-			local zonePart = zonesFolder:FindFirstChild(zoneConfig.Name)
-			if not zonePart then
-				zonePart = Instance.new("Part")
-				zonePart.Name = zoneConfig.Name
-				zonePart.Size = Vector3.new(zoneConfig.Size.X, 1, zoneConfig.Size.Z)
-				zonePart.Position = zoneConfig.Position
-				zonePart.Anchored = true
-				zonePart.CanCollide = false
-				zonePart.Transparency = 0.8
-				zonePart.Color = Color3.fromRGB(100, 100, 255)
-				zonePart.Material = Enum.Material.Neon
-				zonePart.Parent = zonesFolder
-
-				-- Añadir atributos
-				zonePart:SetAttribute("ZoneName", zoneConfig.Name)
-				zonePart:SetAttribute("MaxOrbs", zoneConfig.MaxOrbs)
-			end
-
 			-- Loop de generación para esta zona
 			while true do
 				-- Generar orb si es necesario
@@ -174,13 +146,13 @@ function OrbGenerator.Initialize()
 	MoneyManager.Initialize()
 	RebirthManager.Initialize()
 
-	-- Esperar un momento para que todo se cargue
-	task.wait(1)
+	-- Esperar a que las zonas estén configuradas
+	task.wait(2)
 
 	-- Iniciar generación
 	OrbGenerator.StartGeneration()
 
-	print("[OrbGenerator] Sistema de orbs iniciado")
+	print("[OrbGenerator] ✅ Sistema de orbs iniciado")
 end
 
 -- Iniciar automáticamente
