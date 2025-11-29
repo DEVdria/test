@@ -33,8 +33,9 @@ local function getDefaultData()
 	return {
 		Money = 0,
 		Rebirths = 0,
-		AccumulatedSpeed = 0,
-		SpeedMultiplier = 1,
+		Level = 0,                    -- Nivel actual del jugador
+		CurrentEXP = 0,               -- EXP actual del jugador
+		EXPMultiplier = 1,            -- Multiplicador de EXP por rebirths
 		LastSave = os.time()
 	}
 end
@@ -159,14 +160,30 @@ function DataManager.AddMoney(player, amount)
 	return false
 end
 
--- Añade velocidad acumulada
-function DataManager.AddSpeed(player, speedAmount)
-	return DataManager.IncrementValue(player, "AccumulatedSpeed", speedAmount)
+-- Añade EXP al jugador
+function DataManager.AddEXP(player, expAmount)
+	return DataManager.IncrementValue(player, "CurrentEXP", expAmount)
 end
 
--- Resetea la velocidad acumulada (para rebirths)
-function DataManager.ResetSpeed(player)
-	return DataManager.SetValue(player, "AccumulatedSpeed", 0)
+-- Actualiza el nivel del jugador
+function DataManager.SetLevel(player, newLevel)
+	return DataManager.SetValue(player, "Level", newLevel)
+end
+
+-- Actualiza la EXP actual
+function DataManager.SetEXP(player, newEXP)
+	return DataManager.SetValue(player, "CurrentEXP", newEXP)
+end
+
+-- Resetea nivel y EXP (para rebirths)
+function DataManager.ResetLevelAndEXP(player)
+	local data = playerData[player.UserId]
+	if data then
+		data.Level = 0
+		data.CurrentEXP = 0
+		return true
+	end
+	return false
 end
 
 -- Procesa un rebirth
@@ -185,8 +202,9 @@ function DataManager.ProcessRebirth(player)
 	-- Procesar rebirth
 	data.Money = data.Money - cost
 	data.Rebirths = data.Rebirths + 1
-	data.AccumulatedSpeed = 0
-	data.SpeedMultiplier = OrbConfig.CalculateSpeedMultiplier(data.Rebirths)
+	data.Level = 0                        -- Resetear nivel
+	data.CurrentEXP = 0                   -- Resetear EXP
+	data.EXPMultiplier = OrbConfig.CalculateEXPMultiplier(data.Rebirths)
 
 	-- Actualizar leaderstats
 	local leaderstats = player:FindFirstChild("leaderstats")

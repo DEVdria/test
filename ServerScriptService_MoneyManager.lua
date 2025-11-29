@@ -13,6 +13,7 @@ if not Modules then
 end
 
 local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
+local LevelManager = require(Modules:WaitForChild("LevelManager", 10))
 
 -- Esperar RemoteEvents
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
@@ -22,7 +23,9 @@ if not RemoteEvents then
 end
 
 local OrbCollectedEvent = RemoteEvents:WaitForChild("OrbCollected")
-local UpdateSpeedDisplayEvent = RemoteEvents:WaitForChild("UpdateSpeedDisplay")
+local ShowOrbNotificationEvent = RemoteEvents:FindFirstChild("ShowOrbNotification")
+local LevelUpEvent = RemoteEvents:FindFirstChild("LevelUp")
+local MaxLevelReachedEvent = RemoteEvents:FindFirstChild("MaxLevelReached")
 
 -- Esperar DataManager (se carga a través de _G)
 local DataManager
@@ -58,6 +61,45 @@ local function canCollect(player)
 	return true
 end
 
+-- Procesa la subida de nivel si es posible
+local function processLevelUp(player, playerData)
+	local level = playerData.Level
+	local currentEXP = playerData.CurrentEXP
+	local rebirths = playerData.Rebirths
+
+	-- Intentar subir de nivel
+	while true do
+		local canLevel, reason, newLevel, newEXP = LevelManager.ProcessLevelUp(level, currentEXP, rebirths)
+
+		if not canLevel then
+			-- No puede subir más
+			if reason == "Nivel máximo alcanzado" then
+				-- Notificar al cliente que alcanzó nivel máximo
+				if MaxLevelReachedEvent then
+					MaxLevelReachedEvent:FireClient(player, level, rebirths)
+				end
+			end
+			break
+		end
+
+		-- Subió de nivel
+		level = newLevel
+		currentEXP = newEXP
+
+		-- Actualizar en DataManager
+		DataManager.SetLevel(player, level)
+		DataManager.SetEXP(player, currentEXP)
+
+		-- Notificar al cliente sobre la subida de nivel
+		if LevelUpEvent then
+			local newSpeed = LevelManager.GetRunSpeed(level)
+			LevelUpEvent:FireClient(player, level, newSpeed)
+		end
+
+		print(string.format("[MoneyManager] %s subió al nivel %d!", player.Name, level))
+	end
+end
+
 -- Procesa la recolección de un orb
 local function processOrbCollection(player, orbType)
 	-- Validaciones de seguridad
@@ -87,20 +129,26 @@ local function processOrbCollection(player, orbType)
 		return false
 	end
 
-	-- Aplicar multiplicador de rebirth al dinero (opcional)
+	-- Calcular EXP con multiplicador de rebirth
+	local baseEXP = orbData.EXPReward
+	local expMultiplier = playerData.EXPMultiplier or 1
+	local finalEXP = math.floor(baseEXP * expMultiplier)
+
 	local moneyReward = orbData.MoneyReward
-	local speedBonus = orbData.SpeedBonus
 
-	-- Aplicar multiplicador de velocidad
-	local multipliedSpeed = speedBonus * playerData.SpeedMultiplier
-
-	-- Añadir dinero y velocidad
+	-- Añadir dinero y EXP
 	DataManager.AddMoney(player, moneyReward)
-	local newSpeed = DataManager.AddSpeed(player, multipliedSpeed)
+	DataManager.AddEXP(player, finalEXP)
 
-	-- Actualizar display de velocidad en el cliente
-	if newSpeed then
-		UpdateSpeedDisplayEvent:FireClient(player, newSpeed)
+	-- Mostrar notificación al cliente
+	if ShowOrbNotificationEvent then
+		ShowOrbNotificationEvent:FireClient(player, orbType, finalEXP, orbData.Color)
+	end
+
+	-- Procesar posible subida de nivel
+	local updatedData = DataManager.GetData(player)
+	if updatedData then
+		processLevelUp(player, updatedData)
 	end
 
 	return true
@@ -122,4 +170,4 @@ end)
 -- Limpiar cooldowns al salir
 game.Players.PlayerRemoving:Connect(cleanupCooldowns)
 
-print("[MoneyManager] ✅ Sistema de dinero inicializado")
+print("[MoneyManager] ✅ Sistema de dinero, EXP y niveles inicializado")

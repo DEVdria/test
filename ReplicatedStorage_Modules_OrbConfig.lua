@@ -7,7 +7,7 @@ local OrbConfig = {}
 OrbConfig.OrbTypes = {
 	Yellow = {
 		Name = "Yellow",
-		SpeedBonus = 1,                          -- Velocidad que otorga
+		EXPReward = 5,                           -- Experiencia que otorga
 		MoneyReward = 10,                        -- Dinero que otorga al recogerlo
 		Color = Color3.fromRGB(255, 255, 0),     -- Color amarillo
 		Size = Vector3.new(2, 2, 2),             -- Tamaño del orb
@@ -17,7 +17,7 @@ OrbConfig.OrbTypes = {
 	},
 	Green = {
 		Name = "Green",
-		SpeedBonus = 2,
+		EXPReward = 7,                           -- Experiencia que otorga
 		MoneyReward = 25,
 		Color = Color3.fromRGB(0, 255, 0),       -- Color verde
 		Size = Vector3.new(2.2, 2.2, 2.2),
@@ -27,7 +27,7 @@ OrbConfig.OrbTypes = {
 	},
 	Blue = {
 		Name = "Blue",
-		SpeedBonus = 3,
+		EXPReward = 10,                          -- Experiencia que otorga
 		MoneyReward = 50,
 		Color = Color3.fromRGB(0, 100, 255),     -- Color azul
 		Size = Vector3.new(2.5, 2.5, 2.5),
@@ -39,7 +39,7 @@ OrbConfig.OrbTypes = {
 	-- EXTRA: Puedes añadir más tipos aquí siguiendo el mismo formato
 	-- Purple = {
 	--     Name = "Purple",
-	--     SpeedBonus = 5,
+	--     EXPReward = 15,
 	--     MoneyReward = 100,
 	--     Color = Color3.fromRGB(150, 0, 255),
 	--     Size = Vector3.new(3, 3, 3),
@@ -96,8 +96,9 @@ OrbConfig.General = {
 OrbConfig.Rebirth = {
 	BaseCost = 15000,                            -- Costo del primer rebirth
 	CostMultiplier = 1.5,                        -- Multiplicador de costo por rebirth (1.5 = +50% cada vez)
-	BaseSpeedMultiplier = 1.1,                   -- Multiplicador de velocidad base (1.1 = +10%)
-	SpeedMultiplierIncrease = 0.05,              -- Incremento adicional por rebirth
+	BaseEXPMultiplier = 1.1,                     -- Multiplicador de EXP base (1.1 = +10%)
+	EXPMultiplierIncrease = 0.05,                -- Incremento adicional por rebirth
+	MaxRebirths = 10,                            -- Límite máximo de rebirths (opcional)
 }
 
 -- ==================== FUNCIONES AUXILIARES ====================
@@ -107,9 +108,9 @@ function OrbConfig.CalculateRebirthCost(currentRebirths)
 	return math.floor(OrbConfig.Rebirth.BaseCost * (OrbConfig.Rebirth.CostMultiplier ^ currentRebirths))
 end
 
--- Calcula el multiplicador de velocidad basado en el número de rebirths
-function OrbConfig.CalculateSpeedMultiplier(rebirths)
-	return OrbConfig.Rebirth.BaseSpeedMultiplier + (OrbConfig.Rebirth.SpeedMultiplierIncrease * rebirths)
+-- Calcula el multiplicador de EXP basado en el número de rebirths
+function OrbConfig.CalculateEXPMultiplier(rebirths)
+	return OrbConfig.Rebirth.BaseEXPMultiplier + (OrbConfig.Rebirth.EXPMultiplierIncrease * rebirths)
 end
 
 -- Obtiene un tipo de orb aleatorio válido para una zona
