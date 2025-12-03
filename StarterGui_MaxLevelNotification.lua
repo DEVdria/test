@@ -1,5 +1,6 @@
 -- StarterGui > MaxLevelNotification
 -- Muestra notificación cuando el jugador alcanza su nivel máximo
+-- TÚ DISEÑAS LA INTERFAZ, este script solo actualiza los datos
 -- INSTRUCCIONES: Pegar este script como LocalScript en StarterGui
 
 local Players = game:GetService("Players")
@@ -17,183 +18,197 @@ local MaxLevelReachedEvent = RemoteEvents:WaitForChild("MaxLevelReached")
 local Modules = ReplicatedStorage:WaitForChild("Modules")
 local LevelManager = require(Modules:WaitForChild("LevelManager"))
 
--- Configuración de la notificación
-local NOTIFICATION_DURATION = 5  -- Segundos que se muestra
-local FADE_IN_TIME = 0.3
-local FADE_OUT_TIME = 0.5
+-- ==================== CONFIGURACIÓN ====================
+local NOTIFICATION_DURATION = 5  -- Segundos que se muestra la notificación
+local ANIMATION_DURATION = 0.5   -- Duración de animaciones de entrada/salida
 
--- Función para crear la notificación de nivel máximo
-local function createMaxLevelNotification(currentLevel, rebirths)
-	-- Crear ScreenGui si no existe
-	local screenGui = playerGui:FindFirstChild("MaxLevelNotificationGui")
-	if not screenGui then
-		screenGui = Instance.new("ScreenGui")
-		screenGui.Name = "MaxLevelNotificationGui"
-		screenGui.ResetOnSpawn = false
-		screenGui.DisplayOrder = 100  -- Asegurar que esté encima de otros GUIs
-		screenGui.Parent = playerGui
+-- ==================== BUSCAR GUI ====================
+-- TÚ debes crear una ScreenGui llamada "MaxLevelNotificationGui" en StarterGui
+-- Dentro debe haber un Frame llamado "NotificationFrame"
+-- Ver GUIA_DISEÑO_MAX_LEVEL.md para más detalles
+
+local notificationGui = playerGui:WaitForChild("MaxLevelNotificationGui", 10)
+if not notificationGui then
+	warn("[MaxLevelNotification] ❌ No se encontró ScreenGui 'MaxLevelNotificationGui' en StarterGui")
+	warn("[MaxLevelNotification] 📘 Lee GUIA_DISEÑO_MAX_LEVEL.md para crear la interfaz")
+	return
+end
+
+local notificationFrame = notificationGui:WaitForChild("NotificationFrame", 5)
+if not notificationFrame then
+	warn("[MaxLevelNotification] ❌ No se encontró Frame 'NotificationFrame' en MaxLevelNotificationGui")
+	warn("[MaxLevelNotification] 📘 Lee GUIA_DISEÑO_MAX_LEVEL.md para crear la interfaz")
+	return
+end
+
+-- La notificación debe estar oculta inicialmente
+notificationFrame.Visible = false
+
+-- ==================== FUNCIONES ====================
+
+-- Actualiza los datos de la notificación
+local function updateNotificationData(currentLevel, rebirths)
+	-- Buscar elementos por nombre (TÚ defines estos nombres en tu diseño)
+
+	-- TextLabel para mostrar nivel alcanzado (busca "LevelLabel" o "CurrentLevel")
+	local levelLabel = notificationFrame:FindFirstChild("LevelLabel") or notificationFrame:FindFirstChild("CurrentLevel")
+	if levelLabel and levelLabel:IsA("TextLabel") then
+		levelLabel.Text = string.format("Nivel %d", currentLevel)
 	end
 
-	-- Crear frame principal de la notificación
-	local notificationFrame = Instance.new("Frame")
-	notificationFrame.Name = "MaxLevelNotification"
-	notificationFrame.Size = UDim2.new(0, 400, 0, 150)
-	notificationFrame.Position = UDim2.new(0.5, -200, 0.5, -75)  -- Centro de la pantalla
-	notificationFrame.BackgroundColor3 = Color3.fromRGB(255, 165, 0)  -- Naranja/Dorado
-	notificationFrame.BorderSizePixel = 0
-	notificationFrame.BackgroundTransparency = 1  -- Empezar invisible
-	notificationFrame.Parent = screenGui
+	-- TextLabel para mostrar mensaje principal (busca "MessageLabel" o "MainMessage")
+	local messageLabel = notificationFrame:FindFirstChild("MessageLabel") or notificationFrame:FindFirstChild("MainMessage")
+	if messageLabel and messageLabel:IsA("TextLabel") then
+		messageLabel.Text = "¡Nivel Máximo Alcanzado!"
+	end
 
-	-- Añadir UICorner para bordes redondeados
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 15)
-	corner.Parent = notificationFrame
+	-- TextLabel para mostrar cuántos rebirths tienes (busca "RebirthsLabel")
+	local rebirthsLabel = notificationFrame:FindFirstChild("RebirthsLabel")
+	if rebirthsLabel and rebirthsLabel:IsA("TextLabel") then
+		rebirthsLabel.Text = string.format("Rebirths: %d", rebirths)
+	end
 
-	-- Añadir borde brillante
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(255, 215, 0)  -- Dorado brillante
-	stroke.Thickness = 3
-	stroke.Transparency = 1
-	stroke.Parent = notificationFrame
+	-- TextLabel para mostrar sugerencia (busca "SuggestionLabel" o "HintLabel")
+	local suggestionLabel = notificationFrame:FindFirstChild("SuggestionLabel") or notificationFrame:FindFirstChild("HintLabel")
+	if suggestionLabel and suggestionLabel:IsA("TextLabel") then
+		suggestionLabel.Text = "¡Compra un Rebirth para aumentar tu nivel máximo!"
+	end
 
-	-- Título principal
-	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(1, -20, 0, 40)
-	titleLabel.Position = UDim2.new(0, 10, 0, 15)
-	titleLabel.BackgroundTransparency = 1
-	titleLabel.Text = "⚠️ NIVEL MÁXIMO ALCANZADO ⚠️"
-	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.TextSize = 20
-	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	titleLabel.TextTransparency = 1
-	titleLabel.Parent = notificationFrame
+	-- Calcular nivel máximo siguiente
+	local nextMaxLevel = LevelManager.GetMaxLevel(rebirths + 1)
+	local nextLevelLabel = notificationFrame:FindFirstChild("NextMaxLevelLabel")
+	if nextLevelLabel and nextLevelLabel:IsA("TextLabel") then
+		nextLevelLabel.Text = string.format("Siguiente nivel máximo: %d", nextMaxLevel)
+	end
+end
 
-	-- Nivel actual
-	local levelLabel = Instance.new("TextLabel")
-	levelLabel.Size = UDim2.new(1, -20, 0, 30)
-	levelLabel.Position = UDim2.new(0, 10, 0, 55)
-	levelLabel.BackgroundTransparency = 1
-	levelLabel.Text = string.format("Has alcanzado el nivel %d", currentLevel)
-	levelLabel.Font = Enum.Font.Gotham
-	levelLabel.TextSize = 16
-	levelLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	levelLabel.TextTransparency = 1
-	levelLabel.Parent = notificationFrame
+-- Anima la entrada de la notificación
+local function animateIn()
+	notificationFrame.Visible = true
 
-	-- Mensaje de rebirth
-	local rebirthLabel = Instance.new("TextLabel")
-	rebirthLabel.Size = UDim2.new(1, -20, 0, 40)
-	rebirthLabel.Position = UDim2.new(0, 10, 0, 90)
-	rebirthLabel.BackgroundTransparency = 1
-	rebirthLabel.Text = "¡Compra un REBIRTH para aumentar tu nivel máximo!"
-	rebirthLabel.Font = Enum.Font.GothamBold
-	rebirthLabel.TextSize = 14
-	rebirthLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
-	rebirthLabel.TextTransparency = 1
-	rebirthLabel.TextWrapped = true
-	rebirthLabel.Parent = notificationFrame
+	-- Guardar posición original
+	local originalPosition = notificationFrame.Position
+	local originalSize = notificationFrame.Size
 
-	-- Animación de entrada
-	local fadeInTween = TweenService:Create(
-		notificationFrame,
-		TweenInfo.new(FADE_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{BackgroundTransparency = 0.1}
-	)
-
-	local strokeFadeIn = TweenService:Create(
-		stroke,
-		TweenInfo.new(FADE_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{Transparency = 0}
-	)
-
-	local titleFadeIn = TweenService:Create(
-		titleLabel,
-		TweenInfo.new(FADE_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{TextTransparency = 0}
-	)
-
-	local levelFadeIn = TweenService:Create(
-		levelLabel,
-		TweenInfo.new(FADE_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{TextTransparency = 0}
-	)
-
-	local rebirthFadeIn = TweenService:Create(
-		rebirthLabel,
-		TweenInfo.new(FADE_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{TextTransparency = 0}
-	)
-
-	-- Escala de entrada (efecto de "pop")
+	-- Empezar pequeño y fuera de pantalla (opcional)
 	notificationFrame.Size = UDim2.new(0, 0, 0, 0)
 	notificationFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	notificationFrame.BackgroundTransparency = 1
 
-	local scaleTween = TweenService:Create(
+	-- Animar tamaño y posición
+	local sizeTween = TweenService:Create(
 		notificationFrame,
-		TweenInfo.new(FADE_IN_TIME, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		TweenInfo.new(ANIMATION_DURATION, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 		{
-			Size = UDim2.new(0, 400, 0, 150),
-			Position = UDim2.new(0.5, -200, 0.5, -75)
+			Size = originalSize,
+			Position = originalPosition,
+			BackgroundTransparency = notificationFrame.BackgroundTransparency or 0
 		}
 	)
 
-	-- Reproducir animaciones de entrada
-	scaleTween:Play()
-	fadeInTween:Play()
-	strokeFadeIn:Play()
-	titleFadeIn:Play()
-	levelFadeIn:Play()
-	rebirthFadeIn:Play()
+	sizeTween:Play()
 
-	-- Esperar duración de la notificación
-	task.wait(NOTIFICATION_DURATION)
+	-- Animar todos los elementos hijos (text labels, etc.)
+	for _, child in ipairs(notificationFrame:GetDescendants()) do
+		if child:IsA("TextLabel") or child:IsA("TextButton") then
+			-- Guardar transparencia original
+			local originalTextTrans = child.TextTransparency
+			local originalBgTrans = child.BackgroundTransparency
 
-	-- Animación de salida
-	local fadeOutTween = TweenService:Create(
-		notificationFrame,
-		TweenInfo.new(FADE_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{BackgroundTransparency = 1}
-	)
+			child.TextTransparency = 1
+			child.BackgroundTransparency = 1
 
-	local strokeFadeOut = TweenService:Create(
-		stroke,
-		TweenInfo.new(FADE_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{Transparency = 1}
-	)
+			TweenService:Create(child, TweenInfo.new(ANIMATION_DURATION), {
+				TextTransparency = originalTextTrans,
+				BackgroundTransparency = originalBgTrans
+			}):Play()
+		elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
+			local originalImageTrans = child.ImageTransparency
+			local originalBgTrans = child.BackgroundTransparency
 
-	local titleFadeOut = TweenService:Create(
-		titleLabel,
-		TweenInfo.new(FADE_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{TextTransparency = 1}
-	)
+			child.ImageTransparency = 1
+			child.BackgroundTransparency = 1
 
-	local levelFadeOut = TweenService:Create(
-		levelLabel,
-		TweenInfo.new(FADE_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{TextTransparency = 1}
-	)
+			TweenService:Create(child, TweenInfo.new(ANIMATION_DURATION), {
+				ImageTransparency = originalImageTrans,
+				BackgroundTransparency = originalBgTrans
+			}):Play()
+		elseif child:IsA("Frame") then
+			local originalBgTrans = child.BackgroundTransparency
+			child.BackgroundTransparency = 1
 
-	local rebirthFadeOut = TweenService:Create(
-		rebirthLabel,
-		TweenInfo.new(FADE_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{TextTransparency = 1}
-	)
-
-	fadeOutTween:Play()
-	strokeFadeOut:Play()
-	titleFadeOut:Play()
-	levelFadeOut:Play()
-	rebirthFadeOut:Play()
-
-	-- Eliminar después de la animación
-	fadeOutTween.Completed:Wait()
-	notificationFrame:Destroy()
+			TweenService:Create(child, TweenInfo.new(ANIMATION_DURATION), {
+				BackgroundTransparency = originalBgTrans
+			}):Play()
+		end
+	end
 end
 
--- Escuchar evento de nivel máximo alcanzado
+-- Anima la salida de la notificación
+local function animateOut()
+	-- Animar tamaño y transparencia
+	local fadeOutTween = TweenService:Create(
+		notificationFrame,
+		TweenInfo.new(ANIMATION_DURATION, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+		{
+			Size = UDim2.new(0, 0, 0, 0),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			BackgroundTransparency = 1
+		}
+	)
+
+	-- Desvanecer todos los elementos hijos
+	for _, child in ipairs(notificationFrame:GetDescendants()) do
+		if child:IsA("TextLabel") or child:IsA("TextButton") then
+			TweenService:Create(child, TweenInfo.new(ANIMATION_DURATION), {
+				TextTransparency = 1,
+				BackgroundTransparency = 1
+			}):Play()
+		elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
+			TweenService:Create(child, TweenInfo.new(ANIMATION_DURATION), {
+				ImageTransparency = 1,
+				BackgroundTransparency = 1
+			}):Play()
+		elseif child:IsA("Frame") then
+			TweenService:Create(child, TweenInfo.new(ANIMATION_DURATION), {
+				BackgroundTransparency = 1
+			}):Play()
+		end
+	end
+
+	fadeOutTween:Play()
+	fadeOutTween.Completed:Wait()
+
+	-- Ocultar frame
+	notificationFrame.Visible = false
+end
+
+-- Muestra la notificación de nivel máximo
+local function showMaxLevelNotification(currentLevel, rebirths)
+	-- Si ya se está mostrando, no mostrar otra
+	if notificationFrame.Visible then
+		return
+	end
+
+	-- Actualizar datos
+	updateNotificationData(currentLevel, rebirths)
+
+	-- Animar entrada
+	animateIn()
+
+	-- Esperar duración
+	task.wait(NOTIFICATION_DURATION)
+
+	-- Animar salida
+	animateOut()
+end
+
+-- ==================== ESCUCHAR EVENTOS ====================
+
 MaxLevelReachedEvent.OnClientEvent:Connect(function(currentLevel, rebirths)
 	print(string.format("[MaxLevelNotification] Nivel máximo alcanzado: %d (Rebirths: %d)", currentLevel, rebirths))
-	createMaxLevelNotification(currentLevel, rebirths)
+	showMaxLevelNotification(currentLevel, rebirths)
 end)
 
 print("[MaxLevelNotification] ✅ Sistema de notificación de nivel máximo iniciado")
+print("[MaxLevelNotification] 📦 Usando frame: " .. notificationFrame.Name)
