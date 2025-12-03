@@ -15,7 +15,8 @@ if not Modules then
 end
 
 local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
-local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_V1")
+local ZoneConfig = require(Modules:WaitForChild("ZoneConfig", 10))
+local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_V2")  -- Cambio a V2 para nueva estructura
 
 -- Almacenar funciones globalmente para que otros scripts puedan acceder
 _G.DataManager = _G.DataManager or {}
@@ -36,6 +37,7 @@ local function getDefaultData()
 		Level = 0,                    -- Nivel actual del jugador
 		CurrentEXP = 0,               -- EXP actual del jugador
 		EXPMultiplier = 1,            -- Multiplicador de EXP por rebirths
+		OwnedZones = ZoneConfig.GetDefaultZones(),  -- Zonas que posee el jugador
 		LastSave = os.time()
 	}
 end
@@ -262,6 +264,43 @@ function DataManager.ProcessRebirth(player)
 	end
 
 	return true, "Rebirth exitoso"
+end
+
+-- Procesa la compra de una zona
+function DataManager.PurchaseZone(player, zoneID, cost)
+	local data = playerData[player.UserId]
+	if not data then return false end
+
+	-- Verificar si tiene suficiente dinero
+	if data.Money < cost then
+		return false
+	end
+
+	-- Verificar si ya posee la zona
+	if data.OwnedZones then
+		for _, ownedZone in ipairs(data.OwnedZones) do
+			if ownedZone == zoneID then
+				return false  -- Ya posee la zona
+			end
+		end
+	else
+		data.OwnedZones = ZoneConfig.GetDefaultZones()
+	end
+
+	-- Procesar compra
+	data.Money = data.Money - cost
+	table.insert(data.OwnedZones, zoneID)
+
+	-- Actualizar leaderstats
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if leaderstats then
+		local moneyValue = leaderstats:FindFirstChild("Money")
+		if moneyValue then
+			moneyValue.Value = data.Money
+		end
+	end
+
+	return true
 end
 
 -- Limpia los datos de un jugador de la memoria
