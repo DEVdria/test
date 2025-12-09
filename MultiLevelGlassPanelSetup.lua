@@ -277,17 +277,7 @@ local function createLevel(levelConfig)
 	folder.Name = levelConfig.name
 	folder.Parent = workspace
 
-	-- Crear plataforma de INICIO
-	local startPlatform = Instance.new("Part")
-	startPlatform.Name = "StartPlatform"
-	startPlatform.Size = Vector3.new(10, 1, 10)
-	startPlatform.Position = calculatePosition(0, levelConfig) - Vector3.new(0, 0, levelConfig.spacing) -- Antes del primer panel
-	startPlatform.Anchored = true
-	startPlatform.CanCollide = true
-	startPlatform.Material = Enum.Material.Neon
-	startPlatform.Color = Color3.fromRGB(0, 255, 0) -- Verde = inicio
-	startPlatform.TopSurface = Enum.SurfaceType.Smooth
-	startPlatform.Parent = folder
+	-- Plataforma de INICIO eliminada (empezar directamente en los cristales)
 
 	-- Crear paneles
 	for i = 1, levelConfig.numPanels do

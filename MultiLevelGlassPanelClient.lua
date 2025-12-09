@@ -434,17 +434,45 @@ local function detectPlatformTouch()
 	for levelName, levelInfo in pairs(levelData) do
 		local levelFolder = workspace:FindFirstChild(levelName)
 		if levelFolder then
-			local startPlatform = levelFolder:FindFirstChild("StartPlatform")
+			-- Detectar cuando pisa el primer panel (Panel1)
+			local firstPanel = levelFolder:FindFirstChild("Panel1")
 
-			if startPlatform then
-				-- Verificar si el jugador está sobre la plataforma de inicio
-				local platformTop = startPlatform.Position.Y + (startPlatform.Size.Y / 2)
+			if firstPanel then
+				-- Verificar si el jugador está sobre el primer panel
+				local panelTop = firstPanel.Position.Y + (firstPanel.Size.Y / 2)
 				local playerY = humanoidRootPart.Position.Y
 
-				local platformX = startPlatform.Position.X
-				local platformZ = startPlatform.Position.Z
-				local platformSizeX = startPlatform.Size.X / 2
-				local platformSizeZ = startPlatform.Size.Z / 2
+				local panelX = firstPanel.Position.X
+				local panelZ = firstPanel.Position.Z
+				local panelSizeX = firstPanel.Size.X / 2
+				local panelSizeZ = firstPanel.Size.Z / 2
+
+				local playerX = humanoidRootPart.Position.X
+				local playerZ = humanoidRootPart.Position.Z
+
+				local inXRange = playerX >= (panelX - panelSizeX) and playerX <= (panelX + panelSizeX)
+				local inZRange = playerZ >= (panelZ - panelSizeZ) and playerZ <= (panelZ + panelSizeZ)
+				local inYRange = playerY >= panelTop - 1 and playerY <= panelTop + 4
+
+				if inXRange and inZRange and inYRange then
+					if currentLevel ~= levelName then
+						showProgressBar(levelName)
+					end
+					return
+				end
+			end
+
+			-- Detectar cuando llega a la EndPlatform (victoria)
+			local endPlatform = levelFolder:FindFirstChild("EndPlatform")
+
+			if endPlatform then
+				local platformTop = endPlatform.Position.Y + (endPlatform.Size.Y / 2)
+				local playerY = humanoidRootPart.Position.Y
+
+				local platformX = endPlatform.Position.X
+				local platformZ = endPlatform.Position.Z
+				local platformSizeX = endPlatform.Size.X / 2
+				local platformSizeZ = endPlatform.Size.Z / 2
 
 				local playerX = humanoidRootPart.Position.X
 				local playerZ = humanoidRootPart.Position.Z
@@ -454,10 +482,11 @@ local function detectPlatformTouch()
 				local inYRange = playerY >= platformTop - 1 and playerY <= platformTop + 4
 
 				if inXRange and inZRange and inYRange then
-					if currentLevel ~= levelName then
-						showProgressBar(levelName)
+					-- Si estaba mostrando la progress bar de este nivel, ocultarla
+					if currentLevel == levelName then
+						hideProgressBar()
+						print(string.format("🏆 ¡Victoria en %s! Progress Bar ocultada", levelName))
 					end
-					return
 				end
 			end
 		end
@@ -521,15 +550,16 @@ local function initializeLevel(levelFolder)
 	end
 
 	-- Guardar posiciones de inicio y fin para la progress bar
-	local startPlatform = levelFolder:FindFirstChild("StartPlatform")
+	-- Usar el primer panel como inicio y la EndPlatform como fin
+	local firstPanelInLevel = levelFolder:FindFirstChild("Panel1")
 	local endPlatform = levelFolder:FindFirstChild("EndPlatform")
 
-	if startPlatform and endPlatform then
+	if firstPanelInLevel and endPlatform then
 		levelData[levelFolder.Name] = {
-			startPos = startPlatform.Position,
+			startPos = firstPanelInLevel.Position,
 			endPos = endPlatform.Position
 		}
-		print(string.format("📍 Plataformas detectadas en %s", levelFolder.Name))
+		print(string.format("📍 Inicio (Panel1) y EndPlatform detectadas en %s", levelFolder.Name))
 	end
 
 	print(string.format("✅ %s: %d paneles cargados", levelFolder.Name, #levelPanels))
