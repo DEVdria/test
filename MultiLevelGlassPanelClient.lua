@@ -690,7 +690,8 @@ local function initializeSystem()
 	-- Lanzar inicialización de todos los niveles EN PARALELO
 	for _, levelName in ipairs(CONFIG.LEVEL_NAMES) do
 		task.spawn(function()
-			local levelFolder = workspace:FindFirstChild(levelName)
+			-- Esperar hasta 60s a que el servidor cree el nivel
+			local levelFolder = workspace:WaitForChild(levelName, 60)
 			if levelFolder then
 				local panels = initializeLevel(levelFolder)
 				if panels > 0 then
