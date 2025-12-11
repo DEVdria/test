@@ -30,7 +30,6 @@ local CONFIG = {
 	RESPAWN_TIME = 7,               -- Tiempo de respawn (segundos)
 	REPLICATION_WAIT = 1.5,         -- Tiempo de espera para replicación (reducido para carga asíncrona)
 	MIN_LEVELS_TO_START = 3,        -- Mínimo de niveles listos para empezar a jugar
-	ENDPLATFORM_TIMEOUT = 30,       -- Timeout para EndPlatform (aumentado para niveles lejanos)
 
 	-- Animación
 	FALL_DISTANCE = 30,             -- Distancia de caída (studs)
@@ -503,23 +502,6 @@ end
 -- INICIALIZACIÓN DE UN NIVEL
 -- ═══════════════════════════════════════════════════════════
 
--- Calcula timeout dinámico basado en la distancia del nivel
-local function getEndPlatformTimeout(levelName)
-	local levelNum = tonumber(string.match(levelName, "%d+"))
-	if not levelNum then
-		return CONFIG.ENDPLATFORM_TIMEOUT
-	end
-
-	-- Niveles más lejanos necesitan MUCHO más tiempo para replicar
-	if levelNum >= 15 then
-		return 90 -- 90s para Level15-19 (más distantes)
-	elseif levelNum >= 10 then
-		return 60 -- 60s para Level10-14
-	else
-		return 30 -- 30s para Level1-9 (funcionan bien)
-	end
-end
-
 local function initializeLevel(levelFolder)
 	print(string.format("📂 Inicializando %s...", levelFolder.Name))
 
@@ -530,26 +512,7 @@ local function initializeLevel(levelFolder)
 		return 0
 	end
 
-	-- Calcular timeout dinámico basado en distancia del nivel
-	local endPlatformTimeout = getEndPlatformTimeout(levelFolder.Name)
-
-	-- Esperar a que la EndPlatform también se replique (timeout más largo)
-	print(string.format("🔍 DEBUG: Buscando EndPlatform en %s (timeout: %ds)...", levelFolder.Name, endPlatformTimeout))
-	print(string.format("   Hijos actuales de %s:", levelFolder.Name))
-	for _, child in ipairs(levelFolder:GetChildren()) do
-		print(string.format("      - %s (%s)", child.Name, child.ClassName))
-	end
-
-	local endPlatform = levelFolder:WaitForChild("EndPlatform", endPlatformTimeout)
-	if not endPlatform then
-		warn(string.format("❌ No se encontró EndPlatform en %s (timeout después de %ds)", levelFolder.Name, endPlatformTimeout))
-		warn(string.format("   Total de hijos en %s: %d", levelFolder.Name, #levelFolder:GetChildren()))
-		return 0
-	end
-
-	print(string.format("✅ EndPlatform encontrada en %s", levelFolder.Name))
-
-	-- Esperar un poco más para que todos los paneles se repliquen
+	-- Esperar un poco para que todos los paneles se repliquen
 	print(string.format("⏳ Esperando replicación de paneles en %s...", levelFolder.Name))
 	task.wait(CONFIG.REPLICATION_WAIT)
 
@@ -594,24 +557,19 @@ local function initializeLevel(levelFolder)
 	end
 
 	-- Guardar posiciones de inicio y fin para la progress bar
-	-- Usar el primer panel como inicio y la EndPlatform como fin
-	local firstPanelInLevel = levelFolder:FindFirstChild("Panel1")
-	local endPlatformInLevel = levelFolder:FindFirstChild("EndPlatform")
+	-- Usar el primer panel como inicio y el ÚLTIMO panel como fin/meta
+	local firstPanelInLevel = levelPanels[1]
+	local lastPanelInLevel = levelPanels[#levelPanels]
 
-	if firstPanelInLevel and endPlatformInLevel then
+	if firstPanelInLevel and lastPanelInLevel then
 		levelData[levelFolder.Name] = {
 			startPos = firstPanelInLevel.Position,
-			endPos = endPlatformInLevel.Position
+			endPos = lastPanelInLevel.Position
 		}
-		print(string.format("✅ Progress Bar configurada para %s (Panel1 → EndPlatform)", levelFolder.Name))
+		print(string.format("✅ Progress Bar configurada para %s (Panel1 → Panel%d como meta)",
+			levelFolder.Name, getPanelNumber(lastPanelInLevel.Name)))
 	else
 		warn(string.format("⚠️ No se pudo configurar Progress Bar para %s", levelFolder.Name))
-		if not firstPanelInLevel then
-			warn(string.format("   - Panel1 no encontrado en %s", levelFolder.Name))
-		end
-		if not endPlatformInLevel then
-			warn(string.format("   - EndPlatform no encontrada en %s", levelFolder.Name))
-		end
 	end
 
 	print(string.format("✅ %s: %d paneles cargados", levelFolder.Name, #levelPanels))

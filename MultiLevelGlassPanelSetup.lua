@@ -783,27 +783,7 @@ local function createLevel(levelConfig)
 	folder.Name = levelConfig.name
 	folder.Parent = workspace
 
-	-- Plataforma de INICIO eliminada (empezar directamente en los cristales)
-
-	-- Crear plataforma de FIN PRIMERO (para que replique antes que los paneles)
-	local endPlatform = Instance.new("Part")
-	endPlatform.Name = "EndPlatform"
-	endPlatform.Size = Vector3.new(10, 1, 10)
-	endPlatform.Position = calculatePosition(levelConfig.numPanels + 1, levelConfig) -- Después del último panel
-	endPlatform.Anchored = true
-	endPlatform.CanCollide = true
-	endPlatform.Material = Enum.Material.Neon
-	endPlatform.Color = Color3.fromRGB(255, 215, 0) -- Dorado = meta
-	endPlatform.TopSurface = Enum.SurfaceType.Smooth
-	endPlatform.Parent = folder
-
-	-- DEBUG: Verificar que EndPlatform se creó correctamente
-	print(string.format("  🟡 EndPlatform creado en %s | Parent: %s | Posición: %s",
-		levelConfig.name,
-		tostring(endPlatform.Parent.Name),
-		tostring(endPlatform.Position)))
-
-	-- Crear paneles (SIN delay entre ellos para velocidad máxima)
+	-- Crear paneles (el ÚLTIMO panel será la meta/fin del nivel)
 	for i = 1, levelConfig.numPanels do
 		local panel, fallTime = createPanel(i, levelConfig, folder)
 
