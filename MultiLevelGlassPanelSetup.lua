@@ -797,8 +797,9 @@ local function createLevel(levelConfig)
 	endPlatform.TopSurface = Enum.SurfaceType.Smooth
 	endPlatform.Parent = folder
 
-	-- Pequeño delay para forzar replicación de EndPlatform antes de paneles
-	task.wait(0.05)
+	-- DELAY GRANDE para garantizar que EndPlatform replique COMPLETAMENTE antes de crear panels
+	-- Crítico para Level10-19 que están muy lejos (~300-400 studs de distancia)
+	task.wait(1.0)
 
 	-- Crear paneles con delay entre cada uno para evitar saturación de replicación
 	for i = 1, levelConfig.numPanels do
