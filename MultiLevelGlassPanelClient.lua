@@ -308,13 +308,16 @@ end
 -- ═══════════════════════════════════════════════════════════
 
 local function initializeProgressBar()
-	-- Buscar la ProgressBarGui en PlayerGui
+	-- Buscar la ProgressBarGui en PlayerGui (con retry)
 	local playerGui = player:WaitForChild("PlayerGui")
-	progressBarGui = playerGui:FindFirstChild("ProgressBarGui")
+
+	-- Intentar encontrar con timeout (los GUIs tardan en replicar desde StarterGui)
+	progressBarGui = playerGui:WaitForChild("ProgressBarGui", 5)
 
 	if not progressBarGui then
-		warn("⚠️ No se encontró ProgressBarGui en StarterGui")
-		warn("Crea la interfaz siguiendo INSTRUCCIONES_PROGRESS_BAR.md")
+		warn("⚠️ No se encontró ProgressBarGui en PlayerGui")
+		warn("Verifica que 'ProgressBarGui' esté en StarterGui")
+		warn("Sigue las instrucciones en INSTRUCCIONES_PROGRESS_BAR.md")
 		return false
 	end
 

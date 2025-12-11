@@ -317,6 +317,11 @@ local function setupAllLevels()
 
 	for levelIndex, levelConfig in ipairs(LEVELS) do
 		createLevel(levelConfig)
+
+		-- Pequeño delay entre niveles para evitar saturar la replicación
+		if levelIndex < #LEVELS then
+			task.wait(0.1) -- 100ms entre cada nivel
+		end
 	end
 
 	print("═══════════════════════════════════════════════════════")
