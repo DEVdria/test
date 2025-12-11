@@ -800,7 +800,7 @@ local function createLevel(levelConfig)
 	-- Pequeño delay para forzar replicación de EndPlatform antes de paneles
 	task.wait(0.05)
 
-	-- Crear paneles
+	-- Crear paneles con delay entre cada uno para evitar saturación de replicación
 	for i = 1, levelConfig.numPanels do
 		local panel, fallTime = createPanel(i, levelConfig, folder)
 
@@ -809,6 +809,12 @@ local function createLevel(levelConfig)
 			i,
 			fallTime
 		))
+
+		-- Pequeño delay entre paneles para distribuir carga de replicación
+		-- Especialmente importante para niveles con muchos paneles (Level6=70, Level15=72)
+		if i < levelConfig.numPanels then
+			task.wait(0.01) -- 10ms entre paneles = ~0.7s para 70 paneles
+		end
 	end
 
 	print(string.format("✅ %s completado", levelConfig.name))
