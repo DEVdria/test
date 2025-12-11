@@ -28,7 +28,9 @@ local CONFIG = {
 
 	-- Tiempos
 	RESPAWN_TIME = 7,               -- Tiempo de respawn (segundos)
-	REPLICATION_WAIT = 2.0,         -- Tiempo de espera para replicación (aumentado para muchos niveles)
+	REPLICATION_WAIT = 1.5,         -- Tiempo de espera para replicación (reducido para carga asíncrona)
+	MIN_LEVELS_TO_START = 3,        -- Mínimo de niveles listos para empezar a jugar
+	ENDPLATFORM_TIMEOUT = 30,       -- Timeout para EndPlatform (aumentado para niveles lejanos)
 
 	-- Animación
 	FALL_DISTANCE = 30,             -- Distancia de caída (studs)
@@ -508,10 +510,10 @@ local function initializeLevel(levelFolder)
 		return 0
 	end
 
-	-- Esperar a que la EndPlatform también se replique
-	local endPlatform = levelFolder:WaitForChild("EndPlatform", 10)
+	-- Esperar a que la EndPlatform también se replique (timeout más largo)
+	local endPlatform = levelFolder:WaitForChild("EndPlatform", CONFIG.ENDPLATFORM_TIMEOUT)
 	if not endPlatform then
-		warn(string.format("❌ No se encontró EndPlatform en %s", levelFolder.Name))
+		warn(string.format("❌ No se encontró EndPlatform en %s (timeout después de %ds)", levelFolder.Name, CONFIG.ENDPLATFORM_TIMEOUT))
 		return 0
 	end
 
@@ -667,50 +669,64 @@ local function initializeSystem()
 	print("═══════════════════════════════════════════════════════")
 	print("MULTI-LEVEL GLASS PANEL SYSTEM - INICIANDO")
 	print("═══════════════════════════════════════════════════════")
+	print(string.format("⚡ Cargando niveles en PARALELO (empezarás a jugar cuando %d estén listos)", CONFIG.MIN_LEVELS_TO_START))
 
 	local totalPanels = 0
-	local levelsFound = 0
-	local levelsWithProgressBar = 0
+	local levelsReady = 0
+	local systemStarted = false
 
-	-- Buscar e inicializar cada nivel
+	-- Lanzar inicialización de todos los niveles EN PARALELO
 	for _, levelName in ipairs(CONFIG.LEVEL_NAMES) do
-		local levelFolder = workspace:FindFirstChild(levelName)
-		if levelFolder then
-			levelsFound = levelsFound + 1
-			totalPanels = totalPanels + initializeLevel(levelFolder)
-		else
-			warn(string.format("⚠️ %s no encontrado en Workspace", levelName))
-		end
+		task.spawn(function()
+			local levelFolder = workspace:FindFirstChild(levelName)
+			if levelFolder then
+				local panels = initializeLevel(levelFolder)
+				if panels > 0 then
+					-- Nivel cargado exitosamente
+					totalPanels = totalPanels + panels
+					levelsReady = levelsReady + 1
+
+					print(string.format("✅ %s LISTO PARA JUGAR (%d/%d niveles disponibles)",
+						levelName, levelsReady, #CONFIG.LEVEL_NAMES))
+
+					-- ¿Ya podemos empezar a jugar?
+					if levelsReady >= CONFIG.MIN_LEVELS_TO_START and not systemStarted then
+						systemStarted = true
+						print("───────────────────────────────────────────────────────")
+						print(string.format("🎮 ¡SISTEMA ACTIVADO! Ya puedes jugar con %d niveles", levelsReady))
+						print(string.format("   Los demás %d niveles se siguen cargando en segundo plano",
+							#CONFIG.LEVEL_NAMES - levelsReady))
+						print("───────────────────────────────────────────────────────")
+
+						-- Activar sistema de detección
+						startDetectionLoop()
+						print("🔄 Sistema de detección continua activado")
+					end
+				end
+			else
+				warn(string.format("⚠️ %s no encontrado en Workspace", levelName))
+			end
+		end)
 	end
 
-	-- Contar cuántos niveles tienen progress bar configurada
-	for levelName, _ in pairs(levelData) do
-		levelsWithProgressBar = levelsWithProgressBar + 1
+	-- Esperar a que al menos MIN_LEVELS_TO_START niveles estén listos
+	local maxWait = 60 -- Máximo 60 segundos de espera
+	local waited = 0
+	while levelsReady < CONFIG.MIN_LEVELS_TO_START and waited < maxWait do
+		task.wait(0.5)
+		waited = waited + 0.5
 	end
 
-	if levelsFound == 0 then
-		warn("❌ ERROR: No se encontraron niveles en Workspace")
+	if levelsReady == 0 then
+		warn("❌ ERROR: No se pudieron cargar niveles")
 		warn("Ejecuta el script de setup primero")
 		return false
 	end
 
-	print("───────────────────────────────────────────────────────")
-	print(string.format("✅ SISTEMA LISTO"))
-	print(string.format("   Niveles encontrados: %d/%d", levelsFound, #CONFIG.LEVEL_NAMES))
-	print(string.format("   Niveles con Progress Bar: %d/%d", levelsWithProgressBar, levelsFound))
-	print(string.format("   Total de paneles: %d", totalPanels))
-
-	-- Mostrar niveles sin progress bar
-	if levelsWithProgressBar < levelsFound then
-		warn("⚠️ Algunos niveles NO tienen Progress Bar configurada:")
-		for _, levelName in ipairs(CONFIG.LEVEL_NAMES) do
-			if workspace:FindFirstChild(levelName) and not levelData[levelName] then
-				warn(string.format("   - %s", levelName))
-			end
-		end
+	if levelsReady < CONFIG.MIN_LEVELS_TO_START then
+		warn(string.format("⚠️ Solo se cargaron %d niveles (esperaba %d mínimo)", levelsReady, CONFIG.MIN_LEVELS_TO_START))
+		print("🎮 Activando sistema de todas formas...")
 	end
-
-	print("═══════════════════════════════════════════════════════")
 
 	return true
 end
@@ -719,10 +735,35 @@ end
 -- EJECUTAR SISTEMA
 -- ═══════════════════════════════════════════════════════════
 
-if initializeSystem() then
-	-- Inicializar progress bar (opcional, funcionará sin ella)
-	initializeProgressBar()
+-- Inicializar progress bar primero (opcional, funcionará sin ella)
+initializeProgressBar()
 
-	startDetectionLoop()
-	print("🔄 Sistema de detección continua activado")
+-- Inicializar sistema (carga niveles en paralelo y activa detección automáticamente)
+if initializeSystem() then
+	print("═══════════════════════════════════════════════════════")
+	print("✅ Inicialización completa")
+	print("═══════════════════════════════════════════════════════")
+
+	-- Mostrar resumen final cuando todos terminen de cargar
+	task.spawn(function()
+		task.wait(5) -- Esperar un poco más
+		local levelsWithProgressBar = 0
+		for levelName, _ in pairs(levelData) do
+			levelsWithProgressBar = levelsWithProgressBar + 1
+		end
+
+		print("───────────────────────────────────────────────────────")
+		print("📊 RESUMEN FINAL:")
+		print(string.format("   Niveles con Progress Bar: %d/%d", levelsWithProgressBar, #CONFIG.LEVEL_NAMES))
+
+		if levelsWithProgressBar < #CONFIG.LEVEL_NAMES then
+			warn("⚠️ Algunos niveles no se cargaron completamente:")
+			for _, levelName in ipairs(CONFIG.LEVEL_NAMES) do
+				if workspace:FindFirstChild(levelName) and not levelData[levelName] then
+					warn(string.format("   - %s", levelName))
+				end
+			end
+		end
+		print("───────────────────────────────────────────────────────")
+	end)
 end
