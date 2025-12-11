@@ -45,6 +45,26 @@ local player = Players.LocalPlayer
 local panelData = {} -- Almacena información de cada panel
 local allPanels = {} -- Lista de todos los paneles de todos los niveles
 
+-- ═══════════════════════════════════════════════════════════════
+-- EXPANDIR ÁREA DE REPLICACIÓN
+-- ═══════════════════════════════════════════════════════════════
+-- Problema: Roblox solo replica objetos dentro de ~1000 studs del jugador
+-- Level10-19 están a >1000 studs, sus últimos panels no replican = no caen
+-- Solución: Crear un objeto central invisible como ReplicationFocus
+
+local replicationCenter = Instance.new("Part")
+replicationCenter.Name = "ReplicationCenter"
+replicationCenter.Size = Vector3.new(1, 1, 1)
+replicationCenter.Position = Vector3.new(0, 0, 0) -- Centro entre todos los niveles
+replicationCenter.Anchored = true
+replicationCenter.CanCollide = false
+replicationCenter.Transparency = 1
+replicationCenter.Parent = workspace
+
+-- Forzar replicación desde el centro (cubre todos los niveles)
+player.ReplicationFocus = replicationCenter
+print("🌐 ReplicationFocus expandido - todos los niveles dentro del rango")
+
 -- Progress Bar
 local progressBarGui
 local progressBarFill
@@ -123,6 +143,12 @@ local function activatePanel(panel, panelNumber, levelName, fallTime)
 	-- Marcar como activo
 	data.isActive = true
 	data.startTime = tick()
+
+	-- Si es el ÚLTIMO panel del nivel, ocultar Progress Bar (meta alcanzada)
+	if data.isLastPanel then
+		print(string.format("🏁 %s - ¡META ALCANZADA! (Panel %d) - Ocultando Progress Bar", levelName, panelNumber))
+		hideProgressBar()
+	end
 
 	-- Reproducir sonido con velocidad progresiva
 	local stepSound = panel:FindFirstChild("StepSound")
@@ -537,9 +563,10 @@ local function initializeLevel(levelFolder)
 	end)
 
 	-- Inicializar cada panel
-	for _, panel in ipairs(levelPanels) do
+	for i, panel in ipairs(levelPanels) do
 		local panelNumber = getPanelNumber(panel.Name)
 		local fallTime = getFallTimeFromPanel(panel)
+		local isLastPanel = (i == #levelPanels) -- El último panel del nivel
 
 		-- Guardar datos del panel
 		panelData[panel] = {
@@ -550,6 +577,7 @@ local function initializeLevel(levelFolder)
 			isActive = false,
 			startTime = nil,
 			wasPlayerOn = false,
+			isLastPanel = isLastPanel, -- Marcar si es el último panel (meta del nivel)
 		}
 
 		-- Agregar a lista global
