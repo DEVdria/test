@@ -279,18 +279,7 @@ local function createLevel(levelConfig)
 
 	-- Plataforma de INICIO eliminada (empezar directamente en los cristales)
 
-	-- Crear paneles
-	for i = 1, levelConfig.numPanels do
-		local panel, fallTime = createPanel(i, levelConfig, folder)
-
-		print(string.format(
-			"  📦 Panel%d | Tiempo: %.1fs",
-			i,
-			fallTime
-		))
-	end
-
-	-- Crear plataforma de FIN
+	-- Crear plataforma de FIN PRIMERO (para que replique antes que los paneles)
 	local endPlatform = Instance.new("Part")
 	endPlatform.Name = "EndPlatform"
 	endPlatform.Size = Vector3.new(10, 1, 10)
@@ -301,6 +290,17 @@ local function createLevel(levelConfig)
 	endPlatform.Color = Color3.fromRGB(255, 215, 0) -- Dorado = meta
 	endPlatform.TopSurface = Enum.SurfaceType.Smooth
 	endPlatform.Parent = folder
+
+	-- Crear paneles
+	for i = 1, levelConfig.numPanels do
+		local panel, fallTime = createPanel(i, levelConfig, folder)
+
+		print(string.format(
+			"  📦 Panel%d | Tiempo: %.1fs",
+			i,
+			fallTime
+		))
+	end
 
 	print(string.format("✅ %s completado", levelConfig.name))
 	return folder
