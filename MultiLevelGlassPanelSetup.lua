@@ -828,14 +828,16 @@ local function setupAllLevels()
 		createLevel(levelConfig)
 
 		-- Delay gradual entre niveles para evitar saturar la replicación
-		-- Niveles más altos necesitan más tiempo para replicar
+		-- Niveles más altos necesitan MUCHO más tiempo para replicar completamente
+		-- antes de crear el siguiente nivel
 		if levelIndex < #LEVELS then
-			local delay = 0.1 -- Default para Level1-9
+			local delay = 0.2 -- Default para Level1-9 (ligeramente aumentado)
 			if levelIndex >= 15 then
-				delay = 0.5 -- 500ms para Level15-19 (más distantes)
+				delay = 2.0 -- 2000ms para Level15-19 (crítico para replicación completa)
 			elseif levelIndex >= 10 then
-				delay = 0.3 -- 300ms para Level10-14
+				delay = 1.0 -- 1000ms para Level10-14
 			end
+			print(string.format("⏳ Esperando %.1fs antes de crear siguiente nivel...", delay))
 			task.wait(delay)
 		end
 	end

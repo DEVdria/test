@@ -503,6 +503,23 @@ end
 -- INICIALIZACIÓN DE UN NIVEL
 -- ═══════════════════════════════════════════════════════════
 
+-- Calcula timeout dinámico basado en la distancia del nivel
+local function getEndPlatformTimeout(levelName)
+	local levelNum = tonumber(string.match(levelName, "%d+"))
+	if not levelNum then
+		return CONFIG.ENDPLATFORM_TIMEOUT
+	end
+
+	-- Niveles más lejanos necesitan MUCHO más tiempo para replicar
+	if levelNum >= 15 then
+		return 90 -- 90s para Level15-19 (más distantes)
+	elseif levelNum >= 10 then
+		return 60 -- 60s para Level10-14
+	else
+		return 30 -- 30s para Level1-9 (funcionan bien)
+	end
+end
+
 local function initializeLevel(levelFolder)
 	print(string.format("📂 Inicializando %s...", levelFolder.Name))
 
@@ -513,16 +530,19 @@ local function initializeLevel(levelFolder)
 		return 0
 	end
 
+	-- Calcular timeout dinámico basado en distancia del nivel
+	local endPlatformTimeout = getEndPlatformTimeout(levelFolder.Name)
+
 	-- Esperar a que la EndPlatform también se replique (timeout más largo)
-	print(string.format("🔍 DEBUG: Buscando EndPlatform en %s...", levelFolder.Name))
+	print(string.format("🔍 DEBUG: Buscando EndPlatform en %s (timeout: %ds)...", levelFolder.Name, endPlatformTimeout))
 	print(string.format("   Hijos actuales de %s:", levelFolder.Name))
 	for _, child in ipairs(levelFolder:GetChildren()) do
 		print(string.format("      - %s (%s)", child.Name, child.ClassName))
 	end
 
-	local endPlatform = levelFolder:WaitForChild("EndPlatform", CONFIG.ENDPLATFORM_TIMEOUT)
+	local endPlatform = levelFolder:WaitForChild("EndPlatform", endPlatformTimeout)
 	if not endPlatform then
-		warn(string.format("❌ No se encontró EndPlatform en %s (timeout después de %ds)", levelFolder.Name, CONFIG.ENDPLATFORM_TIMEOUT))
+		warn(string.format("❌ No se encontró EndPlatform en %s (timeout después de %ds)", levelFolder.Name, endPlatformTimeout))
 		warn(string.format("   Total de hijos en %s: %d", levelFolder.Name, #levelFolder:GetChildren()))
 		return 0
 	end
