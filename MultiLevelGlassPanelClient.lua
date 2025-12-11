@@ -514,11 +514,20 @@ local function initializeLevel(levelFolder)
 	end
 
 	-- Esperar a que la EndPlatform también se replique (timeout más largo)
+	print(string.format("🔍 DEBUG: Buscando EndPlatform en %s...", levelFolder.Name))
+	print(string.format("   Hijos actuales de %s:", levelFolder.Name))
+	for _, child in ipairs(levelFolder:GetChildren()) do
+		print(string.format("      - %s (%s)", child.Name, child.ClassName))
+	end
+
 	local endPlatform = levelFolder:WaitForChild("EndPlatform", CONFIG.ENDPLATFORM_TIMEOUT)
 	if not endPlatform then
 		warn(string.format("❌ No se encontró EndPlatform en %s (timeout después de %ds)", levelFolder.Name, CONFIG.ENDPLATFORM_TIMEOUT))
+		warn(string.format("   Total de hijos en %s: %d", levelFolder.Name, #levelFolder:GetChildren()))
 		return 0
 	end
+
+	print(string.format("✅ EndPlatform encontrada en %s", levelFolder.Name))
 
 	-- Esperar un poco más para que todos los paneles se repliquen
 	print(string.format("⏳ Esperando replicación de paneles en %s...", levelFolder.Name))
