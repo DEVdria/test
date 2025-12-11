@@ -40,12 +40,12 @@ local LEVELS = {
 		},
 
 		-- Posición y orientación
-		startPosition = Vector3.new(0, 10, 0),
+		startPosition = Vector3.new(30, -0.5, 90),
 		direction = "Z",                    -- X, Y, o Z
-		spacing = 6,                        -- Espacio entre paneles
+		spacing = 12,                        -- Espacio entre paneles
 
 		-- Apariencia
-		panelSize = Vector3.new(5, 0.5, 5),
+		panelSize = Vector3.new(10, 0.5, 10),
 		material = Enum.Material.Glass,
 		transparency = 0.3,
 		color = Color3.fromRGB(100, 200, 255), -- Azul claro
@@ -53,9 +53,9 @@ local LEVELS = {
 
 		-- Decals (3 texturas)
 		decalTextures = {
-			"rbxassetid://11673555479",
-			"rbxassetid://8257933359",
-			"rbxassetid://6372755229",
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
 		},
 		decalTransparency = 0.5,
 		decalColor = Color3.fromRGB(100, 200, 255),
@@ -64,28 +64,28 @@ local LEVELS = {
 	-- NIVEL 2 (ejemplo para cuando lo necesites)
 	{
 		name = "Level2",
-		numPanels = 30,
+		numPanels = 42,
 
 		timeGroups = {
-			{count = 10, time = 4.5},
-			{count = 10, time = 4.3},
-			{count = 10, time = 4.1},
+			{count = 10, time = 4.0},
+			{count = 10, time = 3.5},
+			{count = 10, time = 3.2},
 		},
 
-		startPosition = Vector3.new(50, 10, 0), -- Separado del nivel 1
+		startPosition = Vector3.new(0.2, -0.5, 90), -- Separado del nivel 1
 		direction = "Z",
-		spacing = 6,
+		spacing = 15,
 
-		panelSize = Vector3.new(5, 0.5, 5),
+		panelSize = Vector3.new(10, 0.5, 10),
 		material = Enum.Material.Glass,
 		transparency = 0.3,
 		color = Color3.fromRGB(255, 200, 100), -- Naranja
 		reflectance = 0.4,
 
 		decalTextures = {
-			"rbxassetid://11673555479",
-			"rbxassetid://8257933359",
-			"rbxassetid://6372755229",
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
 		},
 		decalTransparency = 0.5,
 		decalColor = Color3.fromRGB(255, 200, 100),
@@ -94,31 +94,537 @@ local LEVELS = {
 	-- NIVEL 3 (ejemplo para cuando lo necesites)
 	{
 		name = "Level3",
-		numPanels = 25,
+		numPanels = 35,
 
 		timeGroups = {
-			{count = 10, time = 4.0},
-			{count = 10, time = 3.8},
-			{count = 5, time = 3.6},
+			{count = 10, time = 3.0},
+			{count = 10, time = 2.6},
+			{count = 5, time = 2.0},
+			{count = 10, time = 1.4},
 		},
 
-		startPosition = Vector3.new(100, 10, 0), -- Separado del nivel 2
+		startPosition = Vector3.new(-29.5,-0.5,90), -- Separado del nivel 2
 		direction = "Z",
-		spacing = 6,
+		spacing = 21,
 
-		panelSize = Vector3.new(5, 0.5, 5),
+		panelSize = Vector3.new(10, 0.5, 15),
 		material = Enum.Material.Glass,
 		transparency = 0.3,
 		color = Color3.fromRGB(200, 100, 255), -- Morado
 		reflectance = 0.4,
 
 		decalTextures = {
-			"rbxassetid://11673555479",
-			"rbxassetid://8257933359",
-			"rbxassetid://6372755229",
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
 		},
 		decalTransparency = 0.5,
 		decalColor = Color3.fromRGB(200, 100, 255),
+	},
+	-- NIVEL 4
+	{
+		name = "Level4",
+		numPanels = 30,
+
+		timeGroups = {
+			{count = 10, time = 2.0},
+			{count = 10, time = 1.6},
+			{count = 10, time = 1.2},
+
+		},
+
+		startPosition = Vector3.new(-80,-0.5,90), -- Separado del nivel 2
+		direction = "Z",
+		spacing = 22.5,
+
+		panelSize = Vector3.new(10, 0.5, 15),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(0, 255, 0), -- Morado
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(0, 255, 0),
+	},
+	-- NIVEL 5
+	{
+		name = "Level5",
+		numPanels = 35,
+
+		timeGroups = {
+			{count = 10, time = 1.9},
+			{count = 10, time = 1.6},
+			{count = 10, time = 1.1},
+			{count = 5, time = 1.0},
+
+		},
+
+		startPosition = Vector3.new(-110,-0.5,90), -- Separado del nivel
+		direction = "Z",
+		spacing = 25,
+
+		panelSize = Vector3.new(10, 0.5, 20),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(0, 85, 0), -- Morado
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(0, 85, 0),
+	},
+	-- NIVEL 6
+	{
+		name = "Level6",
+		numPanels = 70,
+
+		timeGroups = {
+			{count = 20, time = 1.3},
+			{count = 30, time = 1.0},
+			{count = 0, time = 0.6},
+			{count = 10, time = 0.4},
+
+		},
+
+		startPosition = Vector3.new(-139.5,-0.5,90), -- Separado del nivel
+		direction = "Z",
+		spacing = 9.5,
+
+		panelSize = Vector3.new(10, 0.5, 5),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(255, 255, 0), -- Morado
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(255, 255, 0),
+	},
+	-- NIVEL 7
+	{
+		name = "Level7",
+		numPanels = 30,
+
+		timeGroups = {
+			{count = 10, time = 1.3},
+			{count = 10, time = 1.0},
+			{count = 5, time = 0.6},
+			{count = 5, time = 0.4},
+
+
+		},
+
+		startPosition = Vector3.new(-190,-0.5,90), -- Separado del nivel
+		direction = "Z",
+		spacing = 30,
+
+		panelSize = Vector3.new(10, 0.5,26),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(255, 170, 0), -- Morado
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(255, 170, 0),
+	},
+	-- NIVEL 8
+	{
+		name = "Level8",
+		numPanels = 30,
+
+		timeGroups = {
+			{count = 5, time = 1.3},
+			{count = 5, time = 1.0},
+			{count = 5, time = 0.6},
+			{count = 15, time = 0.4},
+
+
+		},
+
+		startPosition = Vector3.new(-220,-0.5,100), -- Separado del nivel
+		direction = "Z",
+		spacing = 27,
+
+		panelSize = Vector3.new(10, 0.5, 15),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(170, 85, 127), -- Morado
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(170, 85, 127),
+	},
+	-- NIVEL 9
+	{
+		name = "Level9",
+		numPanels = 25,
+
+		timeGroups = {
+			{count = 10, time = 1.0},
+			{count = 5, time = 0.7},
+			{count = 5, time = 0.5},
+			{count = 5, time = 0.3},
+
+		},
+
+		startPosition = Vector3.new(-249.5,-0.5,100), -- Separado del nivel
+		direction = "Z",
+		spacing = 35,
+
+		panelSize = Vector3.new(10, 0.5, 30),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(255, 0, 0), -- color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(255, 0, 0),
+	},
+	-- NIVEL 10
+	{
+		name = "Level10",
+		numPanels = 25,
+
+		timeGroups = {
+			{count = 10, time = 1.0},
+			{count = 5, time = 0.7},
+			{count = 5, time = 0.5},
+			{count = 5, time = 0.3},
+
+		},
+
+		startPosition = Vector3.new(-316.5,-0.5,110), -- Separado del nivel
+		direction = "Z",
+		spacing = 42,
+
+		panelSize = Vector3.new(10, 0.5, 37),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(85, 85, 127), -- color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(85, 85, 127),
+	},
+	-- NIVEL 11
+	{
+		name = "Level11",
+		numPanels = 25,
+
+		timeGroups = {
+			{count = 10, time = 1.0},
+			{count = 5, time = 0.7},
+			{count = 5, time = 0.5},
+			{count = 5, time = 0.4},
+
+		},
+
+		startPosition = Vector3.new(-345.9,-0.5,110), -- Separado del nivel
+		direction = "Z",
+		spacing = 50,
+
+		panelSize = Vector3.new(10, 0.5, 45),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(170, 0, 255), -- color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(170, 0, 255),
+	},
+	-- NIVEL 12
+	{
+		name = "Level12",
+		numPanels = 30,
+
+		timeGroups = {
+			{count = 5, time = 1.3},
+			{count = 5, time = 1.0},
+			{count = 5, time = 0.6},
+			{count = 15, time = 0.4},
+
+
+		},
+
+		startPosition = Vector3.new(-410,-0.5,100), -- Separado del nivel
+		direction = "Z",
+		spacing = 51,
+
+		panelSize = Vector3.new(10, 0.5, 30),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(85, 85, 255), -- Color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(85, 85, 255),
+	},
+	-- NIVEL 13
+	{
+		name = "Level13",
+		numPanels = 30,
+
+		timeGroups = {
+			{count = 5, time = 0.8},
+			{count = 5, time = 0.6},
+			{count = 5, time = 0.4},
+			{count = 15, time = 0.3},
+
+
+		},
+
+		startPosition = Vector3.new(-440,-0.5,115), -- Separado del nivel
+		direction = "Z",
+		spacing = 55,
+
+		panelSize = Vector3.new(10, 0.5, 50),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(170, 0, 0), -- Color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(170, 0, 0),
+	},
+
+	{
+		name = "Level14",
+		numPanels = 25,
+
+		timeGroups = {
+			{count = 5, time = 0.8},
+			{count = 5, time = 0.6},
+			{count = 5, time = 0.4},
+			{count = 15, time = 0.3},
+
+
+		},
+
+		startPosition = Vector3.new(-469.5,-0.5,115), -- Separado del nivel
+		direction = "Z",
+		spacing = 70,
+
+		panelSize = Vector3.new(10, 0.5, 50),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(255, 255, 0), -- Color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(255, 255, 0),
+	},
+
+	{
+		name = "Level15",
+		numPanels = 72,
+
+		timeGroups = {
+			{count = 20, time = 0.8},
+			{count = 10, time = 0.6},
+			{count = 20, time = 0.4},
+			{count = 22, time = 0.3},
+
+
+		},
+
+		startPosition = Vector3.new(-520,-0.5,90), -- Separado del nivel
+		direction = "Z",
+		spacing = 25,
+
+		panelSize = Vector3.new(10, 0.5, 15),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(0, 255, 255), -- Color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(0, 255, 255),
+	},
+
+	{
+		name = "Level16",
+		numPanels = 28,
+
+		timeGroups = {
+			{count = 5, time = 0.7},
+			{count = 5, time = 0.5},
+			{count = 5, time = 0.3},
+			{count = 13, time = 0.2},
+
+
+		},
+
+		startPosition = Vector3.new(-550,-0.5,115), -- Separado del nivel
+		direction = "Z",
+		spacing = 55,
+
+		panelSize = Vector3.new(10, 0.5, 50),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(255, 85, 255), -- Color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(255, 85, 255),
+	},
+	-- NIVEL 17
+	{
+		name = "Level17",
+		numPanels = 30,
+
+		timeGroups = {
+			{count = 5, time = 1.3},
+			{count = 5, time = 1.0},
+			{count = 5, time = 0.6},
+			{count = 15, time = 0.4},
+
+
+		},
+
+		startPosition = Vector3.new(-579.5,-0.5,100), -- Separado del nivel
+		direction = "Z",
+		spacing = 51,
+
+		panelSize = Vector3.new(10, 0.5, 30),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(85, 85, 255), -- Color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(85, 85, 255),
+	},
+	-- NIVEL 18
+	{
+		name = "Level18",
+		numPanels = 30,
+
+		timeGroups = {
+			{count = 5, time = 1.3},
+			{count = 5, time = 1.0},
+			{count = 5, time = 0.6},
+			{count = 15, time = 0.4},
+
+
+		},
+
+		startPosition = Vector3.new(-643.5,-0.5,100), -- Separado del nivel
+		direction = "Z",
+		spacing = 51,
+
+		panelSize = Vector3.new(10, 0.5, 30),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(85, 85, 255), -- Color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(85, 85, 255),
+	},
+	-- NIVEL 19
+	{
+		name = "Level19",
+		numPanels = 30,
+
+		timeGroups = {
+			{count = 5, time = 1.3},
+			{count = 5, time = 1.0},
+			{count = 5, time = 0.6},
+			{count = 15, time = 0.4},
+
+
+		},
+
+		startPosition = Vector3.new(-673.5,-0.5,100), -- Separado del nivel
+		direction = "Z",
+		spacing = 51,
+
+		panelSize = Vector3.new(10, 0.5, 30),
+		material = Enum.Material.Glass,
+		transparency = 0.3,
+		color = Color3.fromRGB(85, 85, 255), -- Color
+		reflectance = 0.4,
+
+		decalTextures = {
+			"rbxassetid://11673555479", -- Textura 1 (vidrio agrietado)
+			"rbxassetid://100869468561738", -- Textura 2 (puedes cambiar este ID)
+			"rbxassetid://8257933359"  -- Textura 3 (puedes cambiar este ID)
+		},
+		decalTransparency = 0.5,
+		decalColor = Color3.fromRGB(85, 85, 255),
 	},
 }
 
@@ -252,7 +758,7 @@ local function createPanel(index, levelConfig, parentFolder)
 	-- Agregar sonido de paso
 	local stepSound = Instance.new("Sound")
 	stepSound.Name = "StepSound"
-	stepSound.SoundId = "rbxasset://sounds/impact_water.mp3"  -- Sonido de cristal/agua
+	stepSound.SoundId = "rbxassetid://1169755927"  -- Sonido de cristal/agua
 	stepSound.Volume = 0.5
 	stepSound.Parent = panel
 
