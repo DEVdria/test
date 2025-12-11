@@ -24,10 +24,11 @@ local RunService = game:GetService("RunService")
 
 local CONFIG = {
 	-- Nombres de niveles a buscar
-	LEVEL_NAMES = {"Level1", "Level2", "Level3"},
+	LEVEL_NAMES = {"Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "Level7", "Level8", "Level9", "Level10", "Level11", "Level12", "Level13", "Level14", "Level15", "Level16", "Level17", "Level18", "Level19"},
 
 	-- Tiempos
-	RESPAWN_TIME = 15,              -- Tiempo de respawn (segundos)
+	RESPAWN_TIME = 7,               -- Tiempo de respawn (segundos)
+	REPLICATION_WAIT = 2.0,         -- Tiempo de espera para replicación (aumentado para muchos niveles)
 
 	-- Animación
 	FALL_DISTANCE = 30,             -- Distancia de caída (studs)
@@ -507,9 +508,16 @@ local function initializeLevel(levelFolder)
 		return 0
 	end
 
+	-- Esperar a que la EndPlatform también se replique
+	local endPlatform = levelFolder:WaitForChild("EndPlatform", 10)
+	if not endPlatform then
+		warn(string.format("❌ No se encontró EndPlatform en %s", levelFolder.Name))
+		return 0
+	end
+
 	-- Esperar un poco más para que todos los paneles se repliquen
 	print(string.format("⏳ Esperando replicación de paneles en %s...", levelFolder.Name))
-	task.wait(0.5)
+	task.wait(CONFIG.REPLICATION_WAIT)
 
 	-- Buscar todos los paneles en el nivel
 	local levelPanels = {}
@@ -519,8 +527,10 @@ local function initializeLevel(levelFolder)
 		end
 	end
 
+	print(string.format("🔍 %s: Encontrados %d paneles", levelFolder.Name, #levelPanels))
+
 	if #levelPanels == 0 then
-		warn(string.format("⚠️ No se encontraron paneles en %s", levelFolder.Name))
+		warn(string.format("❌ No se encontraron paneles en %s", levelFolder.Name))
 		return 0
 	end
 
@@ -552,14 +562,22 @@ local function initializeLevel(levelFolder)
 	-- Guardar posiciones de inicio y fin para la progress bar
 	-- Usar el primer panel como inicio y la EndPlatform como fin
 	local firstPanelInLevel = levelFolder:FindFirstChild("Panel1")
-	local endPlatform = levelFolder:FindFirstChild("EndPlatform")
+	local endPlatformInLevel = levelFolder:FindFirstChild("EndPlatform")
 
-	if firstPanelInLevel and endPlatform then
+	if firstPanelInLevel and endPlatformInLevel then
 		levelData[levelFolder.Name] = {
 			startPos = firstPanelInLevel.Position,
-			endPos = endPlatform.Position
+			endPos = endPlatformInLevel.Position
 		}
-		print(string.format("📍 Inicio (Panel1) y EndPlatform detectadas en %s", levelFolder.Name))
+		print(string.format("✅ Progress Bar configurada para %s (Panel1 → EndPlatform)", levelFolder.Name))
+	else
+		warn(string.format("⚠️ No se pudo configurar Progress Bar para %s", levelFolder.Name))
+		if not firstPanelInLevel then
+			warn(string.format("   - Panel1 no encontrado en %s", levelFolder.Name))
+		end
+		if not endPlatformInLevel then
+			warn(string.format("   - EndPlatform no encontrada en %s", levelFolder.Name))
+		end
 	end
 
 	print(string.format("✅ %s: %d paneles cargados", levelFolder.Name, #levelPanels))
@@ -652,6 +670,7 @@ local function initializeSystem()
 
 	local totalPanels = 0
 	local levelsFound = 0
+	local levelsWithProgressBar = 0
 
 	-- Buscar e inicializar cada nivel
 	for _, levelName in ipairs(CONFIG.LEVEL_NAMES) do
@@ -659,7 +678,14 @@ local function initializeSystem()
 		if levelFolder then
 			levelsFound = levelsFound + 1
 			totalPanels = totalPanels + initializeLevel(levelFolder)
+		else
+			warn(string.format("⚠️ %s no encontrado en Workspace", levelName))
 		end
+	end
+
+	-- Contar cuántos niveles tienen progress bar configurada
+	for levelName, _ in pairs(levelData) do
+		levelsWithProgressBar = levelsWithProgressBar + 1
 	end
 
 	if levelsFound == 0 then
@@ -670,8 +696,20 @@ local function initializeSystem()
 
 	print("───────────────────────────────────────────────────────")
 	print(string.format("✅ SISTEMA LISTO"))
-	print(string.format("   Niveles encontrados: %d", levelsFound))
+	print(string.format("   Niveles encontrados: %d/%d", levelsFound, #CONFIG.LEVEL_NAMES))
+	print(string.format("   Niveles con Progress Bar: %d/%d", levelsWithProgressBar, levelsFound))
 	print(string.format("   Total de paneles: %d", totalPanels))
+
+	-- Mostrar niveles sin progress bar
+	if levelsWithProgressBar < levelsFound then
+		warn("⚠️ Algunos niveles NO tienen Progress Bar configurada:")
+		for _, levelName in ipairs(CONFIG.LEVEL_NAMES) do
+			if workspace:FindFirstChild(levelName) and not levelData[levelName] then
+				warn(string.format("   - %s", levelName))
+			end
+		end
+	end
+
 	print("═══════════════════════════════════════════════════════")
 
 	return true
