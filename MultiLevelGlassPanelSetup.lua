@@ -797,24 +797,19 @@ local function createLevel(levelConfig)
 	endPlatform.TopSurface = Enum.SurfaceType.Smooth
 	endPlatform.Parent = folder
 
-	-- DELAY GRANDE para garantizar que EndPlatform replique COMPLETAMENTE antes de crear panels
-	-- Crítico para Level10-19 que están muy lejos (~300-400 studs de distancia)
-	task.wait(1.0)
+	-- DEBUG: Verificar que EndPlatform se creó correctamente
+	print(string.format("  🟡 EndPlatform creado en %s | Parent: %s | Posición: %s",
+		levelConfig.name,
+		tostring(endPlatform.Parent.Name),
+		tostring(endPlatform.Position)))
 
-	-- Crear paneles con delay entre cada uno para evitar saturación de replicación
+	-- Crear paneles (SIN delay entre ellos para velocidad máxima)
 	for i = 1, levelConfig.numPanels do
 		local panel, fallTime = createPanel(i, levelConfig, folder)
 
-		print(string.format(
-			"  📦 Panel%d | Tiempo: %.1fs",
-			i,
-			fallTime
-		))
-
-		-- Pequeño delay entre paneles para distribuir carga de replicación
-		-- Especialmente importante para niveles con muchos paneles (Level6=70, Level15=72)
-		if i < levelConfig.numPanels then
-			task.wait(0.01) -- 10ms entre paneles = ~0.7s para 70 paneles
+		-- Solo mostrar cada 10 paneles para no saturar output
+		if i % 10 == 0 or i == levelConfig.numPanels then
+			print(string.format("  📦 Paneles: %d/%d creados", i, levelConfig.numPanels))
 		end
 	end
 
@@ -834,18 +829,9 @@ local function setupAllLevels()
 	for levelIndex, levelConfig in ipairs(LEVELS) do
 		createLevel(levelConfig)
 
-		-- Delay gradual entre niveles para evitar saturar la replicación
-		-- Niveles más altos necesitan MUCHO más tiempo para replicar completamente
-		-- antes de crear el siguiente nivel
+		-- Pequeño delay solo para evitar lag visual en creación masiva
 		if levelIndex < #LEVELS then
-			local delay = 0.2 -- Default para Level1-9 (ligeramente aumentado)
-			if levelIndex >= 15 then
-				delay = 2.0 -- 2000ms para Level15-19 (crítico para replicación completa)
-			elseif levelIndex >= 10 then
-				delay = 1.0 -- 1000ms para Level10-14
-			end
-			print(string.format("⏳ Esperando %.1fs antes de crear siguiente nivel...", delay))
-			task.wait(delay)
+			task.wait(0.05) -- 50ms mínimo entre niveles
 		end
 	end
 
