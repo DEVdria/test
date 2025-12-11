@@ -291,6 +291,9 @@ local function createLevel(levelConfig)
 	endPlatform.TopSurface = Enum.SurfaceType.Smooth
 	endPlatform.Parent = folder
 
+	-- Pequeño delay para forzar replicación de EndPlatform antes de paneles
+	task.wait(0.05)
+
 	-- Crear paneles
 	for i = 1, levelConfig.numPanels do
 		local panel, fallTime = createPanel(i, levelConfig, folder)
@@ -318,9 +321,16 @@ local function setupAllLevels()
 	for levelIndex, levelConfig in ipairs(LEVELS) do
 		createLevel(levelConfig)
 
-		-- Pequeño delay entre niveles para evitar saturar la replicación
+		-- Delay gradual entre niveles para evitar saturar la replicación
+		-- Niveles más altos necesitan más tiempo para replicar
 		if levelIndex < #LEVELS then
-			task.wait(0.1) -- 100ms entre cada nivel
+			local delay = 0.1 -- Default para Level1-9
+			if levelIndex >= 15 then
+				delay = 0.5 -- 500ms para Level15-19 (más distantes)
+			elseif levelIndex >= 10 then
+				delay = 0.3 -- 300ms para Level10-14
+			end
+			task.wait(delay)
 		end
 	end
 
