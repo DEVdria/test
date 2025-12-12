@@ -109,6 +109,24 @@ local function createRespawnTween(panel, originalCFrame)
 end
 
 -- ═══════════════════════════════════════════════════════════
+-- FUNCIÓN AUXILIAR PARA PROGRESS BAR
+-- ═══════════════════════════════════════════════════════════
+
+local function hideProgressBar()
+	-- Buscar el GUI actualizado cada vez
+	local playerGui = player:FindFirstChild("PlayerGui")
+	if playerGui then
+		progressBarGui = playerGui:FindFirstChild("ProgressBarGui")
+		if progressBarGui then
+			progressBarGui.Enabled = false
+		end
+	end
+
+	currentLevel = nil
+	print("📊 Progress Bar ocultada")
+end
+
+-- ═══════════════════════════════════════════════════════════
 -- LÓGICA DE ACTIVACIÓN DEL PANEL
 -- ═══════════════════════════════════════════════════════════
 
@@ -385,20 +403,6 @@ local function showProgressBar(levelName)
 	currentLevel = levelName
 	progressBarGui.Enabled = true
 	print(string.format("📊 Progress Bar activada para %s", levelName))
-end
-
-local function hideProgressBar()
-	-- Buscar el GUI actualizado cada vez
-	local playerGui = player:FindFirstChild("PlayerGui")
-	if playerGui then
-		progressBarGui = playerGui:FindFirstChild("ProgressBarGui")
-		if progressBarGui then
-			progressBarGui.Enabled = false
-		end
-	end
-
-	currentLevel = nil
-	print("📊 Progress Bar ocultada")
 end
 
 local function updateProgressBar()
