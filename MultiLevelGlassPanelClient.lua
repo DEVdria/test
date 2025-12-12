@@ -45,26 +45,6 @@ local player = Players.LocalPlayer
 local panelData = {} -- Almacena información de cada panel
 local allPanels = {} -- Lista de todos los paneles de todos los niveles
 
--- ═══════════════════════════════════════════════════════════════
--- EXPANDIR ÁREA DE REPLICACIÓN
--- ═══════════════════════════════════════════════════════════════
--- Problema: Roblox solo replica objetos dentro de ~1000 studs del jugador
--- Level10-19 están a >1000 studs, sus últimos panels no replican = no caen
--- Solución: Crear un objeto central invisible como ReplicationFocus
-
-local replicationCenter = Instance.new("Part")
-replicationCenter.Name = "ReplicationCenter"
-replicationCenter.Size = Vector3.new(1, 1, 1)
-replicationCenter.Position = Vector3.new(0, 0, 0) -- Centro entre todos los niveles
-replicationCenter.Anchored = true
-replicationCenter.CanCollide = false
-replicationCenter.Transparency = 1
-replicationCenter.Parent = workspace
-
--- Forzar replicación desde el centro (cubre todos los niveles)
-player.ReplicationFocus = replicationCenter
-print("🌐 ReplicationFocus expandido - todos los niveles dentro del rango")
-
 -- Progress Bar
 local progressBarGui
 local progressBarFill
