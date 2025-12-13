@@ -152,18 +152,25 @@ Players.PlayerAdded:Connect(function(player)
 	end
 
 	-- Pequeño delay adicional para asegurar que el cliente esté listo
-	task.wait(0.5)
+	task.wait(1)
 
 	local ownedZones = getPlayerZones(player)
 
 	-- Notificar al cliente sobre sus zonas
 	if UpdateZoneOwnershipEvent then
 		print(string.format("[ZoneManager] 📤 Enviando %d zonas a %s...", #ownedZones, player.Name))
+
+		-- Enviar todas las zonas
 		for _, zoneID in ipairs(ownedZones) do
 			UpdateZoneOwnershipEvent:FireClient(player, zoneID, true)
 			task.wait(0.05)  -- Pequeño delay entre envíos para evitar saturación
 		end
-		print(string.format("[ZoneManager] ✅ Zonas enviadas a %s", player.Name))
+
+		-- Señal de que terminó de enviar todas las zonas
+		task.wait(0.1)
+		UpdateZoneOwnershipEvent:FireClient(player, "ZONES_LOADED", true)
+
+		print(string.format("[ZoneManager] ✅ %d zonas enviadas a %s", #ownedZones, player.Name))
 	end
 end)
 

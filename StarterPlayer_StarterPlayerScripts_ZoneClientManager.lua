@@ -33,6 +33,7 @@ end
 local ownedZones = {}
 local isInitialized = false
 local hasReceivedServerData = false
+local allZonesLoaded = false
 
 -- Formatea números con separadores de miles
 local function formatNumber(num)
@@ -220,6 +221,23 @@ local function updateZoneOwnership(zoneID, isOwned)
 	-- Marcar que recibimos datos del servidor
 	hasReceivedServerData = true
 
+	-- Manejar señal de carga completa
+	if zoneID == "ZONES_LOADED" then
+		print(string.format("[ZoneClientManager] ✅ Todas las zonas cargadas del servidor (Total: %d)", #ownedZones))
+		allZonesLoaded = true
+		-- Si aún no está inicializado, inicializar ahora
+		if not isInitialized then
+			task.delay(0.2, function()
+				if not isInitialized then
+					initializeZones()
+					task.wait(0.3)
+					refreshAllZones()
+				end
+			end)
+		end
+		return
+	end
+
 	-- Manejar señal de reset completo
 	if zoneID == "RESET_ALL" then
 		print("[ZoneClientManager] 🔄 Reseteando todas las zonas...")
@@ -252,7 +270,7 @@ local function updateZoneOwnership(zoneID, isOwned)
 
 		local zonePart = buyZones:FindFirstChild(zoneID)
 		if not zonePart then
-			warn(string.format("[ZoneClientManager] ⚠️ No se encontró Part para zona: %s", zoneID))
+			-- No es error si no se encuentra, puede ser una zona que ya no existe
 			return
 		end
 
@@ -280,17 +298,6 @@ end)
 -- Escuchar actualizaciones de ownership (del servidor)
 UpdateZoneOwnershipEvent.OnClientEvent:Connect(function(zoneID, isOwned)
 	updateZoneOwnership(zoneID, isOwned)
-
-	-- Si aún no está inicializado y recibimos datos, inicializar después de un pequeño delay
-	-- Esto permite recibir múltiples zonas antes de inicializar
-	if not isInitialized and hasReceivedServerData then
-		task.delay(1, function()
-			if not isInitialized then
-				print("[ZoneClientManager] ⏰ Inicializando después de recibir datos del servidor...")
-				initializeZones()
-			end
-		end)
-	end
 end)
 
 -- Esperar a que los datos del jugador y el workspace estén completamente cargados
@@ -303,30 +310,26 @@ local function waitForGameLoad()
 		warn("[ZoneClientManager] ⚠️ Leaderstats no disponibles, continuando de todas formas...")
 	end
 
-	-- Esperar a que el servidor envíe las zonas poseídas (máximo 5 segundos)
-	local maxWait = 5
+	-- Esperar a que el servidor envíe la señal ZONES_LOADED (máximo 10 segundos)
+	local maxWait = 10
 	local waited = 0
-	while not hasReceivedServerData and waited < maxWait do
+	while not allZonesLoaded and waited < maxWait do
 		task.wait(0.5)
 		waited = waited + 0.5
 	end
 
-	if hasReceivedServerData then
-		print(string.format("[ZoneClientManager] ✅ Datos del servidor recibidos después de %.1f segundos", waited))
-		-- Esperar un poco más para recibir todas las zonas
-		task.wait(0.5)
+	if allZonesLoaded then
+		print(string.format("[ZoneClientManager] ✅ Señal de carga completa recibida después de %.1f segundos", waited))
+		-- La inicialización ya se disparó desde updateZoneOwnership
 	else
-		warn("[ZoneClientManager] ⚠️ No se recibieron datos del servidor, inicializando con zonas vacías...")
+		warn("[ZoneClientManager] ⚠️ No se recibió señal ZONES_LOADED, inicializando de todas formas...")
+		-- Inicializar de todas formas si no recibimos la señal
+		if not isInitialized then
+			initializeZones()
+			task.wait(0.3)
+			refreshAllZones()
+		end
 	end
-
-	-- Inicializar zonas con los datos recibidos
-	if not isInitialized then
-		initializeZones()
-	end
-
-	-- Forzar un refresh después de medio segundo (para asegurar que todo esté actualizado)
-	task.wait(0.5)
-	refreshAllZones()
 end
 
 -- Iniciar proceso de carga
