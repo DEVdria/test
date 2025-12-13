@@ -145,18 +145,26 @@ end
 
 -- Cuando un jugador se une, enviarle sus zonas
 Players.PlayerAdded:Connect(function(player)
-	task.wait(2)  -- Esperar a que DataManager cargue los datos
+	-- Esperar a que DataManager cargue los datos y cree leaderstats
+	local leaderstats = player:WaitForChild("leaderstats", 10)
+	if not leaderstats then
+		warn(string.format("[ZoneManager] ⚠️ No se encontraron leaderstats para %s", player.Name))
+	end
+
+	-- Pequeño delay adicional para asegurar que el cliente esté listo
+	task.wait(0.5)
 
 	local ownedZones = getPlayerZones(player)
 
 	-- Notificar al cliente sobre sus zonas
 	if UpdateZoneOwnershipEvent then
+		print(string.format("[ZoneManager] 📤 Enviando %d zonas a %s...", #ownedZones, player.Name))
 		for _, zoneID in ipairs(ownedZones) do
 			UpdateZoneOwnershipEvent:FireClient(player, zoneID, true)
+			task.wait(0.05)  -- Pequeño delay entre envíos para evitar saturación
 		end
+		print(string.format("[ZoneManager] ✅ Zonas enviadas a %s", player.Name))
 	end
-
-	print(string.format("[ZoneManager] %s posee %d zonas", player.Name, #ownedZones))
 end)
 
 print("[ZoneManager] ✅ Sistema de zonas inicializado")
