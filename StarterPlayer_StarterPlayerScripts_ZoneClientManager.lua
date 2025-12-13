@@ -14,10 +14,23 @@ local ZoneConfig = require(Modules:WaitForChild("ZoneConfig"))
 
 -- Esperar RemoteEvents
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
-local RequestZonePurchaseEvent = RemoteEvents:WaitForChild("RequestZonePurchase")
-local UpdateZoneOwnershipEvent = RemoteEvents:WaitForChild("UpdateZoneOwnership")
+local RequestZonePurchaseEvent = RemoteEvents:WaitForChild("RequestZonePurchase", 10)
+local UpdateZoneOwnershipEvent = RemoteEvents:WaitForChild("UpdateZoneOwnership", 10)
 
--- Estado local de zonas poseidaslocal ownedZones = {}
+if not RequestZonePurchaseEvent then
+	warn("[ZoneClientManager] ❌ No se encontró RemoteEvent 'RequestZonePurchase'")
+	warn("[ZoneClientManager] 📘 Crea este RemoteEvent en ReplicatedStorage/RemoteEvents")
+	return
+end
+
+if not UpdateZoneOwnershipEvent then
+	warn("[ZoneClientManager] ❌ No se encontró RemoteEvent 'UpdateZoneOwnership'")
+	warn("[ZoneClientManager] 📘 Crea este RemoteEvent en ReplicatedStorage/RemoteEvents")
+	return
+end
+
+-- Estado local de zonas poseídas
+local ownedZones = {}
 
 -- Formatea números con separadores de miles
 local function formatNumber(num)
