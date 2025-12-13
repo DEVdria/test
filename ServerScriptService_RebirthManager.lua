@@ -14,6 +14,7 @@ end
 
 local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
 local LevelManager = require(Modules:WaitForChild("LevelManager", 10))
+local ZoneConfig = require(Modules:WaitForChild("ZoneConfig", 10))
 
 -- Esperar RemoteEvents
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
@@ -23,6 +24,7 @@ if not RemoteEvents then
 end
 
 local RequestRebirthPurchaseEvent = RemoteEvents:WaitForChild("RequestRebirthPurchase")
+local UpdateZoneOwnershipEvent = RemoteEvents:FindFirstChild("UpdateZoneOwnership")  -- Para resetear zonas
 
 -- Esperar DataManager (se carga a través de _G)
 local DataManager
@@ -98,6 +100,16 @@ local function processRebirthPurchase(player)
 	local success, message = DataManager.ProcessRebirth(player)
 
 	if success then
+		-- Resetear zonas al cliente (notificar que perdió las zonas compradas)
+		if UpdateZoneOwnershipEvent then
+			-- Obtener zonas default
+			local defaultZones = ZoneConfig.GetDefaultZones()
+			-- Enviar actualización de cada zona default
+			for _, zoneID in ipairs(defaultZones) do
+				UpdateZoneOwnershipEvent:FireClient(player, zoneID, true)
+			end
+		end
+
 		-- Guardar datos inmediatamente
 		task.spawn(function()
 			DataManager.SaveData(player)
