@@ -236,12 +236,12 @@ function DataManager.ProcessRebirth(player)
 	end
 
 	-- Procesar rebirth
-	data.Money = data.Money - cost
+	data.Money = 0                        -- Resetear dinero a 0
 	data.Rebirths = data.Rebirths + 1
 	data.Level = 0                        -- Resetear nivel
 	data.CurrentEXP = 0                   -- Resetear EXP
 	data.EXPMultiplier = OrbConfig.CalculateEXPMultiplier(data.Rebirths)
-	data.OwnedZones = ZoneConfig.GetDefaultZones()  -- Resetear zonas compradas
+	-- Las zonas compradas NO se resetean (se guardan permanentemente)
 
 	-- Actualizar leaderstats
 	local leaderstats = player:FindFirstChild("leaderstats")

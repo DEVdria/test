@@ -100,15 +100,7 @@ local function processRebirthPurchase(player)
 	local success, message = DataManager.ProcessRebirth(player)
 
 	if success then
-		-- Resetear zonas al cliente (notificar que perdió las zonas compradas)
-		if UpdateZoneOwnershipEvent then
-			-- Obtener zonas default
-			local defaultZones = ZoneConfig.GetDefaultZones()
-			-- Enviar actualización de cada zona default
-			for _, zoneID in ipairs(defaultZones) do
-				UpdateZoneOwnershipEvent:FireClient(player, zoneID, true)
-			end
-		end
+		-- Las zonas NO se resetean (se mantienen después del rebirth)
 
 		-- Guardar datos inmediatamente
 		task.spawn(function()

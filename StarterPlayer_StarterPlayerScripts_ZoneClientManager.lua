@@ -31,6 +31,7 @@ end
 
 -- Estado local de zonas poseídas
 local ownedZones = {}
+local isInitialized = false
 
 -- Formatea números con separadores de miles
 local function formatNumber(num)
@@ -57,7 +58,8 @@ local function updateZoneSurfaceGui(zonePart, zoneConfig, isOwned)
 	end
 
 	-- ARREGLO: Configurar MaxDistance para que se vea desde lejos
-	surfaceGui.MaxDistance = math.huge  -- Sin límite de distancia
+	surfaceGui.MaxDistance = 0  -- 0 = Sin límite de distancia (equivalente a math.huge)
+	surfaceGui.AlwaysOnTop = false  -- Para que se renderice correctamente a distancia
 
 	-- NUEVO: Cambiar CanCollide según si está desbloqueada
 	zonePart.CanCollide = not isOwned  -- Bloqueada = CanCollide true, Desbloqueada = CanCollide false
@@ -77,6 +79,12 @@ local function updateZoneSurfaceGui(zonePart, zoneConfig, isOwned)
 			priceLabel.Text = "GRATIS"
 		else
 			priceLabel.Text = string.format("$%s", formatNumber(zoneConfig.Price))
+		end
+		priceLabel.Visible = true  -- Asegurar que sea visible
+	else
+		-- Debug: avisar si no se encuentra el label
+		if not priceLabel then
+			print(string.format("[ZoneClientManager] ⚠️ No se encontró PriceLabel en zona '%s'", zonePart.Name))
 		end
 	end
 
@@ -125,16 +133,53 @@ local function updateZoneSurfaceGui(zonePart, zoneConfig, isOwned)
 			purchaseButton.Text = "DESBLOQUEADA"
 			purchaseButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 			purchaseButton.Active = false
+			-- Desconectar todos los eventos previos creando un clon
+			local newButton = purchaseButton:Clone()
+			newButton.Parent = purchaseButton.Parent
+			purchaseButton:Destroy()
+			purchaseButton = newButton
 		else
 			purchaseButton.Text = "COMPRAR"
 			purchaseButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 			purchaseButton.Active = true
+
+			-- Desconectar eventos previos clonando el botón
+			local newButton = purchaseButton:Clone()
+			newButton.Parent = purchaseButton.Parent
+			purchaseButton:Destroy()
+			purchaseButton = newButton
 
 			-- Conectar evento de clic
 			purchaseButton.MouseButton1Click:Connect(function()
 				print(string.format("[ZoneClientManager] Comprando zona: %s", zoneConfig.ID))
 				RequestZonePurchaseEvent:FireServer(zoneConfig.ID)
 			end)
+		end
+		purchaseButton.Visible = true  -- Asegurar que sea visible
+	else
+		-- Debug: avisar si no se encuentra el botón
+		if not purchaseButton then
+			warn(string.format("[ZoneClientManager] ⚠️ No se encontró PurchaseButton en zona '%s'", zonePart.Name))
+		end
+	end
+
+	print(string.format("[ZoneClientManager] ✅ Zona '%s' actualizada (Owned: %s)", zonePart.Name, tostring(isOwned)))
+end
+
+-- Fuerza la actualización de todas las zonas (útil después de recibir datos del servidor)
+local function refreshAllZones()
+	local buyZones = Workspace:FindFirstChild("Buy Zones")
+	if not buyZones then return end
+
+	print(string.format("[ZoneClientManager] 🔄 Refrescando todas las zonas... (Zonas poseídas: %d)", #ownedZones))
+
+	for _, zonePart in ipairs(buyZones:GetChildren()) do
+		if zonePart:IsA("BasePart") then
+			local zoneConfig = ZoneConfig.GetZone(zonePart.Name)
+			if zoneConfig then
+				local isOwned = table.find(ownedZones, zonePart.Name) ~= nil
+				updateZoneSurfaceGui(zonePart, zoneConfig, isOwned)
+			end
 		end
 	end
 end
@@ -149,6 +194,8 @@ local function initializeZones()
 		return
 	end
 
+	print(string.format("[ZoneClientManager] Inicializando zonas... (Zonas poseídas: %d)", #ownedZones))
+
 	-- Buscar todos los Parts en Buy Zones
 	for _, zonePart in ipairs(buyZones:GetChildren()) do
 		if zonePart:IsA("BasePart") then
@@ -162,6 +209,9 @@ local function initializeZones()
 			end
 		end
 	end
+
+	isInitialized = true
+	print("[ZoneClientManager] ✅ Zonas inicializadas")
 end
 
 -- Actualiza el estado de una zona específica
@@ -169,22 +219,37 @@ local function updateZoneOwnership(zoneID, isOwned)
 	-- Actualizar estado local
 	if isOwned and not table.find(ownedZones, zoneID) then
 		table.insert(ownedZones, zoneID)
+		print(string.format("[ZoneClientManager] ➕ Zona añadida: %s", zoneID))
+	elseif not isOwned then
+		-- Remover de la lista si no está owned (para rebirths que resetean)
+		local index = table.find(ownedZones, zoneID)
+		if index then
+			table.remove(ownedZones, index)
+			print(string.format("[ZoneClientManager] ➖ Zona removida: %s", zoneID))
+		end
 	end
 
-	-- Buscar el Part de la zona
-	local buyZones = Workspace:FindFirstChild("Buy Zones")
-	if not buyZones then return end
+	-- Si ya está inicializado, actualizar inmediatamente
+	if isInitialized then
+		-- Buscar el Part de la zona
+		local buyZones = Workspace:FindFirstChild("Buy Zones")
+		if not buyZones then return end
 
-	local zonePart = buyZones:FindFirstChild(zoneID)
-	if not zonePart then return end
+		local zonePart = buyZones:FindFirstChild(zoneID)
+		if not zonePart then
+			warn(string.format("[ZoneClientManager] ⚠️ No se encontró Part para zona: %s", zoneID))
+			return
+		end
 
-	local zoneConfig = ZoneConfig.GetZone(zoneID)
-	if not zoneConfig then return end
+		local zoneConfig = ZoneConfig.GetZone(zoneID)
+		if not zoneConfig then
+			warn(string.format("[ZoneClientManager] ⚠️ No se encontró config para zona: %s", zoneID))
+			return
+		end
 
-	-- Actualizar SurfaceGui
-	updateZoneSurfaceGui(zonePart, zoneConfig, isOwned)
-
-	print(string.format("[ZoneClientManager] Zona %s actualizada (Owned: %s)", zoneID, tostring(isOwned)))
+		-- Actualizar SurfaceGui
+		updateZoneSurfaceGui(zonePart, zoneConfig, isOwned)
+	end
 end
 
 -- Manejar respuesta de compra
@@ -197,14 +262,41 @@ RequestZonePurchaseEvent.OnClientEvent:Connect(function(result)
 	end
 end)
 
--- Escuchar actualizaciones de ownership
+-- Escuchar actualizaciones de ownership (del servidor)
 UpdateZoneOwnershipEvent.OnClientEvent:Connect(function(zoneID, isOwned)
 	updateZoneOwnership(zoneID, isOwned)
+
+	-- Si aún no está inicializado y recibimos datos, inicializar después de un pequeño delay
+	if not isInitialized then
+		task.delay(0.5, function()
+			if not isInitialized then
+				initializeZones()
+			end
+		end)
+	end
 end)
 
--- Inicializar al cargar
-task.wait(2)  -- Esperar a que todo cargue
-initializeZones()
+-- Esperar a que los datos del jugador y el workspace estén completamente cargados
+local function waitForGameLoad()
+	-- Esperar a que leaderstats estén disponibles (significa que DataManager cargó)
+	local leaderstats = player:WaitForChild("leaderstats", 10)
+	if not leaderstats then
+		warn("[ZoneClientManager] ⚠️ Leaderstats no disponibles, continuando de todas formas...")
+	end
+
+	-- Esperar un poco más para que el servidor envíe las zonas poseídas
+	task.wait(3)
+
+	-- Inicializar zonas
+	initializeZones()
+
+	-- Forzar un refresh después de un segundo (para asegurar que todo esté actualizado)
+	task.wait(1)
+	refreshAllZones()
+end
+
+-- Iniciar proceso de carga
+task.spawn(waitForGameLoad)
 
 print("[ZoneClientManager] ✅ Sistema de zonas del cliente inicializado")
-print(string.format("[ZoneClientManager] Zonas poseídas: %d", #ownedZones))
+print(string.format("[ZoneClientManager] Zonas poseídas inicialmente: %d", #ownedZones))
