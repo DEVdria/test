@@ -305,24 +305,34 @@ local function waitForGameLoad()
 	print("[ZoneClientManager] ⏳ Esperando carga del juego...")
 
 	-- Esperar a que leaderstats estén disponibles (significa que DataManager cargó)
-	local leaderstats = player:WaitForChild("leaderstats", 10)
+	local leaderstats = player:WaitForChild("leaderstats", 15)
 	if not leaderstats then
 		warn("[ZoneClientManager] ⚠️ Leaderstats no disponibles, continuando de todas formas...")
+	else
+		print("[ZoneClientManager] ✅ Leaderstats cargados")
 	end
 
-	-- Esperar a que el servidor envíe la señal ZONES_LOADED (máximo 10 segundos)
-	local maxWait = 10
+	-- Esperar a que el servidor envíe la señal ZONES_LOADED (máximo 15 segundos)
+	print("[ZoneClientManager] ⏳ Esperando señal ZONES_LOADED del servidor...")
+	local maxWait = 15
 	local waited = 0
 	while not allZonesLoaded and waited < maxWait do
 		task.wait(0.5)
 		waited = waited + 0.5
+
+		if waited % 2 == 0 then
+			print(string.format("[ZoneClientManager] ⏳ Esperando... (%.1f/%.1f segundos, zonas recibidas: %d)", waited, maxWait, #ownedZones))
+		end
 	end
 
 	if allZonesLoaded then
 		print(string.format("[ZoneClientManager] ✅ Señal de carga completa recibida después de %.1f segundos", waited))
+		print(string.format("[ZoneClientManager] ✅ Total de zonas recibidas: %d", #ownedZones))
 		-- La inicialización ya se disparó desde updateZoneOwnership
 	else
-		warn("[ZoneClientManager] ⚠️ No se recibió señal ZONES_LOADED, inicializando de todas formas...")
+		warn(string.format("[ZoneClientManager] ⚠️ No se recibió señal ZONES_LOADED después de %d segundos", maxWait))
+		warn(string.format("[ZoneClientManager] ⚠️ Zonas recibidas hasta ahora: %d", #ownedZones))
+		warn("[ZoneClientManager] ⚠️ Inicializando de todas formas...")
 		-- Inicializar de todas formas si no recibimos la señal
 		if not isInitialized then
 			initializeZones()
@@ -336,4 +346,4 @@ end
 task.spawn(waitForGameLoad)
 
 print("[ZoneClientManager] ✅ Sistema de zonas del cliente cargado")
-print(string.format("[ZoneClientManager] Esperando datos del servidor..."))
+print(string.format("[ZoneClientManager] ⏳ Esperando datos del servidor..."))

@@ -24,7 +24,21 @@ end
 
 -- RemoteEvents para zonas (crear estos en ReplicatedStorage/RemoteEvents)
 local RequestZonePurchaseEvent = RemoteEvents:WaitForChild("RequestZonePurchase", 10)
-local UpdateZoneOwnershipEvent = RemoteEvents:FindFirstChild("UpdateZoneOwnership")
+local UpdateZoneOwnershipEvent = RemoteEvents:WaitForChild("UpdateZoneOwnership", 10)
+
+if not RequestZonePurchaseEvent then
+	warn("[ZoneManager] ❌ No se encontró RemoteEvent 'RequestZonePurchase'")
+	warn("[ZoneManager] 📘 Crea este RemoteEvent en ReplicatedStorage/RemoteEvents")
+	return
+end
+
+if not UpdateZoneOwnershipEvent then
+	warn("[ZoneManager] ❌ No se encontró RemoteEvent 'UpdateZoneOwnership'")
+	warn("[ZoneManager] 📘 Crea este RemoteEvent en ReplicatedStorage/RemoteEvents")
+	return
+end
+
+print("[ZoneManager] ✅ RemoteEvents encontrados")
 
 -- Esperar DataManager (se carga a través de _G)
 local DataManager
@@ -145,32 +159,61 @@ end
 
 -- Cuando un jugador se une, enviarle sus zonas
 Players.PlayerAdded:Connect(function(player)
+	print(string.format("[ZoneManager] 👤 Jugador conectado: %s", player.Name))
+
 	-- Esperar a que DataManager cargue los datos y cree leaderstats
 	local leaderstats = player:WaitForChild("leaderstats", 10)
 	if not leaderstats then
 		warn(string.format("[ZoneManager] ⚠️ No se encontraron leaderstats para %s", player.Name))
+		return
 	end
 
-	-- Pequeño delay adicional para asegurar que el cliente esté listo
-	task.wait(1)
+	print(string.format("[ZoneManager] ✅ Leaderstats encontrados para %s", player.Name))
+
+	-- Esperar a que el cliente esté listo
+	task.wait(2)
 
 	local ownedZones = getPlayerZones(player)
+	print(string.format("[ZoneManager] 📦 Zonas para %s: %d zonas", player.Name, #ownedZones))
 
-	-- Notificar al cliente sobre sus zonas
-	if UpdateZoneOwnershipEvent then
-		print(string.format("[ZoneManager] 📤 Enviando %d zonas a %s...", #ownedZones, player.Name))
+	-- DEBUG: Mostrar qué zonas posee
+	if #ownedZones > 0 then
+		print(string.format("[ZoneManager] Lista de zonas: %s", table.concat(ownedZones, ", ")))
+	end
 
-		-- Enviar todas las zonas
-		for _, zoneID in ipairs(ownedZones) do
+	-- Verificar que UpdateZoneOwnershipEvent existe
+	if not UpdateZoneOwnershipEvent then
+		warn(string.format("[ZoneManager] ❌ UpdateZoneOwnershipEvent no existe! No se pueden enviar zonas a %s", player.Name))
+		return
+	end
+
+	-- Enviar todas las zonas
+	print(string.format("[ZoneManager] 📤 Enviando %d zonas a %s...", #ownedZones, player.Name))
+
+	for index, zoneID in ipairs(ownedZones) do
+		local success, err = pcall(function()
 			UpdateZoneOwnershipEvent:FireClient(player, zoneID, true)
-			task.wait(0.05)  -- Pequeño delay entre envíos para evitar saturación
+		end)
+
+		if not success then
+			warn(string.format("[ZoneManager] ❌ Error enviando zona %s a %s: %s", zoneID, player.Name, tostring(err)))
+		else
+			print(string.format("[ZoneManager] ✅ Zona %d/%d enviada: %s", index, #ownedZones, zoneID))
 		end
 
-		-- Señal de que terminó de enviar todas las zonas
-		task.wait(0.1)
-		UpdateZoneOwnershipEvent:FireClient(player, "ZONES_LOADED", true)
+		task.wait(0.1)  -- Delay entre envíos
+	end
 
-		print(string.format("[ZoneManager] ✅ %d zonas enviadas a %s", #ownedZones, player.Name))
+	-- Señal de carga completa
+	task.wait(0.2)
+	local success, err = pcall(function()
+		UpdateZoneOwnershipEvent:FireClient(player, "ZONES_LOADED", true)
+	end)
+
+	if success then
+		print(string.format("[ZoneManager] ✅ ZONES_LOADED enviado a %s", player.Name))
+	else
+		warn(string.format("[ZoneManager] ❌ Error enviando ZONES_LOADED a %s: %s", player.Name, tostring(err)))
 	end
 end)
 
