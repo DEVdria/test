@@ -157,9 +157,9 @@ if RequestZonePurchaseEvent then
 	end)
 end
 
--- Cuando un jugador se une, enviarle sus zonas
-Players.PlayerAdded:Connect(function(player)
-	print(string.format("[ZoneManager] 👤 Jugador conectado: %s", player.Name))
+-- Función para enviar zonas a un jugador
+local function sendZonesToPlayer(player)
+	print(string.format("[ZoneManager] 👤 Procesando zonas para: %s", player.Name))
 
 	-- Esperar a que DataManager cargue los datos y cree leaderstats
 	local leaderstats = player:WaitForChild("leaderstats", 10)
@@ -215,6 +215,28 @@ Players.PlayerAdded:Connect(function(player)
 	else
 		warn(string.format("[ZoneManager] ❌ Error enviando ZONES_LOADED a %s: %s", player.Name, tostring(err)))
 	end
+end
+
+-- Cuando un jugador se une, enviarle sus zonas
+Players.PlayerAdded:Connect(function(player)
+	print(string.format("[ZoneManager] 🔔 PlayerAdded event: %s", player.Name))
+	task.spawn(function()
+		sendZonesToPlayer(player)
+	end)
 end)
 
 print("[ZoneManager] ✅ Sistema de zonas inicializado")
+
+-- CRÍTICO: Enviar zonas a jugadores que ya están conectados
+-- (jugadores que se conectaron antes de que este script terminara de cargar)
+task.spawn(function()
+	task.wait(1)  -- Esperar un segundo para que todo se inicialice
+	print("[ZoneManager] 🔍 Verificando jugadores ya conectados...")
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		print(string.format("[ZoneManager] 👥 Jugador ya conectado encontrado: %s", player.Name))
+		task.spawn(function()
+			sendZonesToPlayer(player)
+		end)
+	end
+end)
