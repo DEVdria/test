@@ -32,10 +32,14 @@ local SOUND_IDS = {
 	Green = "rbxassetid://5051712449",   -- Sonido de "ding" medio
 	Blue = "rbxassetid://5051712449",    -- Sonido de "ding" grave
 
+	-- Sonido para estrellas
+	Star = "rbxassetid://6518811702",    -- Sonido de campanita/chime para estrellas
+
 	-- Alternativas populares (descomenta para usar):
 	-- Yellow = "rbxassetid://6895079853",  -- Coin collect
 	-- Green = "rbxassetid://6895079853",
 	-- Blue = "rbxassetid://6895079853",
+	-- Star = "rbxassetid://6895079853",    -- Coin collect para estrellas
 }
 
 -- Configuración de volumen y pitch
@@ -54,6 +58,11 @@ local SOUND_CONFIG = {
 		Volume = 0.7,
 		Pitch = 0.8,  -- Más grave
 		PlaybackSpeed = 0.9
+	},
+	Star = {
+		Volume = 0.6,
+		Pitch = 1.3,  -- Más agudo (sonido mágico/brillante)
+		PlaybackSpeed = 1.1
 	}
 }
 
