@@ -139,17 +139,27 @@ end
 
 -- Muestra la GUI para una zona específica
 local function showZoneGui(zonePart)
+	-- No mostrar GUI si el ScreenGui está deshabilitado (modo configuración)
+	if not zoneGui.Enabled then
+		return
+	end
+
 	local zoneConfig = ZoneConfig.GetZone(zonePart.Name)
 	if not zoneConfig then
 		warn(string.format("[ZoneCollisionGui] ⚠️ No se encontró config para zona: %s", zonePart.Name))
 		return
 	end
 
-	currentZone = zonePart
-	currentZoneConfig = zoneConfig
-
 	-- Verificar si el jugador posee esta zona
 	isOwned = table.find(ownedZones, zonePart.Name) ~= nil
+
+	-- No mostrar GUI para zonas ya compradas
+	if isOwned then
+		return
+	end
+
+	currentZone = zonePart
+	currentZoneConfig = zoneConfig
 
 	-- Actualizar contenido
 	updateGuiContent(zonePart, zoneConfig, isOwned)
@@ -184,8 +194,8 @@ local function checkZoneCollision()
 			local distance = (humanoidRootPart.Position - zonePart.Position).Magnitude
 			local combinedSize = (humanoidRootPart.Size.Magnitude + zonePart.Size.Magnitude) / 2
 
-			-- Si está tocando la zona
-			if distance < combinedSize + 2 then  -- +2 studs de margen
+			-- Si está tocando la zona (más cerca, sin margen adicional)
+			if distance < combinedSize * 0.7 then  -- 70% del tamaño combinado (más cerca)
 				touching = true
 				touchedZone = zonePart
 				break
@@ -291,12 +301,17 @@ print("[ZoneCollisionGui] ✅ Sistema de GUI de colisión de zonas iniciado")
 	- Cuando el jugador se acerca a una zona (colisiona), se muestra la GUI
 	- Cuando se aleja, se oculta la GUI
 	- El botón de compra funciona igual que el de la SurfaceGui
-	- Si ya posee la zona, el botón dice "YA COMPRADA" y está deshabilitado
+	- NO SE MUESTRA en zonas ya compradas
+	- NO SE MUESTRA si el ScreenGui está Disabled (útil para configurar sin interferencias)
+
+	CONFIGURACIÓN:
+	- Para configurar el GUI sin que aparezca: desactiva Enabled en ZoneCollisionGui
+	- En modo juego/pruebas: activa Enabled para que funcione
 
 	PERSONALIZACIÓN:
-	- Ajusta el margen de detección en línea 191: `if distance < combinedSize + 2`
-	- Cambia +2 por un número mayor para detectar desde más lejos
-	- O menor para que tenga que estar más cerca
+	- Ajusta la distancia de detección en línea 198: `if distance < combinedSize * 0.7`
+	- Cambia 0.7 por un número mayor (ej: 1.0) para detectar desde más lejos
+	- O menor (ej: 0.5) para que tenga que estar muy cerca
 
 	EJEMPLO DE DISEÑO SIMPLE:
 
