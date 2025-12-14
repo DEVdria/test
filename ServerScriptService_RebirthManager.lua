@@ -112,6 +112,17 @@ local function processRebirthPurchase(player)
 			end
 		end
 
+		-- Teletransportar al jugador a spawn (0, 2, 0)
+		local character = player.Character
+		if character then
+			local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+			if humanoidRootPart then
+				-- Teletransportar a las coordenadas de spawn
+				humanoidRootPart.CFrame = CFrame.new(0, 2, 0)
+				print(string.format("[RebirthManager] %s teletransportado a spawn (0, 2, 0)", player.Name))
+			end
+		end
+
 		-- Guardar datos inmediatamente
 		task.spawn(function()
 			DataManager.SaveData(player)
