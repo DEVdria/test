@@ -17,13 +17,16 @@ local RequestRebirthPurchaseEvent = RemoteEvents:WaitForChild("RequestRebirthPur
 local rebirthFrame = script.Parent
 local titleLabel = rebirthFrame:WaitForChild("Title")
 local priceLabel = rebirthFrame:WaitForChild("PriceLabel")
-local multiplierLabel = rebirthFrame:WaitForChild("MultiplierLabel")
 local purchaseButton = rebirthFrame:WaitForChild("PurchaseButton")
 local closeButton = rebirthFrame:WaitForChild("CloseButton")
 
--- Nuevos TextLabels para mostrar level caps (opcional, crear estos en la GUI)
-local currentLevelCapLabel = rebirthFrame:FindFirstChild("CurrentLevelCapLabel")
-local nextLevelCapLabel = rebirthFrame:FindFirstChild("NextLevelCapLabel")
+-- TextLabels para multiplicadores (OPCIONAL - crea estos en tu GUI)
+local currentMultiplierLabel = rebirthFrame:FindFirstChild("CurrentMultiplierLabel") or rebirthFrame:FindFirstChild("CurrentMultiplier")
+local nextMultiplierLabel = rebirthFrame:FindFirstChild("NextMultiplierLabel") or rebirthFrame:FindFirstChild("NextMultiplier")
+
+-- TextLabels para nivel máximo (OPCIONAL - crea estos en tu GUI)
+local currentLevelCapLabel = rebirthFrame:FindFirstChild("CurrentLevelCapLabel") or rebirthFrame:FindFirstChild("CurrentMaxLevel")
+local nextLevelCapLabel = rebirthFrame:FindFirstChild("NextLevelCapLabel") or rebirthFrame:FindFirstChild("NextMaxLevel")
 
 -- Estado
 local isPurchasing = false
@@ -63,17 +66,27 @@ local function updateRebirthInfo()
 	local currentMaxLevel = LevelManager.GetMaxLevel(rebirthsValue)
 	local nextMaxLevel = LevelManager.GetMaxLevel(rebirthsValue + 1)
 
-	-- Actualizar labels
+	-- Actualizar precio
 	priceLabel.Text = string.format("Precio: $%s", formatNumber(cost))
-	multiplierLabel.Text = string.format("Multiplicador EXP: x%.2f → x%.2f", currentMultiplier, nextMultiplier)
 
-	-- Actualizar level caps si los labels existen
-	if currentLevelCapLabel then
-		currentLevelCapLabel.Text = string.format("Nivel Máximo Actual: %d", currentMaxLevel)
+	-- Actualizar multiplicador actual (ej: "x1.4")
+	if currentMultiplierLabel then
+		currentMultiplierLabel.Text = string.format("x%.1f", currentMultiplier)
 	end
 
+	-- Actualizar multiplicador siguiente (ej: "x1.6")
+	if nextMultiplierLabel then
+		nextMultiplierLabel.Text = string.format("x%.1f", nextMultiplier)
+	end
+
+	-- Actualizar nivel máximo actual (ej: "Nivel 20")
+	if currentLevelCapLabel then
+		currentLevelCapLabel.Text = string.format("Nivel %d", currentMaxLevel)
+	end
+
+	-- Actualizar nivel máximo siguiente (ej: "Nivel 30")
 	if nextLevelCapLabel then
-		nextLevelCapLabel.Text = string.format("Nivel Máximo con Rebirth: %d", nextMaxLevel)
+		nextLevelCapLabel.Text = string.format("Nivel %d", nextMaxLevel)
 	end
 
 	-- Actualizar botón según si puede comprar

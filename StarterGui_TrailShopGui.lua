@@ -240,28 +240,36 @@ local function refreshTrailCards()
 
 	print(string.format("[TrailShopGui] 🔍 Frames encontrados: %d, Trails disponibles: %d", #manualFrames, #allTrails))
 
-	-- Asociar cada frame con una trail por índice
-	for index, trail in ipairs(allTrails) do
-		local frame = manualFrames[index]
+	-- Asociar cada frame con su trail especificada
+	for _, frame in ipairs(manualFrames) do
+		-- Buscar el atributo "TrailID" en el frame
+		local trailID = frame:GetAttribute("TrailID")
 
-		if frame then
-			-- Verificar si el jugador posee y tiene equipada esta trail
-			local owned = table.find(ownedTrails, trail.ID) ~= nil
-			local equipped = (equippedTrail == trail.ID)
+		if trailID then
+			-- Buscar la trail con ese ID
+			local trail = TrailConfig.GetTrail(trailID)
 
-			-- Actualizar contenido del frame
-			updateTrailCard(frame, trail, owned, equipped)
+			if trail then
+				-- Verificar si el jugador posee y tiene equipada esta trail
+				local owned = table.find(ownedTrails, trail.ID) ~= nil
+				local equipped = (equippedTrail == trail.ID)
 
-			-- Guardar referencia
-			trailCards[trail.ID] = frame
+				-- Actualizar contenido del frame
+				updateTrailCard(frame, trail, owned, equipped)
 
-			print(string.format("[TrailShopGui] ✅ Frame '%s' asociado con trail '%s'", frame.Name, trail.ID))
+				-- Guardar referencia
+				trailCards[trail.ID] = frame
+
+				print(string.format("[TrailShopGui] ✅ Frame '%s' configurado con trail '%s'", frame.Name, trail.ID))
+			else
+				warn(string.format("[TrailShopGui] ⚠️ Trail '%s' no existe en TrailConfig (Frame: %s)", trailID, frame.Name))
+			end
 		else
-			warn(string.format("[TrailShopGui] ⚠️ No hay frame para la trail #%d (%s). Crea más frames en TrailsContainer.", index, trail.ID))
+			warn(string.format("[TrailShopGui] ⚠️ Frame '%s' no tiene atributo 'TrailID'. Añade el atributo para especificar qué trail mostrar.", frame.Name))
 		end
 	end
 
-	-- Contar trails configuradas (trailCards es una tabla con claves string, no numérica)
+	-- Contar trails configuradas
 	local count = 0
 	for _ in pairs(trailCards) do
 		count = count + 1
@@ -389,12 +397,34 @@ print("[TrailShopGui] ✅ Sistema de tienda de trails iniciado")
 	         └─ Frame3 (Frame) ← TÚ CREAS ESTE - Se asocia con Trail #3 (Rainbow)
 	            └─ (mismos elementos internos)
 
+	⚠️ CONFIGURACIÓN MANUAL DE TRAILS POR FRAME:
+
+	Cada frame debe tener un ATRIBUTO llamado "TrailID" que indique qué trail mostrar.
+
+	CÓMO AÑADIR EL ATRIBUTO:
+	1. Selecciona Frame1 en StarterGui
+	2. En Properties, busca la sección "Attributes"
+	3. Click en el botón "+" para añadir un atributo
+	4. Nombre: TrailID
+	5. Tipo: String
+	6. Valor: Fire (o Lightning, o Rainbow)
+
+	EJEMPLO:
+	- Frame1 → Atributo TrailID = "Rainbow"  (mostrará la trail Arcoíris)
+	- Frame2 → Atributo TrailID = "Fire"     (mostrará la trail Fuego)
+	- Frame3 → Atributo TrailID = "Lightning" (mostrará la trail Relámpago)
+
+	IDs de trails disponibles:
+	- "Fire" (Fuego - gratis)
+	- "Lightning" (Relámpago - 5,000 Stars)
+	- "Rainbow" (Arcoíris - 15,000 Stars)
+
 	CÓMO FUNCIONA:
-	1. TÚ creas manualmente 1 Frame por cada trail que tengas en TrailConfig
-	2. Actualmente hay 3 trails (Fire, Lightning, Rainbow), así que necesitas 3 frames
-	3. El script detecta automáticamente los frames en orden (LayoutOrder o Position.Y)
-	4. Frame #1 = Trail #1 (Fire), Frame #2 = Trail #2 (Lightning), etc.
-	5. El script actualiza el contenido de cada frame con la info de su trail
+	1. TÚ creas manualmente 1 Frame por cada trail que quieras mostrar
+	2. Añades el atributo "TrailID" a cada frame con el ID de la trail
+	3. El script detecta los frames y el atributo "TrailID"
+	4. Cada frame muestra la trail que especificaste
+	5. Puedes poner las trails en el orden que quieras
 
 	NOMBRES ALTERNATIVOS ACEPTADOS PARA ELEMENTOS INTERNOS:
 	- TrailName o Name
