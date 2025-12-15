@@ -38,6 +38,8 @@ local function getDefaultData()
 		CurrentEXP = 0,               -- EXP actual del jugador
 		EXPMultiplier = 1,            -- Multiplicador de EXP por rebirths
 		OwnedZones = ZoneConfig.GetDefaultZones(),  -- Zonas que posee el jugador
+		OwnedTrails = {"Fire"},       -- Trails que posee el jugador (Fire es gratis por defecto)
+		EquippedTrail = "Fire",       -- Trail equipada actualmente
 		LastSave = os.time()
 	}
 end
