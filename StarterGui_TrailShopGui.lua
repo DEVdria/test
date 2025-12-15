@@ -47,7 +47,7 @@ end
 -- Buscar botón para cerrar la tienda (opcional)
 local closeButton = shopFrame:FindFirstChild("CloseButton", true)
 
--- Buscar contenedor de trails (donde se clonarán las trail cards)
+-- Buscar contenedor de trails (donde están tus frames manuales)
 local trailsContainer = shopFrame:FindFirstChild("TrailsContainer", true) or shopFrame:FindFirstChild("ScrollingFrame", true)
 if not trailsContainer then
 	warn("[TrailShopGui] ⚠️ No se encontró contenedor de trails (TrailsContainer o ScrollingFrame)")
@@ -55,16 +55,7 @@ if not trailsContainer then
 	trailsContainer = shopFrame
 end
 
--- Buscar template de trail card (debe estar dentro del contenedor o del shopFrame)
-local trailCardTemplate = shopFrame:FindFirstChild("TrailCardTemplate", true)
-if not trailCardTemplate then
-	warn("[TrailShopGui] ❌ No se encontró 'TrailCardTemplate'")
-	warn("[TrailShopGui] 📘 Crea un Frame llamado 'TrailCardTemplate' para usar como plantilla")
-	return
-end
-
--- Ocultar template
-trailCardTemplate.Visible = false
+print(string.format("[TrailShopGui] 📦 Contenedor de trails: %s", trailsContainer.Name))
 
 -- Ocultar tienda al inicio
 shopFrame.Visible = false
@@ -209,41 +200,68 @@ local function updateTrailCard(card, trail, owned, equipped)
 	end
 end
 
--- Crea una card para una trail
-local function createTrailCard(trail, index)
-	local card = trailCardTemplate:Clone()
-	card.Name = "TrailCard_" .. trail.ID
-	card.Visible = true
-	card.Parent = trailsContainer
+-- Obtiene los frames que creaste manualmente en el contenedor
+local function getManualTrailFrames()
+	local frames = {}
 
-	-- Verificar si el jugador posee y tiene equipada esta trail
-	local owned = table.find(ownedTrails, trail.ID) ~= nil
-	local equipped = (equippedTrail == trail.ID)
+	for _, child in ipairs(trailsContainer:GetChildren()) do
+		-- Ignorar elementos que no son frames o que son UIListLayout, UIPadding, etc.
+		if child:IsA("Frame") or child:IsA("GuiObject") then
+			-- Ignorar si es un UILayout o UIConstraint
+			if not child:IsA("UIListLayout") and not child:IsA("UIPadding") and
+			   not child:IsA("UIGridLayout") and not child:IsA("UICorner") then
+				table.insert(frames, child)
+			end
+		end
+	end
 
-	-- Actualizar contenido de la card
-	updateTrailCard(card, trail, owned, equipped)
+	-- Ordenar frames por LayoutOrder (o Position.Y si no tienen LayoutOrder)
+	table.sort(frames, function(a, b)
+		if a.LayoutOrder ~= b.LayoutOrder then
+			return a.LayoutOrder < b.LayoutOrder
+		else
+			return a.Position.Y.Scale < b.Position.Y.Scale or
+			       (a.Position.Y.Scale == b.Position.Y.Scale and a.Position.Y.Offset < b.Position.Y.Offset)
+		end
+	end)
 
-	-- Guardar referencia
-	trailCards[trail.ID] = card
-
-	return card
+	return frames
 end
 
--- Refresca todas las trail cards
+-- Refresca todas las trail cards (actualiza frames existentes)
 local function refreshTrailCards()
-	-- Limpiar cards existentes
-	for _, card in pairs(trailCards) do
-		card:Destroy()
-	end
-	trailCards = {}
+	trailCards = {}  -- Limpiar referencias
 
-	-- Crear cards para todas las trails
+	-- Obtener frames manuales que creaste
+	local manualFrames = getManualTrailFrames()
+
+	-- Obtener todas las trails disponibles
 	local allTrails = TrailConfig.GetAllTrails()
+
+	print(string.format("[TrailShopGui] 🔍 Frames encontrados: %d, Trails disponibles: %d", #manualFrames, #allTrails))
+
+	-- Asociar cada frame con una trail por índice
 	for index, trail in ipairs(allTrails) do
-		createTrailCard(trail, index)
+		local frame = manualFrames[index]
+
+		if frame then
+			-- Verificar si el jugador posee y tiene equipada esta trail
+			local owned = table.find(ownedTrails, trail.ID) ~= nil
+			local equipped = (equippedTrail == trail.ID)
+
+			-- Actualizar contenido del frame
+			updateTrailCard(frame, trail, owned, equipped)
+
+			-- Guardar referencia
+			trailCards[trail.ID] = frame
+
+			print(string.format("[TrailShopGui] ✅ Frame '%s' asociado con trail '%s'", frame.Name, trail.ID))
+		else
+			warn(string.format("[TrailShopGui] ⚠️ No hay frame para la trail #%d (%s). Crea más frames en TrailsContainer.", index, trail.ID))
+		end
 	end
 
-	print(string.format("[TrailShopGui] 🔄 Tienda refrescada - %d trails mostradas", #allTrails))
+	print(string.format("[TrailShopGui] 🔄 Tienda refrescada - %d trails configuradas", #trailCards))
 end
 
 -- Carga los datos de trail del servidor
@@ -336,24 +354,43 @@ print("[TrailShopGui] ✅ Sistema de tienda de trails iniciado")
 
 -- ==================== NOTAS DE USO ====================
 --[[
+	⚠️ IMPORTANTE: TÚ CREAS LOS FRAMES MANUALMENTE (NO SE CLONAN)
+
 	ESTRUCTURA REQUERIDA:
 
 	StarterGui
 	└─ TrailShopGui (ScreenGui)
+	   ├─ TrailShopGui (LocalScript) ← Este script va AQUÍ
 	   ├─ OpenShopButton (TextButton) - Botón visible para abrir la tienda
 	   └─ ShopFrame (Frame) - Frame principal de la tienda
+	      │  Properties: Visible = false (empieza oculto)
+	      │
 	      ├─ CloseButton (TextButton) - OPCIONAL, botón para cerrar
-	      ├─ TrailsContainer (ScrollingFrame o Frame) - OPCIONAL, contenedor de trails
-	      └─ TrailCardTemplate (Frame) - Template de una trail card
-	         ├─ TrailName (TextLabel) - OPCIONAL, nombre de la trail
-	         ├─ Description (TextLabel) - OPCIONAL, descripción
-	         ├─ Price (TextLabel) - OPCIONAL, precio
-	         ├─ Requirements (TextLabel) - OPCIONAL, requisitos
-	         ├─ Status (TextLabel) - OPCIONAL, estado (equipada/comprada/bloqueada)
-	         ├─ BuyButton (TextButton) - OPCIONAL, botón de compra
-	         └─ EquipButton (TextButton) - OPCIONAL, botón de equipar
+	      │
+	      └─ TrailsContainer (ScrollingFrame o Frame) - Contenedor de tus frames
+	         ├─ Frame1 (Frame) ← TÚ CREAS ESTE - Se asocia con Trail #1 (Fire)
+	         │  ├─ TrailName (TextLabel) - OPCIONAL
+	         │  ├─ Description (TextLabel) - OPCIONAL
+	         │  ├─ Price (TextLabel) - OPCIONAL
+	         │  ├─ Requirements (TextLabel) - OPCIONAL
+	         │  ├─ Status (TextLabel) - OPCIONAL
+	         │  ├─ BuyButton (TextButton) - OPCIONAL
+	         │  └─ EquipButton (TextButton) - OPCIONAL
+	         │
+	         ├─ Frame2 (Frame) ← TÚ CREAS ESTE - Se asocia con Trail #2 (Lightning)
+	         │  └─ (mismos elementos internos)
+	         │
+	         └─ Frame3 (Frame) ← TÚ CREAS ESTE - Se asocia con Trail #3 (Rainbow)
+	            └─ (mismos elementos internos)
 
-	NOMBRES ALTERNATIVOS ACEPTADOS:
+	CÓMO FUNCIONA:
+	1. TÚ creas manualmente 1 Frame por cada trail que tengas en TrailConfig
+	2. Actualmente hay 3 trails (Fire, Lightning, Rainbow), así que necesitas 3 frames
+	3. El script detecta automáticamente los frames en orden (LayoutOrder o Position.Y)
+	4. Frame #1 = Trail #1 (Fire), Frame #2 = Trail #2 (Lightning), etc.
+	5. El script actualiza el contenido de cada frame con la info de su trail
+
+	NOMBRES ALTERNATIVOS ACEPTADOS PARA ELEMENTOS INTERNOS:
 	- TrailName o Name
 	- Description o Desc
 	- Price o PriceLabel
@@ -362,16 +399,20 @@ print("[TrailShopGui] ✅ Sistema de tienda de trails iniciado")
 	- BuyButton o PurchaseButton
 
 	FUNCIONAMIENTO:
-	- Click en OpenShopButton abre la tienda
-	- La tienda muestra todas las trails disponibles
-	- Trails compradas se marcan como "COMPRADA"
+	- Click en OpenShopButton → muestra ShopFrame (sin animación)
+	- El script detecta tus frames y los llena con info de las trails
+	- Trails compradas se marcan como "YA COMPRADA"
 	- Trail equipada se marca como "EQUIPADA"
-	- Botón de compra permite comprar nuevas trails
-	- Botón de equipar permite cambiar la trail activa
+	- Botones funcionan automáticamente
 
-	PERSONALIZACIÓN:
-	- Diseña la GUI como quieras en StarterGui
-	- El script solo gestiona la lógica y eventos
-	- Puedes añadir más elementos visuales libremente
-	- La animación de apertura/cierre puede modificarse en las funciones openShop/closeShop
+	SI AÑADES MÁS TRAILS:
+	- Edita TrailConfig y añade una nueva trail
+	- Crea un nuevo Frame en TrailsContainer
+	- El script lo detectará automáticamente
+
+	EJEMPLO RÁPIDO:
+	1. Crea TrailsContainer (ScrollingFrame)
+	2. Dentro, crea 3 Frames (Frame1, Frame2, Frame3)
+	3. Dentro de cada Frame, añade TextLabels y TextButtons con los nombres de arriba
+	4. El script automáticamente los llenará con la info correcta
 ]]
