@@ -267,37 +267,16 @@ local function loadTrailData()
 	end
 end
 
--- Muestra la tienda con animación
+-- Muestra la tienda (sin animación, respeta tu diseño)
 local function openShop()
 	loadTrailData()  -- Recargar datos al abrir
-
 	shopFrame.Visible = true
-
-	-- Animación de entrada (opcional, solo si quieres)
-	shopFrame.Size = UDim2.new(0, 0, 0, 0)
-	local openTween = TweenService:Create(
-		shopFrame,
-		TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-		{Size = UDim2.new(0.7, 0, 0.8, 0)}  -- Ajusta el tamaño según tu diseño
-	)
-	openTween:Play()
-
 	print("[TrailShopGui] 🛒 Tienda abierta")
 end
 
--- Cierra la tienda con animación
+-- Cierra la tienda
 local function closeShop()
-	local closeTween = TweenService:Create(
-		shopFrame,
-		TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{Size = UDim2.new(0, 0, 0, 0)}
-	)
-	closeTween:Play()
-
-	closeTween.Completed:Connect(function()
-		shopFrame.Visible = false
-	end)
-
+	shopFrame.Visible = false
 	print("[TrailShopGui] 🛒 Tienda cerrada")
 end
 
