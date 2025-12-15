@@ -207,7 +207,8 @@ function TrailConfig.MeetsRequirements(player, trailID)
 	local leaderstats = player:FindFirstChild("leaderstats")
 	if not leaderstats then return false end
 
-	local level = leaderstats:FindFirstChild("Nivel")
+	-- Buscar Level o Nivel (compatibilidad)
+	local level = leaderstats:FindFirstChild("Level") or leaderstats:FindFirstChild("Nivel")
 	local rebirths = leaderstats:FindFirstChild("Rebirths")
 
 	if not level or not rebirths then return false end

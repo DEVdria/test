@@ -261,7 +261,13 @@ local function refreshTrailCards()
 		end
 	end
 
-	print(string.format("[TrailShopGui] 🔄 Tienda refrescada - %d trails configuradas", #trailCards))
+	-- Contar trails configuradas (trailCards es una tabla con claves string, no numérica)
+	local count = 0
+	for _ in pairs(trailCards) do
+		count = count + 1
+	end
+
+	print(string.format("[TrailShopGui] 🔄 Tienda refrescada - %d trails configuradas", count))
 end
 
 -- Carga los datos de trail del servidor
