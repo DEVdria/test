@@ -129,9 +129,10 @@ end
 local function markPlayerFinished(player)
 	for _, p in ipairs(participants) do
 		if p.player == player and not p.finishTime then
-			p.finishTime = tick() - raceStartTime
+			local finishTime = tick() - raceStartTime
+			p.finishTime = finishTime
 			p.finishPosition = raceFinish.Position
-			print(string.format("[RaceManager] 🏁 %s terminó la carrera en %.2f segundos", player.Name, p.finishTime))
+			print(string.format("[RaceManager] 🏁 %s terminó la carrera en %.2f segundos", player.Name, finishTime))
 			return true
 		end
 	end
