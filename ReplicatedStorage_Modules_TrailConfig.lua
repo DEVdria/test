@@ -120,6 +120,43 @@ TrailConfig.Trails = {
 		IsDefault = false
 	},
 
+	-- Trail 4: Full Body (TODO EL CUERPO)
+	{
+		ID = "FullBody",
+		Name = "✨ Estela de Cuerpo Completo",
+		Description = "Trails en todo tu cuerpo (excepto cabeza)",
+
+		-- VISUAL (TÚ MODIFICAS ESTO)
+		Texture = "rbxasset://textures/particles/sparkles_main.dds",  -- CAMBIA POR TU TEXTURA
+		Color = ColorSequence.new(Color3.fromRGB(255, 255, 255)),    -- Blanco por defecto
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.3),
+			NumberSequenceKeypoint.new(1, 1)
+		}),
+
+		-- PROPIEDADES DE LA TRAIL
+		Lifetime = 1.5,
+		MinLength = 0.1,
+		WidthScale = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.8),
+			NumberSequenceKeypoint.new(1, 0.2)
+		}),
+
+		-- PRECIO Y REQUISITOS
+		Price = 25000,            -- 25,000 Stars
+		RequiredLevel = 50,
+		RequiredRebirths = 2,
+
+		-- METADATA
+		Category = "Premium",
+		Rarity = "Legendary",
+		IsDefault = false,
+
+		-- ⚠️ ESPECIAL: Esta trail se aplica a TODO EL CUERPO
+		ApplyToAllParts = true,   -- Aplicar a todas las partes del cuerpo R6
+		TrailsPerPart = 2         -- 2 trails por cada parte
+	},
+
 	-- ==================== AÑADE MÁS TRAILS AQUÍ ====================
 	-- Copia el formato de arriba y añade nuevas trails:
 	--[[
