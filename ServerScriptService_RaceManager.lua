@@ -171,7 +171,7 @@ end
 local function waitingPhase()
 	print(string.format("[RaceManager] ⏳ Fase de espera iniciada (%d participantes)", #participants))
 
-	-- Verificar que hay participantes
+	-- Verificar que hay al menos 1 participante (permite carreras con 1+ jugadores)
 	if #participants == 0 then
 		print("[RaceManager] ❌ No hay participantes. Cancelando carrera.")
 		RaceEndEvent:FireAllClients({Cancelled = true, Reason = RaceConfig.Messages.NoParticipants})

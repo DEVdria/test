@@ -66,7 +66,7 @@ RaceConfig.Messages = {
 	CountingDown = "La carrera comenzará en %d segundos...",
 	RaceBegin = "¡CARRERA INICIADA!",
 	RaceEnded = "¡Carrera terminada!",
-	NoParticipants = "No hay suficientes participantes. Carrera cancelada."
+	NoParticipants = "Nadie se unió a la carrera. Carrera cancelada."
 }
 
 return RaceConfig
