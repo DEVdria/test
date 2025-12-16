@@ -15,8 +15,8 @@
 ]]
 
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- ═══════════════════════════════════════════════════════════
 -- CONFIGURACIÓN
@@ -54,6 +54,12 @@ local currentLevel = nil -- Nivel activo actual
 local levelData = {} -- {levelName -> {startPos, endPos}}
 local diedConnection = nil -- Conexión del evento Died
 
+-- RemoteEvent para comunicación con servidor
+local panelActivatedEvent = ReplicatedStorage:WaitForChild("PanelActivatedEvent", 10)
+if not panelActivatedEvent then
+	error("❌ No se encontró PanelActivatedEvent en ReplicatedStorage. Asegúrate de que el servidor esté corriendo.")
+end
+
 -- ═══════════════════════════════════════════════════════════
 -- FUNCIONES AUXILIARES
 -- ═══════════════════════════════════════════════════════════
@@ -76,36 +82,6 @@ local function getFallTimeFromPanel(panel)
 		end
 	end
 	return 5.0 -- Default
-end
-
--- Crear tween de caída
-local function createFallTween(panel, originalCFrame)
-	local goal = {
-		CFrame = originalCFrame * CFrame.new(0, -CONFIG.FALL_DISTANCE, 0)
-	}
-
-	local tweenInfo = TweenInfo.new(
-		CONFIG.FALL_DURATION,
-		Enum.EasingStyle.Quad,
-		Enum.EasingDirection.In
-	)
-
-	return TweenService:Create(panel, tweenInfo, goal)
-end
-
--- Crear tween de respawn
-local function createRespawnTween(panel, originalCFrame)
-	local goal = {
-		CFrame = originalCFrame
-	}
-
-	local tweenInfo = TweenInfo.new(
-		CONFIG.RESPAWN_DURATION,
-		Enum.EasingStyle.Bounce,
-		Enum.EasingDirection.Out
-	)
-
-	return TweenService:Create(panel, tweenInfo, goal)
 end
 
 -- ═══════════════════════════════════════════════════════════
@@ -148,15 +124,13 @@ local function activatePanel(panel, panelNumber, levelName, fallTime)
 		hideProgressBar()
 	end
 
-	-- Reproducir sonido con velocidad progresiva
+	-- Reproducir sonido con velocidad progresiva (solo local)
 	local stepSound = panel:FindFirstChild("StepSound")
 	if stepSound then
 		-- Calcular posición en el ciclo de 20 paneles (0-19)
 		local cyclePosition = (panelNumber - 1) % 20
 
 		-- Velocidad base 1.0, incremento de 0.05 por panel
-		-- Panel 1: 1.0, Panel 2: 1.05, ..., Panel 20: 1.95
-		-- Panel 21: 1.0 (reinicia), Panel 22: 1.05, etc.
 		local playbackSpeed = 1.0 + (cyclePosition * 0.05)
 
 		stepSound.PlaybackSpeed = playbackSpeed
@@ -164,120 +138,29 @@ local function activatePanel(panel, panelNumber, levelName, fallTime)
 	end
 
 	print(string.format(
-		"⏱️ %s - PANEL %d ACTIVADO | Caerá en %.1f segundos",
+		"📤 [CLIENTE] %s - PANEL %d ACTIVADO | Enviando al servidor (%.1f segundos)",
 		levelName,
 		panelNumber,
 		fallTime
 	))
 
-	-- Obtener el TextLabel del timer
-	local timerDisplay = panel:FindFirstChild("TimerDisplay")
-	local timerText = timerDisplay and timerDisplay:FindFirstChild("TimerText")
+	-- Construir path del panel para enviar al servidor
+	local panelPath = panel:GetFullName()
 
-	-- Iniciar countdown
-	task.spawn(function()
-		local success, err = pcall(function()
-			-- Actualizar el texto cada frame durante el countdown
-			local startTime = tick()
-			local endTime = startTime + fallTime
+	-- Enviar evento al servidor para que maneje la física
+	local success, err = pcall(function()
+		panelActivatedEvent:FireServer(panelPath, fallTime)
+	end)
 
-			while tick() < endTime do
-				local remaining = endTime - tick()
+	if not success then
+		warn(string.format("❌ [CLIENTE] Error al enviar evento para %s PANEL %d: %s", levelName, panelNumber, tostring(err)))
+	end
 
-				if timerText then
-					timerText.Text = string.format("%.1f", remaining)
-
-					-- Cambiar color según el tiempo restante
-					if remaining <= 1 then
-						timerText.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-						timerText.TextColor3 = Color3.fromRGB(255, 255, 255)
-					elseif remaining <= 2 then
-						timerText.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
-						timerText.TextColor3 = Color3.fromRGB(255, 255, 255)
-					elseif remaining <= 3 then
-						timerText.BackgroundColor3 = Color3.fromRGB(200, 200, 0)
-						timerText.TextColor3 = Color3.fromRGB(0, 0, 0)
-					end
-				end
-
-				task.wait(0.05)
-			end
-
-			-- Cuando llega a 0
-			if timerText then
-				timerText.Text = "💥"
-				timerText.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-			end
-
-			print(string.format("💥 %s - PANEL %d CAYENDO", levelName, panelNumber))
-
-			-- Deshabilitar colisión
-			panel.CanCollide = false
-
-			-- Hacer el panel completamente invisible
-			local originalTransparency = panel.Transparency
-			panel.Transparency = 1
-
-			-- Ocultar todos los decals
-			local decals = {}
-			for _, child in ipairs(panel:GetChildren()) do
-				if child:IsA("Decal") then
-					table.insert(decals, {decal = child, wasVisible = child.Transparency})
-					child.Transparency = 1
-				end
-			end
-
-			-- Animar caída
-			local fallTween = createFallTween(panel, data.originalCFrame)
-			fallTween:Play()
-			fallTween.Completed:Wait()
-
-			-- Ocultar el timer mientras está abajo
-			if timerDisplay then
-				timerDisplay.Enabled = false
-			end
-
-			print(string.format("⌛ %s - PANEL %d respawnea en %d segundos", levelName, panelNumber, CONFIG.RESPAWN_TIME))
-
-			-- Esperar tiempo de respawn
-			task.wait(CONFIG.RESPAWN_TIME)
-
-			-- Reactivar colisión
-			panel.CanCollide = true
-
-			-- Restaurar transparencia original
-			panel.Transparency = originalTransparency
-
-			-- Restaurar decals
-			for _, decalData in ipairs(decals) do
-				decalData.decal.Transparency = decalData.wasVisible
-			end
-
-			-- Animar respawn
-			local respawnTween = createRespawnTween(panel, data.originalCFrame)
-			respawnTween:Play()
-			respawnTween.Completed:Wait()
-
-			-- Restaurar el timer
-			if timerDisplay then
-				timerDisplay.Enabled = true
-			end
-
-			if timerText then
-				timerText.Text = string.format("%.1f", fallTime)
-				timerText.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-				timerText.TextColor3 = Color3.fromRGB(255, 255, 255)
-			end
-
-			print(string.format("✅ %s - PANEL %d RESPAWNEADO", levelName, panelNumber))
-
-			-- Resetear estado
-			data.isActive = false
-			data.startTime = nil
-		end)
-
-		if not success then
-			warn(string.format("❌ Error en %s PANEL %d: %s", levelName, panelNumber, tostring(err)))
+	-- Resetear estado después del ciclo completo (fallTime + animaciones + respawn)
+	-- Servidor: FALL_DURATION (1.5s) + RESPAWN_TIME (3s) + RESPAWN_DURATION (0.8s) = 5.3s
+	local totalCycleTime = fallTime + 5.5 -- Un poco extra para seguridad
+	task.delay(totalCycleTime, function()
+		if data then
 			data.isActive = false
 			data.startTime = nil
 		end
