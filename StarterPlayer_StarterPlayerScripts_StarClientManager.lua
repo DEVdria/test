@@ -155,6 +155,15 @@ local function animateStars(deltaTime)
 	end
 end
 
+-- Cuenta cuántas stars hay en animatedStars
+local function countStars()
+	local count = 0
+	for _ in pairs(animatedStars) do
+		count = count + 1
+	end
+	return count
+end
+
 -- Inicializar estrellas
 local function initializeStars()
 	starsFolder = findStarsFolder()
@@ -163,11 +172,45 @@ local function initializeStars()
 	-- Buscar todos los modelos de estrellas
 	for _, child in ipairs(starsFolder:GetChildren()) do
 		if child:IsA("Model") or child:IsA("BasePart") then
-			setupStarAnimation(child)
+			-- Solo agregar si aún no está en la lista
+			if not animatedStars[child] then
+				setupStarAnimation(child)
+			end
 		end
 	end
 
-	print(string.format("[StarClientManager] ✅ %d estrellas inicializadas", #animatedStars))
+	print(string.format("[StarClientManager] ✅ %d estrellas inicializadas", countStars()))
+end
+
+-- Escuchar cuando se agreguen nuevas stars (para modo servidor/cliente)
+local function listenForNewStars()
+	if not starsFolder then return end
+
+	starsFolder.ChildAdded:Connect(function(child)
+		-- Esperar a que el objeto esté completamente replicado
+		task.wait(0.5)
+
+		if (child:IsA("Model") or child:IsA("BasePart")) and not animatedStars[child] then
+			setupStarAnimation(child)
+			print(string.format("[StarClientManager] ➕ Nueva estrella detectada: %s (Total: %d)", child.Name, countStars()))
+		end
+	end)
+
+	-- También revisar si hay descendants que se agreguen después
+	starsFolder.DescendantAdded:Connect(function(descendant)
+		-- Si un BasePart se agrega a un Model que ya teníamos pero no pudimos inicializar
+		if descendant:IsA("BasePart") then
+			local starModel = descendant.Parent
+			if starModel and (starModel:IsA("Model") or starModel:IsA("BasePart")) then
+				-- Si el modelo existe pero no está animado, intentar configurarlo
+				if starModel.Parent == starsFolder and not animatedStars[starModel] then
+					task.wait(0.1)  -- Pequeña espera para asegurar replicación completa
+					setupStarAnimation(starModel)
+					print(string.format("[StarClientManager] 🔄 Estrella %s configurada después de replicación (Total: %d)", starModel.Name, countStars()))
+				end
+			end
+		end
+	end)
 end
 
 -- ==================== BUCLE DE ANIMACIÓN Y DETECCIÓN ====================
@@ -194,7 +237,55 @@ end)
 
 -- ==================== INICIALIZAR ====================
 
-task.wait(2)  -- Esperar a que todo cargue
-initializeStars()
+-- Esperar a que la carpeta Stars exista (importante para modo servidor/cliente)
+task.spawn(function()
+	print("[StarClientManager] ⏳ Esperando carpeta Stars...")
 
-print("[StarClientManager] ✅ Sistema de estrellas del cliente inicializado")
+	-- Intentar encontrar la carpeta con reintentos
+	local attempts = 0
+	local maxAttempts = 20  -- 20 segundos máximo
+	while not starsFolder and attempts < maxAttempts do
+		starsFolder = Workspace:FindFirstChild("Stars")
+		if not starsFolder then
+			attempts = attempts + 1
+			task.wait(1)
+		end
+	end
+
+	if not starsFolder then
+		warn("[StarClientManager] ❌ No se encontró carpeta Stars después de 20 segundos")
+		return
+	end
+
+	print("[StarClientManager] ✅ Carpeta Stars encontrada")
+
+	-- Esperar un poco más para que las stars se repliquen
+	task.wait(2)
+
+	-- Inicializar stars existentes
+	initializeStars()
+
+	-- Escuchar por nuevas stars (importante para replicación tardía en servidor/cliente)
+	listenForNewStars()
+
+	-- Revisar periódicamente si hay stars que no se inicializaron (fallback)
+	task.spawn(function()
+		task.wait(5)  -- Esperar 5 segundos adicionales
+		if starsFolder then
+			local uninitializedCount = 0
+			for _, child in ipairs(starsFolder:GetChildren()) do
+				if (child:IsA("Model") or child:IsA("BasePart")) and not animatedStars[child] then
+					setupStarAnimation(child)
+					uninitializedCount = uninitializedCount + 1
+				end
+			end
+
+			if uninitializedCount > 0 then
+				print(string.format("[StarClientManager] 🔄 Se inicializaron %d estrellas adicionales (replicación tardía)", uninitializedCount))
+				print(string.format("[StarClientManager] ✅ Total de estrellas: %d", countStars()))
+			end
+		end
+	end)
+
+	print("[StarClientManager] ✅ Sistema de estrellas del cliente inicializado")
+end)
