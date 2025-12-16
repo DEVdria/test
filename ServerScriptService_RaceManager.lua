@@ -198,6 +198,36 @@ local function waitingPhase()
 	return true
 end
 
+-- Otorga premio a un jugador
+local function givePrize(player, reward, place)
+	if not player or not player.Parent then return end
+
+	-- Dar XP (usando MoneyManager)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if leaderstats then
+		local currentEXP = leaderstats:FindFirstChild("CurrentEXP")
+		if currentEXP then
+			DataManager.AddEXP(player, reward.XP)
+			print(string.format("[RaceManager] 💎 %s recibió %d XP", player.Name, reward.XP))
+		end
+
+		-- Dar Money
+		DataManager.AddMoney(player, reward.Money)
+		print(string.format("[RaceManager] 💰 %s recibió %d Money", player.Name, reward.Money))
+
+		-- Dar Win (solo al primero)
+		if reward.AddWin then
+			local wins = leaderstats:FindFirstChild("Wins")
+			if wins then
+				wins.Value = wins.Value + 1
+				-- Actualizar en DataManager
+				DataManager.SetValue(player, "Wins", wins.Value)
+				print(string.format("[RaceManager] 🏆 %s recibió 1 Win (Total: %d)", player.Name, wins.Value))
+			end
+		end
+	end
+end
+
 -- Fase 4: Carrera activa
 local function runRace()
 	print("[RaceManager] 🏃 Carrera en progreso...")
@@ -296,36 +326,6 @@ local function calculateResults()
 	end
 
 	return results
-end
-
--- Otorga premio a un jugador
-local function givePrize(player, reward, place)
-	if not player or not player.Parent then return end
-
-	-- Dar XP (usando MoneyManager)
-	local leaderstats = player:FindFirstChild("leaderstats")
-	if leaderstats then
-		local currentEXP = leaderstats:FindFirstChild("CurrentEXP")
-		if currentEXP then
-			DataManager.AddEXP(player, reward.XP)
-			print(string.format("[RaceManager] 💎 %s recibió %d XP", player.Name, reward.XP))
-		end
-
-		-- Dar Money
-		DataManager.AddMoney(player, reward.Money)
-		print(string.format("[RaceManager] 💰 %s recibió %d Money", player.Name, reward.Money))
-
-		-- Dar Win (solo al primero)
-		if reward.AddWin then
-			local wins = leaderstats:FindFirstChild("Wins")
-			if wins then
-				wins.Value = wins.Value + 1
-				-- Actualizar en DataManager
-				DataManager.SetValue(player, "Wins", wins.Value)
-				print(string.format("[RaceManager] 🏆 %s recibió 1 Win (Total: %d)", player.Name, wins.Value))
-			end
-		end
-	end
 end
 
 -- Teletransporta a todos los participantes al spawn
