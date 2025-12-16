@@ -358,7 +358,13 @@ local function runRaceCycle()
 	-- Fase 3: Zona de espera
 	local shouldContinue = waitingPhase()
 	if not shouldContinue then
-		return  -- Carrera cancelada
+		-- Carrera cancelada, resetear barrera
+		if raceBarrier then
+			raceBarrier.CanCollide = true
+			raceBarrier.Transparency = 1
+		end
+		print("[RaceManager] 🔄 Barrera reseteada después de cancelación")
+		return
 	end
 
 	-- Fase 4: Carrera
@@ -373,6 +379,13 @@ local function runRaceCycle()
 	-- Teletransportar a todos
 	task.wait(5)  -- Esperar 5 segundos para que vean el podio
 	teleportAllToSpawn()
+
+	-- Resetear barrera para la siguiente carrera
+	if raceBarrier then
+		raceBarrier.CanCollide = true
+		raceBarrier.Transparency = 1  -- Invisible hasta la próxima carrera
+		print("[RaceManager] 🔄 Barrera reseteada para la próxima carrera")
+	end
 
 	print("[RaceManager] ✅ Ciclo de carrera completado")
 	print("[RaceManager] ═══════════════════════════════════════")
