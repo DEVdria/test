@@ -96,10 +96,10 @@ local secondViewport = resultsFrame:FindFirstChild("SecondViewport", true)
 local thirdViewport = resultsFrame:FindFirstChild("ThirdViewport", true)
 
 -- Ocultar todas las GUIs al inicio
-warningFrame.Visible = false
-decisionFrame.Visible = false
+raceWarningGui.Enabled = false
+raceDecisionGui.Enabled = false
 if raceWaitGui then raceWaitGui.Enabled = false end
-resultsFrame.Visible = false
+raceResultsGui.Enabled = false
 
 -- ==================== VARIABLES ====================
 
@@ -117,12 +117,12 @@ local function showWarning(message, countdown)
 		warningCountdown.Text = tostring(countdown)
 	end
 
-	warningFrame.Visible = true
+	raceWarningGui.Enabled = true
 end
 
 -- Oculta el aviso de carrera
 local function hideWarning()
-	warningFrame.Visible = false
+	raceWarningGui.Enabled = false
 end
 
 -- Muestra la GUI de decisión (FASE 2)
@@ -131,12 +131,12 @@ local function showDecision()
 		decisionLabel.Text = RaceConfig.Messages.RaceStarted
 	end
 
-	decisionFrame.Visible = true
+	raceDecisionGui.Enabled = true
 end
 
 -- Oculta la GUI de decisión
 local function hideDecision()
-	decisionFrame.Visible = false
+	raceDecisionGui.Enabled = false
 end
 
 -- Muestra la cuenta regresiva en zona de espera (FASE 3)
@@ -229,12 +229,12 @@ local function showResults(results)
 		end
 	end
 
-	resultsFrame.Visible = true
+	raceResultsGui.Enabled = true
 end
 
 -- Oculta los resultados
 local function hideResults()
-	resultsFrame.Visible = false
+	raceResultsGui.Enabled = false
 end
 
 -- Intenta unirse a la carrera
