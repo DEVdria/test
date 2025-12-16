@@ -28,7 +28,7 @@ local CONFIG = {
 
 	-- Tiempos
 	RESPAWN_TIME = 7,               -- Tiempo de respawn (segundos)
-	REPLICATION_WAIT = 1.5,         -- Tiempo de espera para replicación (reducido para carga asíncrona)
+	REPLICATION_WAIT = 3.0,         -- Tiempo de espera para replicación (mayor para modo servidor-cliente)
 	MIN_LEVELS_TO_START = 3,        -- Mínimo de niveles listos para empezar a jugar
 
 	-- Animación
@@ -65,9 +65,10 @@ end
 
 -- Obtener tiempo de caída desde el timer display
 local function getFallTimeFromPanel(panel)
-	local timerDisplay = panel:FindFirstChild("TimerDisplay")
+	-- Usar WaitForChild para esperar replicación en modo servidor-cliente
+	local timerDisplay = panel:WaitForChild("TimerDisplay", 2)
 	if timerDisplay then
-		local timerText = timerDisplay:FindFirstChild("TimerText")
+		local timerText = timerDisplay:WaitForChild("TimerText", 2)
 		if timerText then
 			local time = tonumber(timerText.Text)
 			if time then
@@ -170,13 +171,13 @@ local function activatePanel(panel, panelNumber, levelName, fallTime)
 		fallTime
 	))
 
-	-- Obtener el TextLabel del timer
-	local timerDisplay = panel:FindFirstChild("TimerDisplay")
-	local timerText = timerDisplay and timerDisplay:FindFirstChild("TimerText")
-
 	-- Iniciar countdown
 	task.spawn(function()
 		local success, err = pcall(function()
+			-- Esperar a que TimerDisplay se replique (importante en modo servidor-cliente)
+			local timerDisplay = panel:WaitForChild("TimerDisplay", 2)
+			local timerText = timerDisplay and timerDisplay:WaitForChild("TimerText", 2)
+
 			-- Actualizar el texto cada frame durante el countdown
 			local startTime = tick()
 			local endTime = startTime + fallTime
