@@ -179,9 +179,10 @@ local function waitingPhase()
 		return false
 	end
 
-	-- Activar barrera
+	-- Activar barrera (visible y sólida)
 	raceBarrier.CanCollide = true
-	raceBarrier.Transparency = 0.5  -- Hacerla visible durante la cuenta regresiva
+	raceBarrier.Transparency = 0.5  -- Semi-transparente para que se vea
+	print("[RaceManager] 🔒 Barrera activada (CanCollide=true, Transparency=0.5)")
 
 	-- Cuenta regresiva
 	for i = RaceConfig.WAIT_TIME, 1, -1 do
@@ -190,9 +191,10 @@ local function waitingPhase()
 		task.wait(1)
 	end
 
-	-- Desactivar barrera
+	-- Desactivar barrera (invisible y sin colisión)
 	raceBarrier.CanCollide = false
-	raceBarrier.Transparency = 1  -- Hacerla invisible
+	raceBarrier.Transparency = 1  -- Completamente invisible
+	print("[RaceManager] 🔓 Barrera desactivada (CanCollide=false, Transparency=1)")
 
 	print("[RaceManager] ✅ Barrera desactivada. ¡Carrera iniciada!")
 	RaceCountdownEvent:FireAllClients(RaceConfig.Messages.RaceBegin, 0)
@@ -362,8 +364,8 @@ local function runRaceCycle()
 		if raceBarrier then
 			raceBarrier.CanCollide = true
 			raceBarrier.Transparency = 1
+			print("[RaceManager] 🔄 Barrera reseteada después de cancelación (CanCollide=true, Transparency=1)")
 		end
-		print("[RaceManager] 🔄 Barrera reseteada después de cancelación")
 		return
 	end
 
@@ -380,11 +382,11 @@ local function runRaceCycle()
 	task.wait(5)  -- Esperar 5 segundos para que vean el podio
 	teleportAllToSpawn()
 
-	-- Resetear barrera para la siguiente carrera
+	-- Resetear barrera para la siguiente carrera (invisible pero sólida)
 	if raceBarrier then
 		raceBarrier.CanCollide = true
 		raceBarrier.Transparency = 1  -- Invisible hasta la próxima carrera
-		print("[RaceManager] 🔄 Barrera reseteada para la próxima carrera")
+		print("[RaceManager] 🔄 Barrera reseteada para siguiente carrera (CanCollide=true, Transparency=1)")
 	end
 
 	print("[RaceManager] ✅ Ciclo de carrera completado")
