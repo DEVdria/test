@@ -176,22 +176,38 @@ local function createCharacterClone(viewportFrame, userId)
 	-- Intentar obtener el personaje del jugador
 	local targetPlayer = Players:GetPlayerByUserId(userId)
 	if targetPlayer and targetPlayer.Character then
-		-- Clonar el personaje
-		local characterClone = targetPlayer.Character:Clone()
+		-- Clonar el personaje con protección de errores
+		local success, characterClone = pcall(function()
+			return targetPlayer.Character:Clone()
+		end)
 
-		-- Remover scripts del clon
-		for _, desc in ipairs(characterClone:GetDescendants()) do
-			if desc:IsA("Script") or desc:IsA("LocalScript") then
-				desc:Destroy()
+		if success and characterClone then
+			-- Remover scripts del clon
+			pcall(function()
+				for _, desc in ipairs(characterClone:GetDescendants()) do
+					if desc:IsA("Script") or desc:IsA("LocalScript") then
+						desc:Destroy()
+					end
+				end
+			end)
+
+			characterClone.Parent = viewportFrame
+
+			-- Posicionar cámara
+			local humanoidRootPart = characterClone:FindFirstChild("HumanoidRootPart")
+			if humanoidRootPart then
+				camera.CFrame = CFrame.new(humanoidRootPart.Position + Vector3.new(0, 2, 5), humanoidRootPart.Position)
 			end
-		end
+		else
+			-- Si falló el clon, crear un modelo simple
+			warn("[RaceClient] ⚠️ No se pudo clonar el personaje, usando modelo simple")
+			local part = Instance.new("Part")
+			part.Size = Vector3.new(2, 2, 1)
+			part.Position = Vector3.new(0, 0, 0)
+			part.Anchored = true
+			part.Parent = viewportFrame
 
-		characterClone.Parent = viewportFrame
-
-		-- Posicionar cámara
-		local humanoidRootPart = characterClone:FindFirstChild("HumanoidRootPart")
-		if humanoidRootPart then
-			camera.CFrame = CFrame.new(humanoidRootPart.Position + Vector3.new(0, 2, 5), humanoidRootPart.Position)
+			camera.CFrame = CFrame.new(Vector3.new(0, 2, 5), Vector3.new(0, 0, 0))
 		end
 	else
 		-- Si no hay personaje, crear un modelo simple
@@ -211,21 +227,27 @@ local function showResults(results)
 	if results.First and firstPlaceLabel then
 		firstPlaceLabel.Text = "🥇 " .. results.First.Name
 		if firstViewport then
-			createCharacterClone(firstViewport, results.First.UserId)
+			pcall(function()
+				createCharacterClone(firstViewport, results.First.UserId)
+			end)
 		end
 	end
 
 	if results.Second and secondPlaceLabel then
 		secondPlaceLabel.Text = "🥈 " .. results.Second.Name
 		if secondViewport then
-			createCharacterClone(secondViewport, results.Second.UserId)
+			pcall(function()
+				createCharacterClone(secondViewport, results.Second.UserId)
+			end)
 		end
 	end
 
 	if results.Third and thirdPlaceLabel then
 		thirdPlaceLabel.Text = "🥉 " .. results.Third.Name
 		if thirdViewport then
-			createCharacterClone(thirdViewport, results.Third.UserId)
+			pcall(function()
+				createCharacterClone(thirdViewport, results.Third.UserId)
+			end)
 		end
 	end
 
