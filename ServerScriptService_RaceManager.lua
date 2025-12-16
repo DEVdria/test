@@ -163,8 +163,9 @@ local function startRegistration()
 	-- Notificar a todos que pueden unirse
 	RaceStartEvent:FireAllClients()
 
-	-- Esperar mientras se registran jugadores
-	-- (no hay tiempo límite de inscripción, se hace durante la cuenta regresiva)
+	-- Esperar el tiempo de decisión (para que vean los botones y decidan)
+	print(string.format("[RaceManager] ⏰ Esperando %d segundos para decisiones...", RaceConfig.DECISION_TIME))
+	task.wait(RaceConfig.DECISION_TIME)
 end
 
 -- Fase 3: Zona de espera y cuenta regresiva

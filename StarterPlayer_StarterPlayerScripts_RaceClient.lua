@@ -267,6 +267,14 @@ RaceStartEvent.OnClientEvent:Connect(function()
 
 	if not isParticipating then
 		showDecision()
+
+		-- Ocultar automáticamente después del tiempo de decisión
+		task.delay(RaceConfig.DECISION_TIME, function()
+			if not isParticipating then
+				hideDecision()
+				print("[RaceClient] ⏰ Tiempo de decisión agotado")
+			end
+		end)
 	end
 end)
 

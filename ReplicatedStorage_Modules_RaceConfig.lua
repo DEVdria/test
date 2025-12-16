@@ -11,6 +11,9 @@ RaceConfig.RACE_INTERVAL = 120  -- 2 minutos
 -- Tiempo de aviso antes de la carrera (en segundos)
 RaceConfig.WARNING_TIME = 10
 
+-- Tiempo de decisión (cuánto tiempo tienen para presionar Unirse/Ignorar)
+RaceConfig.DECISION_TIME = 10  -- 10 segundos para decidir
+
 -- Tiempo de espera en la zona de espera (en segundos)
 RaceConfig.WAIT_TIME = 15
 
