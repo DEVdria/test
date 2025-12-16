@@ -40,6 +40,7 @@ local function getDefaultData()
 		OwnedZones = ZoneConfig.GetDefaultZones(),  -- Zonas que posee el jugador
 		OwnedTrails = {"Fire"},       -- Trails que posee el jugador (Fire es gratis por defecto)
 		EquippedTrail = "Fire",       -- Trail equipada actualmente
+		Wins = 0,                     -- Victorias en carreras
 		LastSave = os.time()
 	}
 end
@@ -344,8 +345,13 @@ Players.PlayerAdded:Connect(function(player)
 	currentEXP.Value = data.CurrentEXP
 	currentEXP.Parent = leaderstats
 
-	print(string.format("[DataManager] ✅ Datos cargados para %s (Nivel: %d, EXP: %d)",
-		player.Name, data.Level, data.CurrentEXP))
+	local wins = Instance.new("IntValue")
+	wins.Name = "Wins"
+	wins.Value = data.Wins
+	wins.Parent = leaderstats
+
+	print(string.format("[DataManager] ✅ Datos cargados para %s (Nivel: %d, EXP: %d, Wins: %d)",
+		player.Name, data.Level, data.CurrentEXP, data.Wins))
 end)
 
 -- Manejar cuando un jugador se va
