@@ -47,13 +47,18 @@ local closeButton = shopFrame:FindFirstChild(CLOSE_BUTTON_NAME)  -- Opcional
 -- ========================================
 -- REMOTES
 -- ========================================
+local Modules = ReplicatedStorage:WaitForChild("Modules")
+local MoneyPackConfig = require(Modules:WaitForChild("MoneyPackConfig"))
+
 local RemotesFolder = ReplicatedStorage:WaitForChild("Remotes")
+local GetMoneyPacksFunction = RemotesFolder:WaitForChild("GetMoneyPacks")
 local PurchaseMoneyPackEvent = RemotesFolder:WaitForChild("PurchaseMoneyPack")
 
 -- ========================================
 -- VARIABLES
 -- ========================================
 local shopOpen = false
+local packsData = {}
 
 -- ========================================
 -- FUNCIONES DE GUI
@@ -86,13 +91,27 @@ end
 -- CONECTAR BOTONES DE COMPRA
 -- ========================================
 
--- Conecta el BuyButton de un frame con la compra del pack
-local function connectPackButton(packFrame, packID)
+-- Conecta el BuyButton de un frame con la compra del pack y actualiza los labels
+local function connectPackButton(packFrame, packID, packData)
 	local buyButton = packFrame:FindFirstChild(BUY_BUTTON_NAME)
 
 	if not buyButton or not buyButton:IsA("TextButton") then
 		warn(string.format("[ShopButton] ⚠️ No se encontró '%s' en %s", BUY_BUTTON_NAME, packFrame.Name))
 		return false
+	end
+
+	-- Actualizar MoneyAmount label si existe
+	local moneyAmountLabel = packFrame:FindFirstChild("MoneyAmount")
+	if moneyAmountLabel and moneyAmountLabel:IsA("TextLabel") and packData then
+		moneyAmountLabel.Text = MoneyPackConfig.FormatNumber(packData.MoneyAmount)
+		print(string.format("[ShopButton] 💰 MoneyAmount actualizado: %s", moneyAmountLabel.Text))
+	end
+
+	-- Actualizar Price label si existe
+	local priceLabel = packFrame:FindFirstChild("Price")
+	if priceLabel and priceLabel:IsA("TextLabel") and packData then
+		priceLabel.Text = tostring(packData.Price)
+		print(string.format("[ShopButton] 💵 Price actualizado: %s", priceLabel.Text))
 	end
 
 	-- Conectar evento de click
@@ -107,6 +126,25 @@ end
 
 -- Busca y conecta todos los frames de packs
 local function setupPackButtons()
+	-- Primero, cargar los datos de los packs del servidor
+	local success, packs = pcall(function()
+		return GetMoneyPacksFunction:InvokeServer()
+	end)
+
+	if not success or not packs then
+		warn("[ShopButton] ❌ Error al cargar datos de packs:", tostring(packs))
+		packs = {}
+	else
+		packsData = packs
+		print(string.format("[ShopButton] 📦 %d packs cargados del servidor", #packs))
+	end
+
+	-- Crear un mapa de packID → packData para acceso rápido
+	local packMap = {}
+	for _, pack in ipairs(packs) do
+		packMap[pack.ID] = pack
+	end
+
 	local connectedCount = 0
 
 	-- Buscar todos los frames en el ScrollingFrame
@@ -117,8 +155,11 @@ local function setupPackButtons()
 			local packNumber = tonumber(string.match(frameName, "%d+"))
 
 			if packNumber then
+				-- Obtener datos del pack correspondiente
+				local packData = packMap[packNumber]
+
 				-- Conectar este frame con el pack correspondiente
-				local success = connectPackButton(child, packNumber)
+				local success = connectPackButton(child, packNumber, packData)
 				if success then
 					connectedCount = connectedCount + 1
 				end
