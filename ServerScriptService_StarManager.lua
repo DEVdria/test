@@ -162,10 +162,17 @@ local function processStarCollection(player, starID)
 	-- Multiplicar por TODOS: rebirth * gamepass * servidor
 	local finalEXP = math.floor(baseEXP * rebirthMultiplier * gamepassMultiplier * serverMultiplier)
 
-	local moneyReward = starData.MoneyReward
+	-- Calcular dinero con multiplicador global del servidor
+	local baseMoney = starData.MoneyReward
+	local serverMoneyMultiplier = 1
+	if _G.GetServerMoneyMultiplier then
+		serverMoneyMultiplier = _G.GetServerMoneyMultiplier()
+	end
+
+	local finalMoney = math.floor(baseMoney * serverMoneyMultiplier)
 
 	-- Añadir dinero y EXP
-	DataManager.AddMoney(player, moneyReward)
+	DataManager.AddMoney(player, finalMoney)
 	DataManager.AddEXP(player, finalEXP)
 
 	-- Mostrar notificación al cliente (usando el sistema de orbs)

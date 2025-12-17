@@ -148,10 +148,17 @@ local function processOrbCollection(player, orbType)
 	-- Multiplicar por TODOS: rebirth * gamepass * servidor
 	local finalEXP = math.floor(baseEXP * rebirthMultiplier * gamepassMultiplier * serverMultiplier)
 
-	local moneyReward = orbData.MoneyReward
+	-- Calcular dinero con multiplicador global del servidor
+	local baseMoney = orbData.MoneyReward
+	local serverMoneyMultiplier = 1
+	if _G.GetServerMoneyMultiplier then
+		serverMoneyMultiplier = _G.GetServerMoneyMultiplier()
+	end
+
+	local finalMoney = math.floor(baseMoney * serverMoneyMultiplier)
 
 	-- Añadir dinero y EXP
-	DataManager.AddMoney(player, moneyReward)
+	DataManager.AddMoney(player, finalMoney)
 	DataManager.AddEXP(player, finalEXP)
 
 	-- Mostrar notificación al cliente
