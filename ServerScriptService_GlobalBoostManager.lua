@@ -13,10 +13,10 @@
 local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-local ServerScriptService = game:GetService("ServerScriptService")
 
--- Importar configuración
-local GlobalBoostConfig = require(ServerScriptService:WaitForChild("GlobalBoostConfig"))
+-- Importar configuración desde ReplicatedStorage/Modules
+local Modules = ReplicatedStorage:WaitForChild("Modules")
+local GlobalBoostConfig = require(Modules:WaitForChild("GlobalBoostConfig"))
 
 print("[GlobalBoostManager] 🚀 Inicializando sistema de boost global...")
 
@@ -34,20 +34,39 @@ local ServerBoostState = {
 -- ========================================
 -- REMOTES
 -- ========================================
-local RemotesFolder = ReplicatedStorage:WaitForChild("Remotes")
+-- Crear carpeta de Remotes si no existe
+local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes")
+if not RemotesFolder then
+	RemotesFolder = Instance.new("Folder")
+	RemotesFolder.Name = "Remotes"
+	RemotesFolder.Parent = ReplicatedStorage
+	print("[GlobalBoostManager] 📁 Carpeta 'Remotes' creada en ReplicatedStorage")
+end
 
 -- Eventos para comunicación cliente-servidor
-local GlobalBoostStateChangedEvent = Instance.new("RemoteEvent")
-GlobalBoostStateChangedEvent.Name = "GlobalBoostStateChanged"
-GlobalBoostStateChangedEvent.Parent = RemotesFolder
+local GlobalBoostStateChangedEvent = RemotesFolder:FindFirstChild("GlobalBoostStateChanged")
+if not GlobalBoostStateChangedEvent then
+	GlobalBoostStateChangedEvent = Instance.new("RemoteEvent")
+	GlobalBoostStateChangedEvent.Name = "GlobalBoostStateChanged"
+	GlobalBoostStateChangedEvent.Parent = RemotesFolder
+	print("[GlobalBoostManager] ✅ RemoteEvent 'GlobalBoostStateChanged' creado")
+end
 
-local RequestBoostStateFunction = Instance.new("RemoteFunction")
-RequestBoostStateFunction.Name = "RequestBoostState"
-RequestBoostStateFunction.Parent = RemotesFolder
+local RequestBoostStateFunction = RemotesFolder:FindFirstChild("RequestBoostState")
+if not RequestBoostStateFunction then
+	RequestBoostStateFunction = Instance.new("RemoteFunction")
+	RequestBoostStateFunction.Name = "RequestBoostState"
+	RequestBoostStateFunction.Parent = RemotesFolder
+	print("[GlobalBoostManager] ✅ RemoteFunction 'RequestBoostState' creada")
+end
 
-local PurchaseGlobalBoostEvent = Instance.new("RemoteEvent")
-PurchaseGlobalBoostEvent.Name = "PurchaseGlobalBoost"
-PurchaseGlobalBoostEvent.Parent = RemotesFolder
+local PurchaseGlobalBoostEvent = RemotesFolder:FindFirstChild("PurchaseGlobalBoost")
+if not PurchaseGlobalBoostEvent then
+	PurchaseGlobalBoostEvent = Instance.new("RemoteEvent")
+	PurchaseGlobalBoostEvent.Name = "PurchaseGlobalBoost"
+	PurchaseGlobalBoostEvent.Parent = RemotesFolder
+	print("[GlobalBoostManager] ✅ RemoteEvent 'PurchaseGlobalBoost' creado")
+end
 
 -- ========================================
 -- FUNCIONES AUXILIARES
