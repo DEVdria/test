@@ -139,8 +139,14 @@ local function processOrbCollection(player, orbType)
 		gamepassMultiplier = _G.GetPlayerXPMultiplier(player)
 	end
 
-	-- Multiplicar por AMBOS: rebirth * gamepass
-	local finalEXP = math.floor(baseEXP * rebirthMultiplier * gamepassMultiplier)
+	-- Obtener multiplicador global del servidor
+	local serverMultiplier = 1
+	if _G.GetServerXPMultiplier then
+		serverMultiplier = _G.GetServerXPMultiplier()
+	end
+
+	-- Multiplicar por TODOS: rebirth * gamepass * servidor
+	local finalEXP = math.floor(baseEXP * rebirthMultiplier * gamepassMultiplier * serverMultiplier)
 
 	local moneyReward = orbData.MoneyReward
 
