@@ -13,9 +13,10 @@
 local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 -- Importar configuración
-local GlobalBoostConfig = require(script.Parent.ServerScriptService_GlobalBoostConfig)
+local GlobalBoostConfig = require(ServerScriptService:WaitForChild("GlobalBoostConfig"))
 
 print("[GlobalBoostManager] 🚀 Inicializando sistema de boost global...")
 

@@ -5,7 +5,9 @@
 	ESTRUCTURA DE GUI ESPERADA:
 	ScreenGui
 	└── GlobalBoostFrame (Frame)
-	    ├── BoostButton (TextButton) - Botón para comprar/upgrade
+	    ├── BoostButton (TextButton)
+	    │   ├── MultiplierLabel (TextLabel) - muestra "x2", "x4", etc
+	    │   └── PriceLabel (TextLabel) - muestra solo el precio
 	    ├── TimerLabel (TextLabel) - Muestra tiempo restante
 	    └── StatusLabel (TextLabel) - Muestra estado actual (opcional)
 
@@ -24,6 +26,9 @@ local screenGui = script.Parent  -- Asume que el script está en el ScreenGui
 local globalBoostFrame = screenGui:WaitForChild("GlobalBoostFrame")
 
 local boostButton = globalBoostFrame:WaitForChild("BoostButton")  -- TextButton
+local multiplierLabel = boostButton:WaitForChild("MultiplierLabel")  -- TextLabel dentro del botón
+local priceLabel = boostButton:WaitForChild("PriceLabel")            -- TextLabel dentro del botón
+
 local timerLabel = globalBoostFrame:WaitForChild("TimerLabel")    -- TextLabel
 local statusLabel = globalBoostFrame:FindFirstChild("StatusLabel") -- TextLabel (opcional)
 
@@ -71,11 +76,10 @@ local function updateGUI()
 		if availableBoost then
 			-- Mostrar botón de compra del boost 1 (x2)
 			boostButton.Visible = true
-			boostButton.Text = string.format("%s\n%d min - %d R$",
-				availableBoost.Name,
-				math.floor(availableBoost.Duration / 60),
-				availableBoost.Price
-			)
+
+			-- Actualizar labels dentro del botón
+			multiplierLabel.Text = availableBoost.Name  -- "x2 XP SERVER"
+			priceLabel.Text = tostring(availableBoost.Price)  -- "49"
 
 			if statusLabel then
 				statusLabel.Visible = true
@@ -107,11 +111,10 @@ local function updateGUI()
 		-- Mostrar botón de UPGRADE si está disponible
 		if availableBoost and availableBoost.IsUpgrade then
 			boostButton.Visible = true
-			boostButton.Text = string.format("🚀 UPGRADE\n%s\n%d min - %d R$",
-				availableBoost.Name,
-				math.floor(availableBoost.Duration / 60),
-				availableBoost.Price
-			)
+
+			-- Actualizar labels dentro del botón para el upgrade
+			multiplierLabel.Text = string.format("🚀 %s", availableBoost.Name)  -- "🚀 x4 XP SERVER"
+			priceLabel.Text = tostring(availableBoost.Price)  -- "129"
 		else
 			boostButton.Visible = false
 		end
