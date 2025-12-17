@@ -41,6 +41,7 @@ local function getDefaultData()
 		OwnedTrails = {"Fire"},       -- Trails que posee el jugador (Fire es gratis por defecto)
 		EquippedTrail = "Fire",       -- Trail equipada actualmente
 		Wins = 0,                     -- Victorias en carreras
+		ChestCooldowns = {},          -- Cooldowns de cofres {[chestID] = timestamp}
 		LastSave = os.time()
 	}
 end
@@ -178,6 +179,17 @@ function DataManager.AddEXP(player, expAmount)
 			end
 		end
 		return newEXP
+	end
+	return nil
+end
+
+-- Añade Wins (victorias en carreras) al jugador
+function DataManager.AddWins(player, winsAmount)
+	winsAmount = winsAmount or 1  -- Por defecto añadir 1 win
+	local newWins = DataManager.IncrementValue(player, "Wins", winsAmount)
+	if newWins then
+		print(string.format("[DataManager] ✅ %s ahora tiene %d wins", player.Name, newWins))
+		return newWins
 	end
 	return nil
 end
@@ -379,5 +391,35 @@ game:BindToClose(function()
 	end
 	task.wait(2) -- Dar tiempo para que se guarden los datos
 end)
+
+-- ========================================
+-- REMOTES PARA CLIENTES
+-- ========================================
+
+-- Crear carpeta Remotes si no existe
+local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes")
+if not RemotesFolder then
+	RemotesFolder = Instance.new("Folder")
+	RemotesFolder.Name = "Remotes"
+	RemotesFolder.Parent = ReplicatedStorage
+	print("[DataManager] 📁 Carpeta 'Remotes' creada")
+end
+
+-- RemoteFunction para obtener wins del jugador
+local GetPlayerWinsFunction = RemotesFolder:FindFirstChild("GetPlayerWins")
+if not GetPlayerWinsFunction then
+	GetPlayerWinsFunction = Instance.new("RemoteFunction")
+	GetPlayerWinsFunction.Name = "GetPlayerWins"
+	GetPlayerWinsFunction.Parent = RemotesFolder
+	print("[DataManager] ✅ RemoteFunction 'GetPlayerWins' creada")
+end
+
+GetPlayerWinsFunction.OnServerInvoke = function(player)
+	local data = DataManager.GetData(player)
+	if data then
+		return data.Wins or 0
+	end
+	return 0
+end
 
 print("[DataManager] ✅ Sistema de datos inicializado")

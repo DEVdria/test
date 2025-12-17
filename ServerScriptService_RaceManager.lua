@@ -336,6 +336,12 @@ local function calculateResults()
 		if i == 1 then
 			results.First = {Name = p.player.Name, UserId = p.player.UserId}
 			givePrize(p.player, RaceConfig.Rewards.First, 1)
+
+			-- Otorgar 1 Win al ganador
+			if _G.DataManager and _G.DataManager.AddWins then
+				_G.DataManager.AddWins(p.player, 1)
+				print(string.format("[RaceManager] 🏆 %s ganó la carrera y recibe 1 WIN", p.player.Name))
+			end
 		elseif i == 2 then
 			results.Second = {Name = p.player.Name, UserId = p.player.UserId}
 			givePrize(p.player, RaceConfig.Rewards.Second, 2)
