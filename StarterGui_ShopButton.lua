@@ -1,18 +1,24 @@
 --[[
 	SHOP BUTTON - LocalScript
-	Maneja la apertura/cierre de la tienda y la compra de packs de dinero.
+	Maneja la apertura/cierre de la tienda y conecta los botones de compra diseñados manualmente.
 
 	ESTRUCTURA DE GUI ESPERADA:
 	ScreenGui (PrincipalGui o como se llame)
 	├── SHOP (ImageButton) ← Botón que abre/cierra la tienda
-	├── ShopFrame (Frame) ← Contenedor de la tienda (Visible = false por defecto)
-	│   ├── CloseButton (TextButton o ImageButton) ← Botón para cerrar [OPCIONAL]
-	│   └── PacksScrolling (ScrollingFrame) ← Aquí se crearán los botones de packs
-	│       └── UIListLayout ← Para organizar los botones automáticamente
-	└── ShopButton (LocalScript) ← ESTE SCRIPT (al mismo nivel que SHOP button)
+	├── ShopButton (LocalScript) ← ESTE SCRIPT (al mismo nivel que SHOP button)
+	└── ShopFrame (Frame) ← Contenedor de la tienda (Visible = false por defecto)
+	    ├── CloseButton (TextButton o ImageButton) ← Botón para cerrar [OPCIONAL]
+	    └── PacksScrolling (ScrollingFrame) ← Aquí DISEÑAS TÚ los packs
+	        ├── Frame1 (Frame) ← Pack 1 diseñado por ti
+	        │   └── BuyButton (TextButton) ← Botón de compra
+	        ├── Frame2 (Frame) ← Pack 2 diseñado por ti
+	        │   └── BuyButton (TextButton) ← Botón de compra
+	        ├── Frame3 (Frame) ← Pack 3 diseñado por ti
+	        │   └── BuyButton (TextButton) ← Botón de compra
+	        └── ... etc
 
-	NOTA: Los botones de packs se crean AUTOMÁTICAMENTE
-	      Tú solo diseñas el PackTemplate (ver abajo)
+	NOTA: El script conecta automáticamente cada BuyButton con su pack correspondiente
+	      Frame1 = Pack 1, Frame2 = Pack 2, Frame3 = Pack 3, etc.
 ]]
 
 local Players = game:GetService("Players")
@@ -27,6 +33,7 @@ local SHOP_BUTTON_NAME = "SHOP"              -- Nombre del ImageButton que abre 
 local SHOP_FRAME_NAME = "ShopFrame"          -- Nombre del Frame de la tienda
 local SCROLLING_FRAME_NAME = "PacksScrolling"  -- Nombre del ScrollingFrame
 local CLOSE_BUTTON_NAME = "CloseButton"      -- Nombre del botón de cerrar (opcional)
+local BUY_BUTTON_NAME = "BuyButton"          -- Nombre del botón de compra en cada frame
 
 -- ========================================
 -- REFERENCIAS A LA GUI
@@ -37,30 +44,15 @@ local shopFrame = screenGui:WaitForChild(SHOP_FRAME_NAME)
 local packsScrolling = shopFrame:WaitForChild(SCROLLING_FRAME_NAME)
 local closeButton = shopFrame:FindFirstChild(CLOSE_BUTTON_NAME)  -- Opcional
 
--- Verificar que existe UIListLayout
-local uiListLayout = packsScrolling:FindFirstChildOfClass("UIListLayout")
-if not uiListLayout then
-	warn("[ShopButton] ⚠️ No se encontró UIListLayout en PacksScrolling, creando uno...")
-	uiListLayout = Instance.new("UIListLayout")
-	uiListLayout.Parent = packsScrolling
-	uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	uiListLayout.Padding = UDim.new(0, 10)
-end
-
 -- ========================================
 -- REMOTES
 -- ========================================
-local Modules = ReplicatedStorage:WaitForChild("Modules")
-local MoneyPackConfig = require(Modules:WaitForChild("MoneyPackConfig"))
-
 local RemotesFolder = ReplicatedStorage:WaitForChild("Remotes")
-local GetMoneyPacksFunction = RemotesFolder:WaitForChild("GetMoneyPacks")
 local PurchaseMoneyPackEvent = RemotesFolder:WaitForChild("PurchaseMoneyPack")
 
 -- ========================================
 -- VARIABLES
 -- ========================================
-local packsData = {}
 local shopOpen = false
 
 -- ========================================
@@ -91,126 +83,56 @@ local function toggleShop()
 end
 
 -- ========================================
--- CREAR BOTONES DE PACKS
+-- CONECTAR BOTONES DE COMPRA
 -- ========================================
 
--- Crea un botón de pack en el ScrollingFrame
-local function createPackButton(pack, index)
-	-- Crear el botón
-	local packButton = Instance.new("TextButton")
-	packButton.Name = "Pack" .. pack.ID
-	packButton.Size = UDim2.new(1, -20, 0, 100)  -- Ancho completo, altura 100
-	packButton.LayoutOrder = index
-	packButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	packButton.BorderSizePixel = 2
-	packButton.BorderColor3 = Color3.fromRGB(255, 200, 0)
-	packButton.Text = ""
-	packButton.AutoButtonColor = true
-	packButton.Parent = packsScrolling
+-- Conecta el BuyButton de un frame con la compra del pack
+local function connectPackButton(packFrame, packID)
+	local buyButton = packFrame:FindFirstChild(BUY_BUTTON_NAME)
 
-	-- Crear UICorner para bordes redondeados
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
-	corner.Parent = packButton
-
-	-- Nombre del pack
-	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Name = "NameLabel"
-	nameLabel.Size = UDim2.new(1, -10, 0, 25)
-	nameLabel.Position = UDim2.new(0, 5, 0, 5)
-	nameLabel.BackgroundTransparency = 1
-	nameLabel.Text = pack.Name
-	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	nameLabel.TextSize = 18
-	nameLabel.Font = Enum.Font.GothamBold
-	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-	nameLabel.Parent = packButton
-
-	-- Cantidad de dinero
-	local moneyLabel = Instance.new("TextLabel")
-	moneyLabel.Name = "MoneyLabel"
-	moneyLabel.Size = UDim2.new(1, -10, 0, 30)
-	moneyLabel.Position = UDim2.new(0, 5, 0, 30)
-	moneyLabel.BackgroundTransparency = 1
-	moneyLabel.Text = MoneyPackConfig.FormatNumber(pack.MoneyAmount) .. " Dinero"
-	moneyLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
-	moneyLabel.TextSize = 24
-	moneyLabel.Font = Enum.Font.GothamBold
-	moneyLabel.TextXAlignment = Enum.TextXAlignment.Left
-	moneyLabel.Parent = packButton
-
-	-- Precio
-	local priceLabel = Instance.new("TextLabel")
-	priceLabel.Name = "PriceLabel"
-	priceLabel.Size = UDim2.new(0, 100, 0, 30)
-	priceLabel.Position = UDim2.new(1, -110, 1, -35)
-	priceLabel.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-	priceLabel.Text = pack.Price .. " R$"
-	priceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	priceLabel.TextSize = 16
-	priceLabel.Font = Enum.Font.GothamBold
-	priceLabel.Parent = packButton
-
-	local priceCorner = Instance.new("UICorner")
-	priceCorner.CornerRadius = UDim.new(0, 6)
-	priceCorner.Parent = priceLabel
-
-	-- Descripción (opcional)
-	if pack.Description then
-		local descLabel = Instance.new("TextLabel")
-		descLabel.Name = "DescLabel"
-		descLabel.Size = UDim2.new(1, -10, 0, 20)
-		descLabel.Position = UDim2.new(0, 5, 0, 65)
-		descLabel.BackgroundTransparency = 1
-		descLabel.Text = pack.Description
-		descLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-		descLabel.TextSize = 12
-		descLabel.Font = Enum.Font.Gotham
-		descLabel.TextXAlignment = Enum.TextXAlignment.Left
-		descLabel.Parent = packButton
+	if not buyButton or not buyButton:IsA("TextButton") then
+		warn(string.format("[ShopButton] ⚠️ No se encontró '%s' en %s", BUY_BUTTON_NAME, packFrame.Name))
+		return false
 	end
 
-	-- Evento de click
-	packButton.MouseButton1Click:Connect(function()
-		print(string.format("[ShopButton] 🛒 Comprando %s...", pack.Name))
-		PurchaseMoneyPackEvent:FireServer(pack.ID)
+	-- Conectar evento de click
+	buyButton.MouseButton1Click:Connect(function()
+		print(string.format("[ShopButton] 🛒 Comprando Pack %d...", packID))
+		PurchaseMoneyPackEvent:FireServer(packID)
 	end)
 
-	print(string.format("[ShopButton] ✅ Botón creado para %s", pack.Name))
+	print(string.format("[ShopButton] ✅ %s conectado al Pack %d", packFrame.Name, packID))
+	return true
 end
 
--- Carga y crea todos los botones de packs
-local function loadPacks()
-	-- Limpiar botones existentes
+-- Busca y conecta todos los frames de packs
+local function setupPackButtons()
+	local connectedCount = 0
+
+	-- Buscar todos los frames en el ScrollingFrame
 	for _, child in ipairs(packsScrolling:GetChildren()) do
-		if child:IsA("TextButton") then
-			child:Destroy()
+		if child:IsA("Frame") then
+			-- Extraer el número del nombre del frame (Frame1 → 1, Frame2 → 2, etc.)
+			local frameName = child.Name
+			local packNumber = tonumber(string.match(frameName, "%d+"))
+
+			if packNumber then
+				-- Conectar este frame con el pack correspondiente
+				local success = connectPackButton(child, packNumber)
+				if success then
+					connectedCount = connectedCount + 1
+				end
+			else
+				warn(string.format("[ShopButton] ⚠️ Frame '%s' no tiene un número válido", frameName))
+			end
 		end
 	end
 
-	-- Solicitar packs al servidor
-	local success, packs = pcall(function()
-		return GetMoneyPacksFunction:InvokeServer()
-	end)
-
-	if not success then
-		warn("[ShopButton] ❌ Error al cargar packs:", packs)
-		return
+	if connectedCount > 0 then
+		print(string.format("[ShopButton] ✅ %d packs conectados exitosamente", connectedCount))
+	else
+		warn("[ShopButton] ⚠️ No se encontraron frames de packs en PacksScrolling")
 	end
-
-	if not packs or #packs == 0 then
-		warn("[ShopButton] ⚠️ No hay packs disponibles")
-		return
-	end
-
-	packsData = packs
-
-	-- Crear botón para cada pack
-	for index, pack in ipairs(packs) do
-		createPackButton(pack, index)
-	end
-
-	print(string.format("[ShopButton] ✅ %d packs cargados", #packs))
 end
 
 -- ========================================
@@ -237,10 +159,10 @@ end
 shopFrame.Visible = false
 shopOpen = false
 
--- Cargar packs
+-- Conectar botones de packs
 task.spawn(function()
-	task.wait(1)  -- Esperar a que todo esté cargado
-	loadPacks()
+	task.wait(0.5)  -- Pequeña espera para asegurar que todo esté cargado
+	setupPackButtons()
 end)
 
 print("[ShopButton] ✅ Sistema de tienda inicializado")
