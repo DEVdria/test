@@ -67,7 +67,8 @@ local function updateGUI()
 	-- Si ya tiene el boost máximo
 	if currentBoostData.HasMaxBoost then
 		boostButton.Text = "XP Máxima"
-		boostButton.Enabled = false
+		boostButton.Active = false
+		boostButton.AutoButtonColor = false
 
 		if multiplierLabel then
 			multiplierLabel.Text = string.format("x%.1f", currentBoostData.CurrentMultiplier)
@@ -90,7 +91,8 @@ local function updateGUI()
 
 		-- Actualizar texto del botón (opcional, puede estar vacío si usas labels)
 		boostButton.Text = ""  -- Vacío para que solo se vean los labels
-		boostButton.Enabled = true
+		boostButton.Active = true
+		boostButton.AutoButtonColor = true
 
 		-- Actualizar label de multiplicador
 		if multiplierLabel then
@@ -117,7 +119,8 @@ local function updateGUI()
 	else
 		-- No debería llegar aquí, pero por si acaso
 		boostButton.Text = "No disponible"
-		boostButton.Enabled = false
+		boostButton.Active = false
+		boostButton.AutoButtonColor = false
 	end
 end
 
@@ -127,7 +130,8 @@ local function refreshBoostData()
 
 	-- Deshabilitar botón mientras carga
 	boostButton.Text = "Cargando..."
-	boostButton.Enabled = false
+	boostButton.Active = false
+	boostButton.AutoButtonColor = false
 
 	local success, boostData = pcall(function()
 		return GetXPBoostFunction:InvokeServer()
@@ -177,6 +181,11 @@ end
 
 -- Botón de compra
 boostButton.MouseButton1Click:Connect(function()
+	-- Solo funcionar si el botón está activo
+	if not boostButton.Active then
+		return
+	end
+
 	attemptPurchase()
 end)
 
@@ -232,7 +241,7 @@ print("[XPBoostButton] ✅ Sistema de botón de boost de XP iniciado")
 	- MultiplierLabel.Text = "x2.0"
 	- PriceLabel.Text = "MAX"
 	- BoostButton.Text = "XP Máxima"
-	- BoostButton.Enabled = false
+	- BoostButton.Active = false (deshabilitado)
 
 	FUNCIONAMIENTO:
 	1. Al iniciar, el botón solicita datos del servidor
