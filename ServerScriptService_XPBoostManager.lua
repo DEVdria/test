@@ -31,6 +31,10 @@ end
 -- Cache de multiplicadores por jugador {[userId] = multiplier}
 local playerMultipliers = {}
 
+-- Cache de gamepasses comprados recientemente {[userId] = {[gamepassID] = true}}
+-- Esto es necesario porque UserOwnsGamePassAsync puede tardar en actualizar
+local recentPurchases = {}
+
 -- ==================== FUNCIONES DE GAMEPASS ====================
 
 -- Verifica si el jugador tiene un gamepass
@@ -40,6 +44,13 @@ local function playerOwnsGamepass(player, gamepassID)
 		return false
 	end
 
+	-- Primero revisar cache de compras recientes
+	if recentPurchases[player.UserId] and recentPurchases[player.UserId][gamepassID] then
+		print(string.format("[XPBoostManager] ✅ Gamepass %d detectado en cache de compras recientes para %s", gamepassID, player.Name))
+		return true
+	end
+
+	-- Si no está en cache, verificar con Roblox
 	local success, hasPass = pcall(function()
 		return MarketplaceService:UserOwnsGamePassAsync(player.UserId, gamepassID)
 	end)
@@ -47,6 +58,14 @@ local function playerOwnsGamepass(player, gamepassID)
 	if not success then
 		warn(string.format("[XPBoostManager] ⚠️ Error verificando gamepass %d para %s: %s", gamepassID, player.Name, tostring(hasPass)))
 		return false
+	end
+
+	-- Si lo tiene según Roblox, guardarlo en cache
+	if hasPass then
+		if not recentPurchases[player.UserId] then
+			recentPurchases[player.UserId] = {}
+		end
+		recentPurchases[player.UserId][gamepassID] = true
 	end
 
 	return hasPass
@@ -142,6 +161,13 @@ MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, gamep
 
 	print(string.format("[XPBoostManager] 🎉 %s compró %s (Gamepass ID: %d)", player.Name, boost.Name, gamepassID))
 
+	-- INMEDIATAMENTE añadir a cache de compras recientes
+	if not recentPurchases[player.UserId] then
+		recentPurchases[player.UserId] = {}
+	end
+	recentPurchases[player.UserId][gamepassID] = true
+	print(string.format("[XPBoostManager] 💾 Gamepass %d añadido a cache para %s", gamepassID, player.Name))
+
 	-- Invalidar cache
 	invalidatePlayerCache(player)
 
@@ -152,38 +178,27 @@ MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, gamep
 	XPBoostPurchasedEvent:FireClient(player, boost.Level)
 
 	-- Mostrar mensaje en el chat de TODOS los jugadores
-	local game = game or _G.game
 	local TextChatService = game:GetService("TextChatService")
-	local StarterGui = game:GetService("StarterGui")
-
 	local chatMessage = string.format("%s ha comprado mejora NIVEL %d a %d ROBUX", player.Name, boost.Level, boost.Price)
 
 	-- Intentar con TextChatService (nuevo sistema de chat)
-	local success, err = pcall(function()
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			local generalChannel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-			generalChannel:DisplaySystemMessage(chatMessage)
-		else
-			-- Sistema de chat legacy
-			for _, p in ipairs(Players:GetPlayers()) do
-				StarterGui:SetCore("ChatMakeSystemMessage", {
-					Text = chatMessage,
-					Color = Color3.fromRGB(255, 255, 255),
-					Font = Enum.Font.GothamBold,
-					FontSize = Enum.FontSize.Size14
-				})
+	local success = pcall(function()
+		-- Verificar si TextChatService está habilitado
+		local textChannels = TextChatService:FindFirstChild("TextChannels")
+		if textChannels then
+			local generalChannel = textChannels:FindFirstChild("RBXGeneral")
+			if generalChannel then
+				generalChannel:DisplaySystemMessage(chatMessage)
+				print(string.format("[XPBoostManager] ✅ Mensaje de chat enviado: %s", chatMessage))
 			end
 		end
 	end)
 
 	if not success then
-		-- Fallback: enviar a todos los clientes via RemoteEvent
-		for _, p in ipairs(Players:GetPlayers()) do
-			if p ~= player then
-				-- Notificar a otros jugadores también (para que vean el mensaje en el output)
-				print(string.format("[XPBoostManager] 📢 Notificando a %s sobre la compra de %s", p.Name, player.Name))
-			end
-		end
+		-- Si TextChatService no funciona, intentar con sistema legacy
+		warn("[XPBoostManager] ⚠️ TextChatService no disponible, usando sistema legacy")
+		-- En el sistema legacy desde el servidor, simplemente logueamos
+		print(string.format("[XPBoostManager] 📢 COMPRA: %s", chatMessage))
 	end
 
 	-- Mostrar mensaje en servidor
