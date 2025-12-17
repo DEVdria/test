@@ -201,13 +201,21 @@ local function processReceipt(receiptInfo)
 	if not boost then
 		-- No es un boost de XP, intentar como boost de dinero
 		if _G.ProcessMoneyBoostReceipt then
-			local moneyResult = _G.ProcessMoneyBoostReceipt(receiptInfo)
-			if moneyResult then
-				return moneyResult
+			local moneyBoostResult = _G.ProcessMoneyBoostReceipt(receiptInfo)
+			if moneyBoostResult then
+				return moneyBoostResult
 			end
 		end
 
-		-- No es ni XP ni MONEY
+		-- No es boost de dinero, intentar como pack de dinero
+		if _G.ProcessMoneyPackReceipt then
+			local moneyPackResult = _G.ProcessMoneyPackReceipt(receiptInfo)
+			if moneyPackResult then
+				return moneyPackResult
+			end
+		end
+
+		-- No es ni XP boost, ni MONEY boost, ni MONEY pack
 		warn(string.format("[GlobalBoostManager] ❌ Product ID %d no reconocido", productId))
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
