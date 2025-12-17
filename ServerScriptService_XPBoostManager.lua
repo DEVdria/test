@@ -145,10 +145,48 @@ MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, gamep
 	-- Invalidar cache
 	invalidatePlayerCache(player)
 
-	-- Notificar al cliente
+	-- Esperar un poco para asegurar que el gamepass esté procesado por Roblox
+	task.wait(1)
+
+	-- Notificar al cliente específico
 	XPBoostPurchasedEvent:FireClient(player, boost.Level)
 
-	-- Mostrar mensaje
+	-- Mostrar mensaje en el chat de TODOS los jugadores
+	local game = game or _G.game
+	local TextChatService = game:GetService("TextChatService")
+	local StarterGui = game:GetService("StarterGui")
+
+	local chatMessage = string.format("%s ha comprado mejora NIVEL %d a %d ROBUX", player.Name, boost.Level, boost.Price)
+
+	-- Intentar con TextChatService (nuevo sistema de chat)
+	local success, err = pcall(function()
+		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+			local generalChannel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+			generalChannel:DisplaySystemMessage(chatMessage)
+		else
+			-- Sistema de chat legacy
+			for _, p in ipairs(Players:GetPlayers()) do
+				StarterGui:SetCore("ChatMakeSystemMessage", {
+					Text = chatMessage,
+					Color = Color3.fromRGB(255, 255, 255),
+					Font = Enum.Font.GothamBold,
+					FontSize = Enum.FontSize.Size14
+				})
+			end
+		end
+	end)
+
+	if not success then
+		-- Fallback: enviar a todos los clientes via RemoteEvent
+		for _, p in ipairs(Players:GetPlayers()) do
+			if p ~= player then
+				-- Notificar a otros jugadores también (para que vean el mensaje en el output)
+				print(string.format("[XPBoostManager] 📢 Notificando a %s sobre la compra de %s", p.Name, player.Name))
+			end
+		end
+	end
+
+	-- Mostrar mensaje en servidor
 	print(string.format("[XPBoostManager] ✅ %s ahora tiene multiplicador x%.2f", player.Name, GetPlayerXPMultiplier(player)))
 end)
 

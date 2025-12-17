@@ -133,6 +133,26 @@ local function markPlayerFinished(player)
 			p.finishTime = finishTime
 			p.finishPosition = raceFinish.Position
 			print(string.format("[RaceManager] 🏁 %s terminó la carrera en %.2f segundos", player.Name, finishTime))
+
+			-- Reproducir sonido de victoria
+			local character = player.Character
+			if character then
+				local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+				if humanoidRootPart then
+					local finishSound = Instance.new("Sound")
+					finishSound.SoundId = "rbxassetid://9114221327"  -- Sonido de victoria
+					finishSound.Volume = 0.8
+					finishSound.Pitch = 1.0
+					finishSound.Parent = humanoidRootPart
+					finishSound:Play()
+
+					-- Destruir después de reproducir
+					task.delay(3, function()
+						finishSound:Destroy()
+					end)
+				end
+			end
+
 			return true
 		end
 	end

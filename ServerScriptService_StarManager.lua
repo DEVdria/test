@@ -143,10 +143,18 @@ local function processStarCollection(player, starID)
 		return false
 	end
 
-	-- Calcular EXP con multiplicador de rebirth
+	-- Calcular EXP con multiplicador de rebirth Y gamepass
 	local baseEXP = starData.EXPReward
-	local expMultiplier = playerData.EXPMultiplier or 1
-	local finalEXP = math.floor(baseEXP * expMultiplier)
+	local rebirthMultiplier = playerData.EXPMultiplier or 1
+
+	-- Obtener multiplicador de gamepass de XP boost
+	local gamepassMultiplier = 1
+	if _G.GetPlayerXPMultiplier then
+		gamepassMultiplier = _G.GetPlayerXPMultiplier(player)
+	end
+
+	-- Multiplicar por AMBOS: rebirth * gamepass
+	local finalEXP = math.floor(baseEXP * rebirthMultiplier * gamepassMultiplier)
 
 	local moneyReward = starData.MoneyReward
 

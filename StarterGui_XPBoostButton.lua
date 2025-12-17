@@ -193,9 +193,10 @@ end)
 XPBoostPurchasedEvent.OnClientEvent:Connect(function(boostLevel)
 	print(string.format("[XPBoostButton] 🎉 Boost nivel %d comprado exitosamente", boostLevel))
 
-	-- Refrescar datos
-	task.wait(0.5)  -- Pequeña espera para que el servidor actualice
+	-- Refrescar datos con más tiempo de espera
+	task.wait(1.5)  -- Espera más larga para asegurar que el servidor procese
 	refreshBoostData()
+	print("[XPBoostButton] 🔄 GUI actualizada después de compra")
 end)
 
 -- ==================== INICIALIZACIÓN ====================
