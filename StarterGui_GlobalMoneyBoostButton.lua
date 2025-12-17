@@ -2,15 +2,18 @@
 	GLOBAL MONEY BOOST BUTTON - LocalScript
 	Maneja la GUI del boost global de DINERO del servidor.
 
-	ESTRUCTURA DE GUI ESPERADA:
+	ESTRUCTURA DE GUI ESPERADA (puede estar en la misma ScreenGui que XP):
 	ScreenGui
-	└── GlobalMoneyBoostFrame (Frame)
+	├── GlobalBoostFrame (Frame) ← Para XP boost
+	│   └── ...
+	└── GlobalMoneyBoostFrame (Frame) ← Para DINERO boost
 	    ├── MoneyBoostButton (TextButton)
-	    │   ├── MultiplierLabel (TextLabel) - muestra "x2", "x4", etc
-	    │   └── PriceLabel (TextLabel) - muestra solo el precio
+	    │   ├── MultiplierLabel (TextLabel) - muestra "x2 MONEY SERVER"
+	    │   └── PriceLabel (TextLabel) - muestra "49"
 	    ├── TimerLabel (TextLabel) - Muestra tiempo restante
 	    └── StatusLabel (TextLabel) - Muestra estado actual (opcional)
 
+	NOTA: Este script debe estar dentro del ScreenGui (no dentro del Frame)
 	PERSONALIZA LOS NOMBRES SEGÚN TU GUI
 ]]
 
@@ -22,7 +25,7 @@ local player = Players.LocalPlayer
 -- REFERENCIAS A LA GUI
 -- ========================================
 -- IMPORTANTE: Ajusta estas rutas según tu estructura de GUI
-local screenGui = script.Parent  -- Asume que el script está en el ScreenGui
+local screenGui = script.Parent  -- Asume que el script está en el ScreenGui (al mismo nivel que GlobalBoostButton)
 local globalMoneyBoostFrame = screenGui:WaitForChild("GlobalMoneyBoostFrame")
 
 local moneyBoostButton = globalMoneyBoostFrame:WaitForChild("MoneyBoostButton")  -- TextButton

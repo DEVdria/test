@@ -218,23 +218,8 @@ local function processMoneyBoostReceipt(receiptInfo)
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end
 
--- Wrapper para MarketplaceService.ProcessReceipt
--- Esto permite que múltiples sistemas manejen diferentes productos
-local originalProcessReceipt = MarketplaceService.ProcessReceipt
-MarketplaceService.ProcessReceipt = function(receiptInfo)
-	-- Intentar procesar como boost de dinero
-	local result = processMoneyBoostReceipt(receiptInfo)
-	if result then
-		return result
-	end
-
-	-- Si no es boost de dinero, llamar al handler original
-	if originalProcessReceipt then
-		return originalProcessReceipt(receiptInfo)
-	end
-
-	return Enum.ProductPurchaseDecision.NotProcessedYet
-end
+-- Exponer función para que GlobalBoostManager la pueda llamar
+_G.ProcessMoneyBoostReceipt = processMoneyBoostReceipt
 
 -- ========================================
 -- COMUNICACIÓN CON CLIENTES

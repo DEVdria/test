@@ -194,13 +194,25 @@ local function processReceipt(receiptInfo)
 	end
 
 	local productId = receiptInfo.ProductId
+
+	-- Intentar procesar como boost de XP
 	local boost = GlobalBoostConfig.GetBoostByProductID(productId)
 
 	if not boost then
+		-- No es un boost de XP, intentar como boost de dinero
+		if _G.ProcessMoneyBoostReceipt then
+			local moneyResult = _G.ProcessMoneyBoostReceipt(receiptInfo)
+			if moneyResult then
+				return moneyResult
+			end
+		end
+
+		-- No es ni XP ni MONEY
 		warn(string.format("[GlobalBoostManager] ❌ Product ID %d no reconocido", productId))
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 
+	-- Es un boost de XP, procesarlo
 	print(string.format("[GlobalBoostManager] 🎉 %s compró %s (Product ID: %d)", player.Name, boost.Name, productId))
 
 	-- Verificar si el boost puede activarse
