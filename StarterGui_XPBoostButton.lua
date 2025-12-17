@@ -60,30 +60,6 @@ local currentBoostData = nil  -- Información del boost actual del servidor
 
 -- ==================== FUNCIONES ====================
 
--- Solicita datos del servidor
-local function refreshBoostData()
-	print("[XPBoostButton] 📡 Solicitando datos de boost...")
-
-	-- Deshabilitar botón mientras carga
-	boostButton.Text = "Cargando..."
-	boostButton.Enabled = false
-
-	local success, boostData = pcall(function()
-		return GetXPBoostFunction:InvokeServer()
-	end)
-
-	if not success then
-		warn("[XPBoostButton] ❌ Error al obtener datos:", boostData)
-		boostButton.Text = "Error"
-		return
-	end
-
-	currentBoostData = boostData
-
-	-- Actualizar GUI
-	updateGUI()
-end
-
 -- Actualiza la GUI con los datos actuales
 local function updateGUI()
 	if not currentBoostData then return end
@@ -143,6 +119,30 @@ local function updateGUI()
 		boostButton.Text = "No disponible"
 		boostButton.Enabled = false
 	end
+end
+
+-- Solicita datos del servidor
+local function refreshBoostData()
+	print("[XPBoostButton] 📡 Solicitando datos de boost...")
+
+	-- Deshabilitar botón mientras carga
+	boostButton.Text = "Cargando..."
+	boostButton.Enabled = false
+
+	local success, boostData = pcall(function()
+		return GetXPBoostFunction:InvokeServer()
+	end)
+
+	if not success then
+		warn("[XPBoostButton] ❌ Error al obtener datos:", boostData)
+		boostButton.Text = "Error"
+		return
+	end
+
+	currentBoostData = boostData
+
+	-- Actualizar GUI
+	updateGUI()
 end
 
 -- Intenta comprar el boost
