@@ -2,7 +2,8 @@
 	PLAYTIME REWARD BUTTON - LocalScript
 	Controla la GUI de recompensas por tiempo de juego
 
-	UBICACIÓN: StarterGui/PlaytimeRewardButton
+	UBICACIÓN: StarterGui/PrincipalGui/PlaytimeRewardButton (LocalScript)
+	         (Dentro del ScreenGui, NO en StarterGui directamente)
 
 	TÚ DISEÑAS LA GUI, este script solo:
 	- Conecta el botón principal
@@ -16,7 +17,13 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+
+-- Obtener el ScreenGui directamente desde el parent del script
+local screenGui = script.Parent
+if not screenGui or not screenGui:IsA("ScreenGui") then
+	warn("[PlaytimeRewardButton] ❌ Este script debe estar dentro del ScreenGui (PrincipalGui)")
+	return
+end
 
 -- Esperar NotificationManager
 local NotificationManager = nil
@@ -49,15 +56,9 @@ if not GetRewardInfoFunction or not ClaimRewardEvent or not UpdatePlaytimeEvent 
 end
 
 print("[PlaytimeRewardButton] 🕐 Inicializando sistema de recompensas...")
+print(string.format("[PlaytimeRewardButton] 📋 ScreenGui: %s", screenGui.Name))
 
 -- ==================== BUSCAR GUI ====================
-
--- Buscar el ScreenGui
-local screenGui = playerGui:WaitForChild(PlaytimeRewardConfig.GuiNames.ScreenGui, 10)
-if not screenGui then
-	warn(string.format("[PlaytimeRewardButton] ❌ No se encontró ScreenGui: %s", PlaytimeRewardConfig.GuiNames.ScreenGui))
-	return
-end
 
 -- Buscar ImageButton principal
 local mainButton = screenGui:FindFirstChild(PlaytimeRewardConfig.GuiNames.MainButton, true)
@@ -362,20 +363,22 @@ print("[PlaytimeRewardButton] ✅ Sistema de recompensas inicializado")
 --[[
 	ESTRUCTURA REQUERIDA EN STARTERGUI:
 
-	PrincipalGui (ScreenGui) - Ya existe
-	├─ PlaytimeButton (ImageButton) - Botón principal
-	│  └─ TimeLabel (TextLabel) - Tiempo restante para próxima recompensa
-	└─ PlaytimeRewardsFrame (Frame) - Panel de recompensas
-	   ├─ Reward1 (ImageButton) - Recompensa 1
-	   │  ├─ TimeLabel (TextLabel) - Auto-poblado con tiempo requerido
-	   │  ├─ MoneyLabel (TextLabel) - Auto-poblado con cantidad de dinero
-	   │  └─ Status (TextLabel) [OPCIONAL] - Estado de la recompensa
-	   ├─ Reward2 (ImageButton) - Recompensa 2
-	   │  ├─ TimeLabel (TextLabel)
-	   │  ├─ MoneyLabel (TextLabel)
-	   │  └─ Status (TextLabel) [OPCIONAL]
-	   ├─ ... (hasta Reward6)
-	   └─ CloseButton (TextButton/ImageButton) [OPCIONAL] - Cerrar panel
+	StarterGui
+	└─ PrincipalGui (ScreenGui) - Ya existe
+	   ├─ PlaytimeRewardButton (LocalScript) ← ESTE SCRIPT AQUÍ
+	   ├─ PlaytimeButton (ImageButton) - Botón principal
+	   │  └─ TimeLabel (TextLabel) - Tiempo restante para próxima recompensa
+	   └─ PlaytimeRewardsFrame (Frame) - Panel de recompensas
+	      ├─ Reward1 (ImageButton) - Recompensa 1
+	      │  ├─ TimeLabel (TextLabel) - Auto-poblado con tiempo requerido
+	      │  ├─ MoneyLabel (TextLabel) - Auto-poblado con cantidad de dinero
+	      │  └─ Status (TextLabel) [OPCIONAL] - Estado de la recompensa
+	      ├─ Reward2 (ImageButton) - Recompensa 2
+	      │  ├─ TimeLabel (TextLabel)
+	      │  ├─ MoneyLabel (TextLabel)
+	      │  └─ Status (TextLabel) [OPCIONAL]
+	      ├─ ... (hasta Reward6)
+	      └─ CloseButton (TextButton/ImageButton) [OPCIONAL] - Cerrar panel
 
 	PERSONALIZACIÓN:
 	- Diseña los ImageButtons como quieras
