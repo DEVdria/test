@@ -42,6 +42,8 @@ local function getDefaultData()
 		EquippedTrail = "Fire",       -- Trail equipada actualmente
 		Wins = 0,                     -- Victorias en carreras
 		ChestCooldowns = {},          -- Cooldowns de cofres {[chestID] = timestamp}
+		PlayTime = 0,                 -- Tiempo total jugado en segundos
+		ClaimedRewards = {},          -- IDs de recompensas de playtime reclamadas
 		LastSave = os.time()
 	}
 end
@@ -322,6 +324,84 @@ end
 -- Limpia los datos de un jugador de la memoria
 function DataManager.UnloadData(player)
 	playerData[player.UserId] = nil
+end
+
+-- ==================== FUNCIONES DE PLAYTIME ====================
+
+-- Obtiene el tiempo de juego actual del jugador (en segundos)
+function DataManager.GetPlaytime(player)
+	local data = playerData[player.UserId]
+	if not data then return 0 end
+
+	return data.PlayTime or 0
+end
+
+-- Añade tiempo de juego al jugador
+function DataManager.AddPlaytime(player, seconds)
+	local data = playerData[player.UserId]
+	if not data then return false end
+
+	data.PlayTime = (data.PlayTime or 0) + seconds
+	return data.PlayTime
+end
+
+-- Obtiene las recompensas reclamadas por el jugador
+function DataManager.GetClaimedRewards(player)
+	local data = playerData[player.UserId]
+	if not data then return {} end
+
+	return data.ClaimedRewards or {}
+end
+
+-- Verifica si una recompensa ya fue reclamada
+function DataManager.IsRewardClaimed(player, rewardID)
+	local claimedRewards = DataManager.GetClaimedRewards(player)
+	return table.find(claimedRewards, rewardID) ~= nil
+end
+
+-- Reclama una recompensa de playtime
+-- Devuelve: success (boolean), message (string), moneyEarned (number)
+function DataManager.ClaimReward(player, rewardID, moneyAmount)
+	local data = playerData[player.UserId]
+	if not data then
+		return false, "Datos no encontrados", 0
+	end
+
+	-- Verificar si ya fue reclamada
+	if DataManager.IsRewardClaimed(player, rewardID) then
+		return false, "Ya reclamaste esta recompensa", 0
+	end
+
+	-- Añadir a recompensas reclamadas
+	if not data.ClaimedRewards then
+		data.ClaimedRewards = {}
+	end
+	table.insert(data.ClaimedRewards, rewardID)
+
+	-- Añadir dinero
+	local success = DataManager.AddMoney(player, moneyAmount)
+	if not success then
+		return false, "Error al añadir dinero", 0
+	end
+
+	print(string.format("[DataManager] ✅ %s reclamó recompensa %d: $%d", player.Name, rewardID, moneyAmount))
+
+	return true, string.format("¡Reclamaste $%s!", DataManager.FormatNumber(moneyAmount)), moneyAmount
+end
+
+-- Formatea números con separadores de miles
+function DataManager.FormatNumber(num)
+	local formatted = tostring(num)
+	local k
+
+	while true do
+		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+		if k == 0 then
+			break
+		end
+	end
+
+	return formatted
 end
 
 -- Inicializar automáticamente
