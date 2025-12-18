@@ -408,36 +408,40 @@ local function startDetectionLoop()
 end
 
 -- ========================================
--- MANEJO DE NUEVOS OBJETIVOS
+-- MANEJO DE NUEVOS OBJETIVOS (se conecta después de inicialización)
 -- ========================================
 
--- Cuando se añade un nuevo objetivo con el tag
-CollectionService:GetInstanceAddedSignal(ArrowPointConfig.ObjectiveTag):Connect(function(objective)
-	print(string.format("[ArrowPointClient] 🆕 Nuevo objetivo detectado: %s", objective.Name))
+local function connectObjectiveListeners()
+	-- Cuando se añade un nuevo objetivo con el tag
+	CollectionService:GetInstanceAddedSignal(ArrowPointConfig.ObjectiveTag):Connect(function(objective)
+		print(string.format("[ArrowPointClient] 🆕 Nuevo objetivo detectado: %s", objective.Name))
 
-	-- Si no hay objetivo actual, verificar si este es el siguiente
-	if not currentObjective then
-		local nextObjective, nextOrder = findNextObjective()
-		if nextObjective then
+		-- Si no hay objetivo actual, verificar si este es el siguiente
+		if not currentObjective then
+			local nextObjective, nextOrder = findNextObjective()
+			if nextObjective then
+				setCurrentObjective(nextObjective, nextOrder)
+			end
+		end
+	end)
+
+	-- Cuando se remueve un objetivo con el tag
+	CollectionService:GetInstanceRemovedSignal(ArrowPointConfig.ObjectiveTag):Connect(function(objective)
+		print(string.format("[ArrowPointClient] 🗑️ Objetivo removido: %s", objective.Name))
+
+		-- Si era el objetivo actual, buscar el siguiente
+		if objective == currentObjective then
+			local nextObjective, nextOrder = findNextObjective()
 			setCurrentObjective(nextObjective, nextOrder)
 		end
-	end
-end)
 
--- Cuando se remueve un objetivo con el tag
-CollectionService:GetInstanceRemovedSignal(ArrowPointConfig.ObjectiveTag):Connect(function(objective)
-	print(string.format("[ArrowPointClient] 🗑️ Objetivo removido: %s", objective.Name))
+		-- Limpiar highlight si existe
+		removeHighlight(objective)
+		originalHighlights[objective] = nil
+	end)
 
-	-- Si era el objetivo actual, buscar el siguiente
-	if objective == currentObjective then
-		local nextObjective, nextOrder = findNextObjective()
-		setCurrentObjective(nextObjective, nextOrder)
-	end
-
-	-- Limpiar highlight si existe
-	removeHighlight(objective)
-	originalHighlights[objective] = nil
-end)
+	print("[ArrowPointClient] 🔌 Listeners de objetivos conectados")
+end
 
 -- ========================================
 -- REINICIO AL RESPAWNEAR
@@ -489,6 +493,9 @@ else
 	print("[ArrowPointClient] ⚠️ No se encontraron objetivos con el tag", ArrowPointConfig.ObjectiveTag)
 	hideBeam()
 end
+
+-- Conectar listeners DESPUÉS de establecer el objetivo inicial
+connectObjectiveListeners()
 
 -- Iniciar loop de detección
 startDetectionLoop()
