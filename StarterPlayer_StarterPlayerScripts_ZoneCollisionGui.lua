@@ -11,6 +11,23 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
+-- Esperar NotificationManager global
+local NotificationManager = nil
+task.spawn(function()
+	local maxWait = 5
+	local waited = 0
+	while not _G.NotificationManager and waited < maxWait do
+		task.wait(0.1)
+		waited = waited + 0.1
+	end
+	NotificationManager = _G.NotificationManager
+	if NotificationManager then
+		print("[ZoneCollisionGui] ✅ NotificationManager conectado")
+	else
+		warn("[ZoneCollisionGui] ⚠️ NotificationManager no disponible - solo se mostrarán mensajes en output")
+	end
+end)
+
 -- Esperar módulos
 local Modules = ReplicatedStorage:WaitForChild("Modules")
 local ZoneConfig = require(Modules:WaitForChild("ZoneConfig"))
@@ -232,6 +249,12 @@ end
 RequestZonePurchaseEvent.OnClientEvent:Connect(function(result)
 	if result.Success then
 		print(string.format("[ZoneCollisionGui] ✅ %s", result.Message))
+
+		-- Mostrar notificación de éxito
+		if NotificationManager then
+			NotificationManager.Success(result.Message, 3)
+		end
+
 		-- Actualizar lista de zonas poseídas
 		if currentZone and not table.find(ownedZones, currentZone.Name) then
 			table.insert(ownedZones, currentZone.Name)
@@ -243,6 +266,11 @@ RequestZonePurchaseEvent.OnClientEvent:Connect(function(result)
 		end
 	else
 		warn(string.format("[ZoneCollisionGui] ❌ %s", result.Message))
+
+		-- Mostrar notificación de error
+		if NotificationManager then
+			NotificationManager.Error(result.Message, 4)
+		end
 	end
 end)
 
