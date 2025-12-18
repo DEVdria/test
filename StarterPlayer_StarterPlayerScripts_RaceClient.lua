@@ -90,10 +90,10 @@ local firstPlaceLabel = resultsFrame:FindFirstChild("FirstPlace", true) or resul
 local secondPlaceLabel = resultsFrame:FindFirstChild("SecondPlace", true) or resultsFrame:FindFirstChild("Place2", true)
 local thirdPlaceLabel = resultsFrame:FindFirstChild("ThirdPlace", true) or resultsFrame:FindFirstChild("Place3", true)
 
--- ViewportFrames para mostrar personajes (opcional)
-local firstViewport = resultsFrame:FindFirstChild("FirstViewport", true)
-local secondViewport = resultsFrame:FindFirstChild("SecondViewport", true)
-local thirdViewport = resultsFrame:FindFirstChild("ThirdViewport", true)
+-- ImageLabels para mostrar iconos de jugadores (opcional)
+local firstIcon = resultsFrame:FindFirstChild("FirstIcon", true)
+local secondIcon = resultsFrame:FindFirstChild("SecondIcon", true)
+local thirdIcon = resultsFrame:FindFirstChild("ThirdIcon", true)
 
 -- Ocultar todas las GUIs al inicio
 raceWarningGui.Enabled = false
@@ -161,93 +161,51 @@ local function hideWaitCountdown()
 	end
 end
 
--- Crea un clon del personaje en un ViewportFrame
-local function createCharacterClone(viewportFrame, userId)
-	if not viewportFrame then return end
+-- Establece el thumbnail del jugador en un ImageLabel
+local function setPlayerThumbnail(imageLabel, userId)
+	if not imageLabel or not imageLabel:IsA("ImageLabel") then return end
 
-	-- Limpiar viewport anterior
-	viewportFrame:ClearAllChildren()
-
-	-- Crear cámara para el viewport
-	local camera = Instance.new("Camera")
-	camera.Parent = viewportFrame
-	viewportFrame.CurrentCamera = camera
-
-	-- Intentar obtener el personaje del jugador
-	local targetPlayer = Players:GetPlayerByUserId(userId)
-	if targetPlayer and targetPlayer.Character then
-		-- Clonar el personaje con protección de errores
-		local success, characterClone = pcall(function()
-			return targetPlayer.Character:Clone()
+	-- Obtener el thumbnail del jugador de forma asíncrona
+	task.spawn(function()
+		local success, thumbnailUrl = pcall(function()
+			return Players:GetUserThumbnailAsync(
+				userId,
+				Enum.ThumbnailType.HeadShot,
+				Enum.ThumbnailSize.Size150x150
+			)
 		end)
 
-		if success and characterClone then
-			-- Remover scripts del clon
-			pcall(function()
-				for _, desc in ipairs(characterClone:GetDescendants()) do
-					if desc:IsA("Script") or desc:IsA("LocalScript") then
-						desc:Destroy()
-					end
-				end
-			end)
-
-			characterClone.Parent = viewportFrame
-
-			-- Posicionar cámara
-			local humanoidRootPart = characterClone:FindFirstChild("HumanoidRootPart")
-			if humanoidRootPart then
-				camera.CFrame = CFrame.new(humanoidRootPart.Position + Vector3.new(0, 2, 5), humanoidRootPart.Position)
-			end
+		if success and thumbnailUrl then
+			imageLabel.Image = thumbnailUrl
+			print(string.format("[RaceClient] ✅ Thumbnail cargado para UserId: %d", userId))
 		else
-			-- Si falló el clon, crear un modelo simple
-			warn("[RaceClient] ⚠️ No se pudo clonar el personaje, usando modelo simple")
-			local part = Instance.new("Part")
-			part.Size = Vector3.new(2, 2, 1)
-			part.Position = Vector3.new(0, 0, 0)
-			part.Anchored = true
-			part.Parent = viewportFrame
-
-			camera.CFrame = CFrame.new(Vector3.new(0, 2, 5), Vector3.new(0, 0, 0))
+			warn(string.format("[RaceClient] ⚠️ No se pudo cargar thumbnail para UserId: %d", userId))
+			-- Dejar la imagen por defecto o vacía
 		end
-	else
-		-- Si no hay personaje, crear un modelo simple
-		local part = Instance.new("Part")
-		part.Size = Vector3.new(2, 2, 1)
-		part.Position = Vector3.new(0, 0, 0)
-		part.Anchored = true
-		part.Parent = viewportFrame
-
-		camera.CFrame = CFrame.new(Vector3.new(0, 2, 5), Vector3.new(0, 0, 0))
-	end
+	end)
 end
 
 -- Muestra los resultados del podio (FINAL)
 local function showResults(results)
-	-- Actualizar labels de nombres
+	-- Actualizar labels de nombres e iconos
 	if results.First and firstPlaceLabel then
 		firstPlaceLabel.Text = "🥇 " .. results.First.Name
-		if firstViewport then
-			pcall(function()
-				createCharacterClone(firstViewport, results.First.UserId)
-			end)
+		if firstIcon then
+			setPlayerThumbnail(firstIcon, results.First.UserId)
 		end
 	end
 
 	if results.Second and secondPlaceLabel then
 		secondPlaceLabel.Text = "🥈 " .. results.Second.Name
-		if secondViewport then
-			pcall(function()
-				createCharacterClone(secondViewport, results.Second.UserId)
-			end)
+		if secondIcon then
+			setPlayerThumbnail(secondIcon, results.Second.UserId)
 		end
 	end
 
 	if results.Third and thirdPlaceLabel then
 		thirdPlaceLabel.Text = "🥉 " .. results.Third.Name
-		if thirdViewport then
-			pcall(function()
-				createCharacterClone(thirdViewport, results.Third.UserId)
-			end)
+		if thirdIcon then
+			setPlayerThumbnail(thirdIcon, results.Third.UserId)
 		end
 	end
 
@@ -388,9 +346,9 @@ print("[RaceClient] ✅ Sistema de carreras del cliente iniciado")
 	      ├─ FirstPlace (TextLabel) - Nombre del 1er lugar
 	      ├─ SecondPlace (TextLabel) - Nombre del 2do lugar
 	      ├─ ThirdPlace (TextLabel) - Nombre del 3er lugar
-	      ├─ FirstViewport (ViewportFrame) [OPCIONAL] - Avatar del 1er lugar
-	      ├─ SecondViewport (ViewportFrame) [OPCIONAL] - Avatar del 2do lugar
-	      └─ ThirdViewport (ViewportFrame) [OPCIONAL] - Avatar del 3er lugar
+	      ├─ FirstIcon (ImageLabel) [OPCIONAL] - Thumbnail del 1er lugar
+	      ├─ SecondIcon (ImageLabel) [OPCIONAL] - Thumbnail del 2do lugar
+	      └─ ThirdIcon (ImageLabel) [OPCIONAL] - Thumbnail del 3er lugar
 
 	NOMBRES ALTERNATIVOS ACEPTADOS:
 	- WarningLabel o MessageLabel
