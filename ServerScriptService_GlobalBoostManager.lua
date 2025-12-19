@@ -20,6 +20,16 @@ local GlobalBoostConfig = require(Modules:WaitForChild("GlobalBoostConfig"))
 
 print("[GlobalBoostManager] 🚀 Inicializando sistema de boost global...")
 
+-- Esperar ChatNotificationManager
+local ChatNotificationManager = nil
+task.spawn(function()
+	repeat
+		task.wait(0.5)
+		ChatNotificationManager = _G.ChatNotificationManager
+	until ChatNotificationManager
+	print("[GlobalBoostManager] ✅ ChatNotificationManager conectado")
+end)
+
 -- ========================================
 -- ESTADO GLOBAL DEL SERVIDOR
 -- ========================================
@@ -125,6 +135,11 @@ local function activateBoost(boostID, purchaserName)
 		boost.Duration,
 		purchaserName
 	))
+
+	-- Notificar en el chat
+	if ChatNotificationManager then
+		ChatNotificationManager.NotifyPurchase(purchaserName, boost.Name, boost.Price)
+	end
 
 	-- Notificar a todos los clientes
 	broadcastBoostState()

@@ -21,6 +21,15 @@ local RaceCountdownEvent = RemoteEvents:WaitForChild("RaceCountdown")
 repeat task.wait(0.1) until _G.DataManager
 local DataManager = _G.DataManager
 
+-- Esperar ChatNotificationManager
+local ChatNotificationManager = nil
+repeat
+	task.wait(0.5)
+	ChatNotificationManager = _G.ChatNotificationManager
+until ChatNotificationManager
+
+print("[RaceManager] ✅ ChatNotificationManager conectado")
+
 -- ==================== VARIABLES ====================
 
 local raceActive = false
@@ -204,10 +213,22 @@ local function waitingPhase()
 	raceBarrier.Transparency = 0.5  -- Semi-transparente para que se vea
 	print("[RaceManager] 🔒 Barrera activada (CanCollide=true, Transparency=0.5)")
 
+	-- Momentos específicos para notificar en el chat
+	local chatNotifyTimes = {90, 60, 30, 10, 5, 3, 2, 1}
+
 	-- Cuenta regresiva
 	for i = RaceConfig.WAIT_TIME, 1, -1 do
 		local message = string.format(RaceConfig.Messages.CountingDown, i)
 		RaceCountdownEvent:FireAllClients(message, i)
+
+		-- Notificar en el chat en momentos específicos
+		if table.find(chatNotifyTimes, i) then
+			if ChatNotificationManager then
+				local chatMessage = string.format("Faltan %d segundo%s para la carrera", i, i == 1 and "" or "s")
+				ChatNotificationManager.NotifyRace(chatMessage)
+			end
+		end
+
 		task.wait(1)
 	end
 
@@ -218,6 +239,11 @@ local function waitingPhase()
 
 	print("[RaceManager] ✅ Barrera desactivada. ¡Carrera iniciada!")
 	RaceCountdownEvent:FireAllClients(RaceConfig.Messages.RaceBegin, 0)
+
+	-- Notificar en el chat que la carrera comenzó
+	if ChatNotificationManager then
+		ChatNotificationManager.NotifyRace("¡La carrera ha comenzado!")
+	end
 
 	return true
 end

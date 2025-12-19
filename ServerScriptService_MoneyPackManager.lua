@@ -19,6 +19,16 @@ local MoneyPackConfig = require(Modules:WaitForChild("MoneyPackConfig"))
 
 print("[MoneyPackManager] 💰 Inicializando sistema de packs de dinero...")
 
+-- Esperar ChatNotificationManager
+local ChatNotificationManager = nil
+task.spawn(function()
+	repeat
+		task.wait(0.5)
+		ChatNotificationManager = _G.ChatNotificationManager
+	until ChatNotificationManager
+	print("[MoneyPackManager] ✅ ChatNotificationManager conectado")
+end)
+
 -- ========================================
 -- REMOTES
 -- ========================================
@@ -77,6 +87,11 @@ local function processMoneyPackReceipt(receiptInfo)
 				player.Name,
 				MoneyPackConfig.FormatNumber(pack.MoneyAmount),
 				pack.Name))
+
+			-- Notificar en el chat
+			if ChatNotificationManager then
+				ChatNotificationManager.NotifyPurchase(player.Name, pack.Name, pack.Price)
+			end
 		else
 			warn(string.format("[MoneyPackManager] ❌ Error al otorgar dinero a %s", player.Name))
 		end

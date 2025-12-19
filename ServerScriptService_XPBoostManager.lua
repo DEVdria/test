@@ -9,6 +9,16 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Modules = ReplicatedStorage:WaitForChild("Modules")
 local XPBoostConfig = require(Modules:WaitForChild("XPBoostConfig"))
 
+-- Esperar ChatNotificationManager
+local ChatNotificationManager = nil
+task.spawn(function()
+	repeat
+		task.wait(0.5)
+		ChatNotificationManager = _G.ChatNotificationManager
+	until ChatNotificationManager
+	print("[XPBoostManager] ✅ ChatNotificationManager conectado")
+end)
+
 -- Esperar RemoteEvents (se crearán después)
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 local GetXPBoostFunction = RemoteEvents:WaitForChild("GetXPBoost", 10)
@@ -177,28 +187,10 @@ MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, gamep
 	-- Notificar al cliente específico
 	XPBoostPurchasedEvent:FireClient(player, boost.Level)
 
-	-- Mostrar mensaje en el chat de TODOS los jugadores
-	local TextChatService = game:GetService("TextChatService")
-	local chatMessage = string.format("%s ha comprado mejora NIVEL %d a %d ROBUX", player.Name, boost.Level, boost.Price)
-
-	-- Intentar con TextChatService (nuevo sistema de chat)
-	local success = pcall(function()
-		-- Verificar si TextChatService está habilitado
-		local textChannels = TextChatService:FindFirstChild("TextChannels")
-		if textChannels then
-			local generalChannel = textChannels:FindFirstChild("RBXGeneral")
-			if generalChannel then
-				generalChannel:DisplaySystemMessage(chatMessage)
-				print(string.format("[XPBoostManager] ✅ Mensaje de chat enviado: %s", chatMessage))
-			end
-		end
-	end)
-
-	if not success then
-		-- Si TextChatService no funciona, intentar con sistema legacy
-		warn("[XPBoostManager] ⚠️ TextChatService no disponible, usando sistema legacy")
-		-- En el sistema legacy desde el servidor, simplemente logueamos
-		print(string.format("[XPBoostManager] 📢 COMPRA: %s", chatMessage))
+	-- Notificar en el chat
+	if ChatNotificationManager then
+		local boostName = string.format("XP Boost Nivel %d", boost.Level)
+		ChatNotificationManager.NotifyPurchase(player.Name, boostName, boost.Price)
 	end
 
 	-- Mostrar mensaje en servidor
