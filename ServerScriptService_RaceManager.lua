@@ -368,6 +368,12 @@ local function calculateResults()
 				_G.DataManager.AddWins(p.player, 1)
 				print(string.format("[RaceManager] 🏆 %s ganó la carrera y recibe 1 WIN", p.player.Name))
 			end
+
+			-- Notificar en el chat quién ganó
+			if ChatNotificationManager then
+				local winMessage = string.format("¡%s ganó la carrera! 🏆", p.player.Name)
+				ChatNotificationManager.NotifyRace(winMessage)
+			end
 		elseif i == 2 then
 			results.Second = {Name = p.player.Name, UserId = p.player.UserId}
 			givePrize(p.player, RaceConfig.Rewards.Second, 2)
