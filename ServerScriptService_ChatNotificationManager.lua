@@ -3,32 +3,29 @@
 	Gestiona las notificaciones en el chat del juego
 	Soporta tanto TextChatService (nuevo) como Chat (legacy)
 
-	UBICACIÓN: ServerScriptService/ChatNotificationManager
+	UBICACIÓN: ServerScriptService/ChatNotificationManager (Script normal)
 ]]
 
-local TextChatService = game:GetService("TextChatService")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 print("[ChatNotificationManager] 💬 Inicializando sistema de notificaciones de chat...")
 
--- ==================== DETECTAR SISTEMA DE CHAT ====================
+-- ==================== CREAR REMOTE EVENT ====================
 
-local useTextChatService = false
-local generalChannel = nil
+local RemotesFolder = ReplicatedStorage:FindFirstChild("Remotes")
+if not RemotesFolder then
+	RemotesFolder = Instance.new("Folder")
+	RemotesFolder.Name = "Remotes"
+	RemotesFolder.Parent = ReplicatedStorage
+end
 
--- Intentar usar TextChatService (nuevo sistema)
-local success = pcall(function()
-	if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-		generalChannel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral", 5)
-		if generalChannel then
-			useTextChatService = true
-			print("[ChatNotificationManager] ✅ Usando TextChatService (nuevo sistema)")
-		end
-	end
-end)
-
-if not useTextChatService then
-	print("[ChatNotificationManager] ⚠️ TextChatService no disponible, usando sistema legacy")
+local ChatNotificationEvent = RemotesFolder:FindFirstChild("ChatNotification")
+if not ChatNotificationEvent then
+	ChatNotificationEvent = Instance.new("RemoteEvent")
+	ChatNotificationEvent.Name = "ChatNotification"
+	ChatNotificationEvent.Parent = RemotesFolder
+	print("[ChatNotificationManager] ✅ RemoteEvent 'ChatNotification' creado")
 end
 
 -- ==================== CONFIGURACIÓN ====================
@@ -55,45 +52,6 @@ ChatNotificationManager.Prefixes = {
 
 -- ==================== FUNCIONES ====================
 
--- Envía un mensaje al chat usando TextChatService
-local function sendTextChatMessage(message, color)
-	if not generalChannel then return false end
-
-	local textChannel = generalChannel
-
-	-- Crear mensaje con color
-	local displayMessage = message
-
-	-- Enviar mensaje
-	local success, err = pcall(function()
-		textChannel:DisplaySystemMessage(displayMessage)
-	end)
-
-	if success then
-		return true
-	else
-		warn("[ChatNotificationManager] Error enviando mensaje TextChatService:", err)
-		return false
-	end
-end
-
--- Envía un mensaje al chat usando sistema legacy
-local function sendLegacyChatMessage(message, color)
-	local success = pcall(function()
-		for _, player in ipairs(Players:GetPlayers()) do
-			-- Crear mensaje en el chat del jugador
-			game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
-				Text = message,
-				Color = color or Color3.fromRGB(255, 255, 255),
-				Font = Enum.Font.SourceSansBold,
-				FontSize = Enum.FontSize.Size18,
-			})
-		end
-	end)
-
-	return success
-end
-
 -- Función principal para enviar notificaciones al chat
 function ChatNotificationManager.SendNotification(message, notificationType, customColor)
 	notificationType = notificationType or "Info"
@@ -105,12 +63,8 @@ function ChatNotificationManager.SendNotification(message, notificationType, cus
 	-- Construir mensaje completo
 	local fullMessage = prefix ~= "" and (prefix .. " " .. message) or message
 
-	-- Enviar según el sistema disponible
-	if useTextChatService then
-		sendTextChatMessage(fullMessage, color)
-	else
-		sendLegacyChatMessage(fullMessage, color)
-	end
+	-- Enviar a todos los clientes vía RemoteEvent
+	ChatNotificationEvent:FireAllClients(fullMessage, color)
 
 	print(string.format("[ChatNotificationManager] 📢 %s", fullMessage))
 end
@@ -146,6 +100,3 @@ end
 _G.ChatNotificationManager = ChatNotificationManager
 
 print("[ChatNotificationManager] ✅ Sistema de notificaciones de chat listo")
-print(string.format("[ChatNotificationManager] 📊 Sistema activo: %s", useTextChatService and "TextChatService" or "Legacy Chat"))
-
-return ChatNotificationManager
