@@ -339,6 +339,19 @@ ClaimRewardEvent.OnClientEvent:Connect(function(result)
 	if result.Success then
 		print(string.format("[PlaytimeRewardButton] ✅ %s", result.Message))
 
+		-- Reproducir sonido de recompensa reclamada
+		local claimSound = Instance.new("Sound")
+		claimSound.SoundId = "rbxassetid://9114221327"  -- Sonido de recompensa/victoria
+		claimSound.Volume = 0.6
+		claimSound.Pitch = 1.2
+		claimSound.Parent = game:GetService("SoundService")
+		claimSound:Play()
+
+		-- Destruir después de reproducir
+		task.delay(3, function()
+			claimSound:Destroy()
+		end)
+
 		-- Mostrar notificación
 		if NotificationManager then
 			NotificationManager.Money(result.Message, 4)
