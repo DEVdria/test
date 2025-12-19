@@ -1,6 +1,9 @@
 -- StarterPlayer > StarterCharacterScripts > Running
 -- Sistema de sprint integrado con sistema de niveles
 -- MODIFICADO PARA USAR VELOCIDAD POR NIVEL (No velocidad acumulada)
+-- MODO TOGGLE: El running se activa/desactiva con una sola tecla/botón
+--              Se puede activar incluso estando quieto
+--              No se desactiva automáticamente al detenerse
 
 -- -=/GETTING CHARACTER/=-
 local plr = game.Players.LocalPlayer
@@ -123,10 +126,11 @@ local function runKey(input)
 	return false
 end
 
--- -=/RUN FUNCTION/=-
+-- -=/RUN FUNCTION (TOGGLE MODE)/=-
 local function Run()
 	if not runDebounce then return end
-	if not RootPart:GetAttribute("IsRunning") and RootPart:GetAttribute("RunEnabled") and isOnGround and Humanoid.MoveDirection.Magnitude > 0.1 then
+	-- MODO TOGGLE: Se puede activar incluso estando quieto
+	if not RootPart:GetAttribute("IsRunning") and RootPart:GetAttribute("RunEnabled") and isOnGround then
 		runDebounce = false
 
 		RootPart:SetAttribute("IsRunning", true)
@@ -189,23 +193,29 @@ task.spawn(function()
 	end
 end)
 
--- -=/KEY INPUT HANDLER/=-
+-- -=/KEY INPUT HANDLER (TOGGLE MODE)/=-
 UIS.InputBegan:Connect(function(input, isTyping)
 	if isTyping then return end
 	if runKey(input) then
 		if config.CrouchingEnabled and RootPart:GetAttribute("IsCrouching") then
 			return
 		end
-		Run()
+		-- MODO TOGGLE: Alternar entre running y normal con una sola tecla
+		if not RootPart:GetAttribute("IsRunning") then
+			Run()
+		else
+			Stop()
+		end
 	end
 end)
 
--- -=/KEY RELEASE HANDLER/=-
-UIS.InputEnded:Connect(function(input)
-	if runKey(input) then
-		Stop()
-	end
-end)
+-- -=/KEY RELEASE HANDLER (DESACTIVADO EN MODO TOGGLE)/=-
+-- En modo toggle no se necesita, pero lo dejamos aquí comentado por si se quiere cambiar el comportamiento
+-- UIS.InputEnded:Connect(function(input)
+-- 	if runKey(input) then
+-- 		Stop()
+-- 	end
+-- end)
 
 -- -=/STATE CHANGES HANDLER/=-
 local function onStateChanged(_, newState)
@@ -264,11 +274,13 @@ RunService.Heartbeat:Connect(function()
 		end
 	end
 
-	-- -=/NON-MOVEMENT CHECK/=-
-	notMoving = Humanoid.MoveDirection.Magnitude < 0.1
-	if notMoving and RootPart:GetAttribute("IsRunning") then
-		Stop()
-	end
+	-- -=/NON-MOVEMENT CHECK (DESACTIVADO EN MODO TOGGLE)/=-
+	-- En modo toggle, el running NO se detiene automáticamente al detenerse
+	-- El jugador debe presionar la tecla/botón de nuevo para desactivarlo
+	-- notMoving = Humanoid.MoveDirection.Magnitude < 0.1
+	-- if notMoving and RootPart:GetAttribute("IsRunning") then
+	-- 	Stop()
+	-- end
 
 	-- -=/RUNNING ENABLED VALUE CHECK/=-
 	if RootPart:GetAttribute("IsRunning") and not RootPart:GetAttribute("RunEnabled") then
