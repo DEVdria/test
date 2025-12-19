@@ -42,8 +42,8 @@ local function getDefaultData()
 		EquippedTrail = "Fire",       -- Trail equipada actualmente
 		Wins = 0,                     -- Victorias en carreras
 		ChestCooldowns = {},          -- Cooldowns de cofres {[chestID] = timestamp}
-		PlayTime = 0,                 -- Tiempo total jugado en segundos
-		ClaimedRewards = {},          -- IDs de recompensas de playtime reclamadas
+		-- NOTA: PlayTime y ClaimedRewards NO se guardan - son solo por sesión
+		-- Se inicializan cuando el jugador entra al servidor
 		LastSave = os.time()
 	}
 end
@@ -83,6 +83,10 @@ function DataManager.LoadData(player)
 		end
 	end
 
+	-- Inicializar datos de sesión (no persistentes)
+	data.PlayTime = 0  -- Tiempo de juego se reinicia cada sesión
+	data.ClaimedRewards = {}  -- Recompensas se reinician cada sesión
+
 	playerData[userId] = data
 	return data
 end
@@ -99,13 +103,21 @@ function DataManager.SaveData(player)
 
 	data.LastSave = os.time()
 
+	-- Crear copia de datos SIN los datos de sesión (PlayTime, ClaimedRewards)
+	local dataToSave = {}
+	for key, value in pairs(data) do
+		if key ~= "PlayTime" and key ~= "ClaimedRewards" then
+			dataToSave[key] = value
+		end
+	end
+
 	local success, errorMsg
 	local attempts = 0
 
 	repeat
 		attempts = attempts + 1
 		success, errorMsg = pcall(function()
-			PlayerDataStore:SetAsync(userId, data)
+			PlayerDataStore:SetAsync(userId, dataToSave)
 		end)
 
 		if not success then

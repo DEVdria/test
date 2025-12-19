@@ -97,6 +97,23 @@ local rewardButtons = {}
 
 -- ==================== FUNCIONES ====================
 
+-- Formatea tiempo en formato de cronómetro (MM:SS o HH:MM:SS)
+local function formatCountdown(seconds)
+	if seconds <= 0 then
+		return "0:00"
+	end
+
+	local hours = math.floor(seconds / 3600)
+	local minutes = math.floor((seconds % 3600) / 60)
+	local secs = seconds % 60
+
+	if hours > 0 then
+		return string.format("%d:%02d:%02d", hours, minutes, secs)
+	else
+		return string.format("%d:%02d", minutes, secs)
+	end
+end
+
 -- Actualiza el TextLabel del botón principal con el tiempo restante
 local function updateMainButtonTime(timeUntilNext)
 	if not mainButtonTimeLabel or not mainButtonTimeLabel:IsA("TextLabel") then
@@ -126,7 +143,17 @@ local function updateRewardButton(rewardButton, rewardData, state)
 
 	-- Auto-poblar TextLabels si existen
 	if timeLabel and timeLabel:IsA("TextLabel") then
-		timeLabel.Text = PlaytimeRewardConfig.FormatTimeShort(reward.TimeRequired)
+		-- Mostrar countdown (tiempo restante) en lugar del tiempo requerido
+		if state == "Locked" then
+			-- Mostrar cronómetro con tiempo restante
+			timeLabel.Text = formatCountdown(rewardData.TimeRemaining)
+		elseif state == "Available" then
+			-- Cuando está disponible, mostrar "LISTO"
+			timeLabel.Text = "¡LISTO!"
+		else  -- Claimed
+			-- Cuando ya está reclamado, mostrar check
+			timeLabel.Text = "✅"
+		end
 	end
 
 	if moneyLabel and moneyLabel:IsA("TextLabel") then
@@ -341,7 +368,7 @@ end)
 task.wait(2)  -- Esperar a que el servidor esté listo
 requestRewardInfo()
 
--- Actualizar periódicamente el tiempo en el botón principal
+-- Actualizar periódicamente el tiempo en el botón principal y las recompensas
 task.spawn(function()
 	while true do
 		task.wait(1)
@@ -352,7 +379,23 @@ task.spawn(function()
 				currentRewardInfo.TimeUntilNext = math.max(0, currentRewardInfo.TimeUntilNext - 1)
 			end
 
+			-- Decrementar el tiempo restante de cada recompensa
+			if currentRewardInfo.RewardStates then
+				for _, rewardData in ipairs(currentRewardInfo.RewardStates) do
+					if rewardData.TimeRemaining > 0 then
+						rewardData.TimeRemaining = math.max(0, rewardData.TimeRemaining - 1)
+
+						-- Si llegó a 0, cambiar estado a Available
+						if rewardData.TimeRemaining == 0 and rewardData.State == "Locked" then
+							rewardData.State = "Available"
+						end
+					end
+				end
+			end
+
+			-- Actualizar visuales
 			updateMainButtonTime(currentRewardInfo.TimeUntilNext)
+			updateAllRewardButtons()
 		end
 	end
 end)
