@@ -162,6 +162,12 @@ local function markPlayerFinished(player)
 				end
 			end
 
+			-- TELETRANSPORTAR INMEDIATAMENTE AL JUGADOR AL SPAWN
+			task.spawn(function()
+				teleportToSpawn(player)
+				print(string.format("[RaceManager] 🚀 %s teletransportado al spawn", player.Name))
+			end)
+
 			return true
 		end
 	end
@@ -378,14 +384,17 @@ local function calculateResults()
 	return results
 end
 
--- Teletransporta a todos los participantes al spawn
+-- Teletransporta a todos los participantes al spawn (solo los que no terminaron)
 local function teleportAllToSpawn()
-	print("[RaceManager] 🚀 Teletransportando participantes al spawn...")
+	print("[RaceManager] 🚀 Teletransportando participantes restantes al spawn...")
 
 	for _, p in ipairs(participants) do
-		if p.player and p.player.Parent then
+		-- Solo teletransportar a los que NO terminaron la carrera (no tienen finishTime)
+		-- Los que terminaron ya fueron teletransportados al tocar la meta
+		if p.player and p.player.Parent and not p.finishTime then
 			task.spawn(function()
 				teleportToSpawn(p.player)
+				print(string.format("[RaceManager] 🚀 %s teletransportado al spawn (no terminó)", p.player.Name))
 			end)
 		end
 	end
