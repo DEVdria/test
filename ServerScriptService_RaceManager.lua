@@ -213,22 +213,10 @@ local function waitingPhase()
 	raceBarrier.Transparency = 0.5  -- Semi-transparente para que se vea
 	print("[RaceManager] 🔒 Barrera activada (CanCollide=true, Transparency=0.5)")
 
-	-- Momentos específicos para notificar en el chat
-	local chatNotifyTimes = {90, 60, 30, 10, 5, 3, 2, 1}
-
 	-- Cuenta regresiva
 	for i = RaceConfig.WAIT_TIME, 1, -1 do
 		local message = string.format(RaceConfig.Messages.CountingDown, i)
 		RaceCountdownEvent:FireAllClients(message, i)
-
-		-- Notificar en el chat en momentos específicos
-		if table.find(chatNotifyTimes, i) then
-			if ChatNotificationManager then
-				local chatMessage = string.format("Faltan %d segundo%s para la carrera", i, i == 1 and "" or "s")
-				ChatNotificationManager.NotifyRace(chatMessage)
-			end
-		end
-
 		task.wait(1)
 	end
 
@@ -481,7 +469,21 @@ task.spawn(function()
 
 	-- Ciclo infinito de carreras
 	while true do
-		task.wait(RaceConfig.RACE_INTERVAL)
+		-- Momentos específicos para notificar en el chat (durante el intervalo)
+		local chatNotifyTimes = {90, 60, 30, 10, 5}
+
+		-- Esperar el intervalo con notificaciones en momentos específicos
+		for i = RaceConfig.RACE_INTERVAL, 1, -1 do
+			-- Notificar en el chat en momentos específicos
+			if table.find(chatNotifyTimes, i) then
+				if ChatNotificationManager then
+					local chatMessage = string.format("Faltan %d segundo%s para la próxima carrera", i, i == 1 and "" or "s")
+					ChatNotificationManager.NotifyRace(chatMessage)
+				end
+			end
+			task.wait(1)
+		end
+
 		task.spawn(runRaceCycle)
 	end
 end)
