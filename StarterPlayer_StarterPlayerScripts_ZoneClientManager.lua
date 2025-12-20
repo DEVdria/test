@@ -63,9 +63,6 @@ local function updateZoneSurfaceGui(zonePart, zoneConfig, isOwned)
 	surfaceGui.MaxDistance = 0  -- 0 = Sin límite de distancia (equivalente a math.huge)
 	surfaceGui.AlwaysOnTop = false  -- Para que se renderice correctamente a distancia
 
-	-- NUEVO: Cambiar CanCollide según si está desbloqueada
-	zonePart.CanCollide = not isOwned  -- Bloqueada = CanCollide true, Desbloqueada = CanCollide false
-
 	-- Buscar elementos por nombre (TÚ defines estos nombres en tu diseño)
 
 	-- TextLabel para mostrar nombre de la zona (busca "ZoneName" o "NameLabel")

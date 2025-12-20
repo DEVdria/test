@@ -49,9 +49,13 @@ task.spawn(function()
 
 	-- Activar running automáticamente al entrar al juego
 	task.wait(0.5)  -- Pequeña espera adicional
-	if RootPart:GetAttribute("RunEnabled") and isOnGround then
-		Run()
-		print("[Running] ✅ Running activado automáticamente al entrar al juego")
+	if RootPart:GetAttribute("RunEnabled") then
+		-- Verificar que esté en el suelo antes de activar
+		local onGround = Humanoid.FloorMaterial ~= Enum.Material.Air
+		if onGround then
+			Run()
+			print("[Running] ✅ Running activado automáticamente al entrar al juego")
+		end
 	end
 end)
 
