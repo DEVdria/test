@@ -108,6 +108,7 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 	local numberLabel = dayButton:FindFirstChild(DailyRewardConfig.GuiNames.DayNumber, true)
 	local rewardText = dayButton:FindFirstChild(DailyRewardConfig.GuiNames.DayReward, true)
 	local status = dayButton:FindFirstChild(DailyRewardConfig.GuiNames.DayStatus, true)
+	local availabilityLabel = dayButton:FindFirstChild("AvailabilityLabel", true)
 
 	-- Auto-poblar información
 	if icon and icon:IsA("TextLabel") then
@@ -136,6 +137,18 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 			status.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
 
+		-- AvailabilityLabel: Día completado
+		if availabilityLabel and availabilityLabel:IsA("TextLabel") then
+			availabilityLabel.Text = "COMPLETADO"
+			availabilityLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+			availabilityLabel.Visible = true
+			-- Detener cualquier animación
+			local existingTween = availabilityLabel:FindFirstChild("PulseTween")
+			if existingTween then
+				existingTween:Destroy()
+			end
+		end
+
 	elseif isCurrentDay and canClaim then
 		-- Día disponible para reclamar (se reclama haciendo clic en el ImageButton directamente)
 		local color = dayNumber == 7 and DailyRewardConfig.Colors.Special or DailyRewardConfig.Colors.Available
@@ -144,6 +157,35 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 		if status and status:IsA("TextLabel") then
 			status.Text = "¡DISPONIBLE!"
 			status.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+
+		-- AvailabilityLabel: DISPONIBLE con animación
+		if availabilityLabel and availabilityLabel:IsA("TextLabel") then
+			availabilityLabel.Text = "¡DISPONIBLE!"
+			availabilityLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+			availabilityLabel.Visible = true
+
+			-- Animación de pulso
+			task.spawn(function()
+				while availabilityLabel and availabilityLabel.Parent and isCurrentDay and canClaim do
+					-- Pulso de transparencia
+					local pulseTween = TweenService:Create(
+						availabilityLabel,
+						TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+						{TextTransparency = 0.3}
+					)
+					pulseTween:Play()
+					pulseTween.Completed:Wait()
+
+					local returnTween = TweenService:Create(
+						availabilityLabel,
+						TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+						{TextTransparency = 0}
+					)
+					returnTween:Play()
+					returnTween.Completed:Wait()
+				end
+			end)
 		end
 
 	elseif isCurrentDay and not canClaim then
@@ -155,12 +197,28 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 			status.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
 
+		-- AvailabilityLabel: En cooldown
+		if availabilityLabel and availabilityLabel:IsA("TextLabel") then
+			availabilityLabel.Text = "EN ESPERA"
+			availabilityLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+			availabilityLabel.Visible = true
+			availabilityLabel.TextTransparency = 0
+		end
+
 	else
 		-- Día bloqueado (futuro)
 		dayButton.BackgroundColor3 = DailyRewardConfig.Colors.Locked
 		if status and status:IsA("TextLabel") then
 			status.Text = "🔒 BLOQUEADO"
 			status.TextColor3 = Color3.fromRGB(150, 150, 150)
+		end
+
+		-- AvailabilityLabel: BLOQUEADO en rojo
+		if availabilityLabel and availabilityLabel:IsA("TextLabel") then
+			availabilityLabel.Text = "BLOQUEADO"
+			availabilityLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+			availabilityLabel.Visible = true
+			availabilityLabel.TextTransparency = 0
 		end
 	end
 end
@@ -499,7 +557,8 @@ print("[DailyRewardGui] ✅ Sistema de GUI de recompensas diarias inicializado")
 	   │  │  ├─ Icon (TextLabel) - Emoji
 	   │  │  ├─ DayNumber (TextLabel) - "DÍA 1"
 	   │  │  ├─ RewardText (TextLabel) - Nombre de recompensa
-	   │  │  └─ Status (TextLabel) - Estado
+	   │  │  ├─ Status (TextLabel) - Estado
+	   │  │  └─ AvailabilityLabel (TextLabel) - "¡DISPONIBLE!" o "BLOQUEADO" (con animación)
 	   │  ├─ Day2 (ImageButton) - Día 2 ← Hacer clic aquí reclama la recompensa
 	   │  ├─ ... (hasta Day7)
 	   │  └─ Day7 (ImageButton) - Día 7 ← Hacer clic aquí reclama la recompensa
@@ -525,6 +584,12 @@ print("[DailyRewardGui] ✅ Sistema de GUI de recompensas diarias inicializado")
 	- ¡DISPONIBLE!: Dorado/Naranja (día actual - HAZ CLIC EN EL IMAGEBUTTON PARA RECLAMAR)
 	- ⏰ Tiempo: Dorado con contador (día actual en cooldown)
 	- 🔒 BLOQUEADO: Gris (días futuros)
+
+	AVAILABILITYLABEL (NUEVO):
+	- "¡DISPONIBLE!" - Verde con animación de pulso (día actual disponible)
+	- "BLOQUEADO" - Rojo (días futuros)
+	- "EN ESPERA" - Amarillo (día actual en cooldown)
+	- "COMPLETADO" - Verde (días ya reclamados)
 
 	NOTA: Para reclamar una recompensa, haz clic directamente en el ImageButton del día (Day1, Day2, etc.)
 	      El script solo permitirá reclamar si es el día actual y está disponible.
