@@ -79,6 +79,9 @@ if boostIndicator then
 	boostIndicator.Visible = false
 end
 
+-- Guardar el tamaño original del frame (el que TÚ diseñaste)
+local originalSize = mainFrame.Size
+
 print("[DailyRewardGui] ✅ GUI encontrada correctamente")
 
 -- ==================== VARIABLES ====================
@@ -224,10 +227,12 @@ end
 local function showPanel()
 	mainFrame.Visible = true
 
-	-- Animación de entrada
-	mainFrame.Position = UDim2.new(0.5, 0, 1.5, 0)  -- Fuera de pantalla abajo
-	local tween = TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, 0, 0.5, 0)
+	-- Animación de entrada (escala en lugar de mover posición)
+	-- Esto respeta tu posición y solo anima el tamaño
+	mainFrame.Size = UDim2.new(0, 0, 0, 0)  -- Empieza pequeño desde el centro del frame
+
+	local tween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		Size = originalSize  -- Crece hasta el tamaño que TÚ diseñaste
 	})
 	tween:Play()
 
@@ -239,16 +244,8 @@ end
 
 -- Oculta el panel principal
 local function hidePanel()
-	-- Animación de salida
-	local tween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-		Position = UDim2.new(0.5, 0, 1.5, 0)
-	})
-	tween:Play()
-
-	task.delay(0.3, function()
-		mainFrame.Visible = false
-	end)
-
+	-- Simplemente ocultar sin animación de salida que cambie posición
+	mainFrame.Visible = false
 	print("[DailyRewardGui] 📋 Panel de recompensas cerrado")
 end
 
