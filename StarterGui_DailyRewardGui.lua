@@ -108,7 +108,6 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 	local numberLabel = dayButton:FindFirstChild(DailyRewardConfig.GuiNames.DayNumber, true)
 	local rewardText = dayButton:FindFirstChild(DailyRewardConfig.GuiNames.DayReward, true)
 	local status = dayButton:FindFirstChild(DailyRewardConfig.GuiNames.DayStatus, true)
-	local claimButton = dayButton:FindFirstChild(DailyRewardConfig.GuiNames.ClaimButton, true)
 
 	-- Auto-poblar información
 	if icon and icon:IsA("TextLabel") then
@@ -136,25 +135,15 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 			status.Text = "✅ RECLAMADO"
 			status.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
-		if claimButton then
-			claimButton.Visible = false
-		end
 
 	elseif isCurrentDay and canClaim then
-		-- Día disponible para reclamar
+		-- Día disponible para reclamar (se reclama haciendo clic en el ImageButton directamente)
 		local color = dayNumber == 7 and DailyRewardConfig.Colors.Special or DailyRewardConfig.Colors.Available
 		dayButton.BackgroundColor3 = color
 
 		if status and status:IsA("TextLabel") then
 			status.Text = "¡DISPONIBLE!"
 			status.TextColor3 = Color3.fromRGB(255, 255, 255)
-		end
-
-		if claimButton and claimButton:IsA("TextButton") then
-			claimButton.Visible = true
-			claimButton.Text = "RECLAMAR"
-			claimButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-			claimButton.Active = true
 		end
 
 	elseif isCurrentDay and not canClaim then
@@ -165,9 +154,6 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 			status.Text = string.format("⏰ %s", timeRemaining)
 			status.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
-		if claimButton then
-			claimButton.Visible = false
-		end
 
 	else
 		-- Día bloqueado (futuro)
@@ -175,9 +161,6 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 		if status and status:IsA("TextLabel") then
 			status.Text = "🔒 BLOQUEADO"
 			status.TextColor3 = Color3.fromRGB(150, 150, 150)
-		end
-		if claimButton then
-			claimButton.Visible = false
 		end
 	end
 end
@@ -320,11 +303,15 @@ for day = 1, 7 do
 	if dayButton then
 		dayButtons[day] = dayButton
 
-		-- Buscar botón de reclamar dentro del día
-		local claimButton = dayButton:FindFirstChild(DailyRewardConfig.GuiNames.ClaimButton, true)
-		if claimButton and claimButton:IsA("TextButton") then
-			claimButton.MouseButton1Click:Connect(function()
-				claimReward()
+		-- Conectar clic directamente al ImageButton/Frame del día
+		if dayButton:IsA("GuiButton") or dayButton:IsA("ImageButton") or dayButton:IsA("TextButton") then
+			dayButton.MouseButton1Click:Connect(function()
+				-- Solo reclamar si es el día actual y está disponible
+				if currentRewardInfo and currentRewardInfo.CurrentDay == day and currentRewardInfo.CanClaim then
+					claimReward()
+				else
+					print(string.format("[DailyRewardGui] ⚠️ Día %d no está disponible para reclamar", day))
+				end
 			end)
 		end
 
@@ -505,15 +492,14 @@ print("[DailyRewardGui] ✅ Sistema de GUI de recompensas diarias inicializado")
 	   ├─ DailyRewardGui (LocalScript) ← ESTE SCRIPT
 	   ├─ DailyRewardFrame (Frame) - Panel principal
 	   │  ├─ CloseButton (TextButton) - Botón cerrar
-	   │  ├─ Day1 (Frame/ImageButton) - Día 1
+	   │  ├─ Day1 (ImageButton) - Día 1 ← Hacer clic aquí reclama la recompensa
 	   │  │  ├─ Icon (TextLabel) - Emoji
 	   │  │  ├─ DayNumber (TextLabel) - "DÍA 1"
 	   │  │  ├─ RewardText (TextLabel) - Nombre de recompensa
-	   │  │  ├─ Status (TextLabel) - Estado
-	   │  │  └─ ClaimButton (TextButton) - Botón reclamar
-	   │  ├─ Day2 (Frame/ImageButton) - Día 2
+	   │  │  └─ Status (TextLabel) - Estado
+	   │  ├─ Day2 (ImageButton) - Día 2 ← Hacer clic aquí reclama la recompensa
 	   │  ├─ ... (hasta Day7)
-	   │  └─ Day7 (Frame/ImageButton) - Día 7
+	   │  └─ Day7 (ImageButton) - Día 7 ← Hacer clic aquí reclama la recompensa
 	   └─ BoostIndicator (Frame) [OPCIONAL] - Indicador de boost activo
 	      ├─ BoostText (TextLabel) - "🔥 x2 XP"
 	      └─ BoostTimer (TextLabel) - "9:45"
@@ -533,7 +519,10 @@ print("[DailyRewardGui] ✅ Sistema de GUI de recompensas diarias inicializado")
 
 	ESTADOS DE LOS DÍAS:
 	- ✅ RECLAMADO: Verde (días completados)
-	- ¡DISPONIBLE!: Dorado/Naranja (día actual si puede reclamar)
+	- ¡DISPONIBLE!: Dorado/Naranja (día actual - HAZ CLIC EN EL IMAGEBUTTON PARA RECLAMAR)
 	- ⏰ Tiempo: Dorado con contador (día actual en cooldown)
 	- 🔒 BLOQUEADO: Gris (días futuros)
+
+	NOTA: Para reclamar una recompensa, haz clic directamente en el ImageButton del día (Day1, Day2, etc.)
+	      El script solo permitirá reclamar si es el día actual y está disponible.
 ]]
