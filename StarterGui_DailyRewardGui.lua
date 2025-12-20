@@ -57,6 +57,17 @@ end
 -- Botón de cerrar
 local closeButton = mainFrame:FindFirstChild(DailyRewardConfig.GuiNames.CloseButton, true)
 
+-- Botón para abrir el panel (fuera del DailyRewardFrame, en la GUI principal)
+-- Este botón debe estar en tu ScreenGui principal (ej: PrincipalGui)
+local openButton = nil
+local principalGui = player:WaitForChild("PlayerGui"):FindFirstChild("PrincipalGui")
+if principalGui then
+	openButton = principalGui:FindFirstChild("DailyRewardButton", true)
+	if openButton then
+		print("[DailyRewardGui] ✅ Botón de apertura encontrado en PrincipalGui")
+	end
+end
+
 -- Indicador de boost activo (opcional)
 local boostIndicator = screenGui:FindFirstChild(DailyRewardConfig.GuiNames.BoostIndicator, true)
 local boostText = boostIndicator and boostIndicator:FindFirstChild(DailyRewardConfig.GuiNames.BoostText, true)
@@ -293,6 +304,18 @@ end
 
 -- ==================== CONECTAR BOTONES ====================
 
+-- Botón de abrir (en PrincipalGui o donde lo hayas puesto)
+if openButton then
+	openButton.MouseButton1Click:Connect(function()
+		if mainFrame.Visible then
+			hidePanel()
+		else
+			showPanel()
+		end
+	end)
+	print("[DailyRewardGui] 🔘 Botón de apertura conectado")
+end
+
 -- Botón de cerrar
 if closeButton then
 	closeButton.MouseButton1Click:Connect(hidePanel)
@@ -482,6 +505,11 @@ print("[DailyRewardGui] ✅ Sistema de GUI de recompensas diarias inicializado")
 	ESTRUCTURA REQUERIDA EN STARTERGUI:
 
 	StarterGui
+	├─ PrincipalGui (ScreenGui) - Tu GUI principal del juego
+	│  └─ DailyRewardButton (ImageButton/TextButton) [OPCIONAL]
+	│     ↑ Botón para abrir/cerrar el panel manualmente
+	│     (Puede estar en cualquier ScreenGui, no necesariamente PrincipalGui)
+	│
 	└─ DailyRewardGui (ScreenGui)
 	   ├─ DailyRewardGui (LocalScript) ← ESTE SCRIPT
 	   ├─ DailyRewardFrame (Frame) - Panel principal
@@ -504,6 +532,13 @@ print("[DailyRewardGui] ✅ Sistema de GUI de recompensas diarias inicializado")
 	- El script auto-puebla los TextLabels
 	- Los colores se actualizan automáticamente según estado
 	- Añade UICorner, UIGradient, etc. para mejorar la apariencia
+
+	BOTÓN DE APERTURA (OPCIONAL):
+	- Crea un ImageButton o TextButton llamado "DailyRewardButton"
+	- Colócalo en tu GUI principal (ej: PrincipalGui)
+	- El script lo buscará automáticamente
+	- Si no existe, el panel solo se abrirá automáticamente cuando haya recompensa
+	- Si existe, podrás abrir/cerrar el panel manualmente haciendo clic
 
 	ESTADOS DE LOS DÍAS:
 	- ✅ RECLAMADO: Verde (días completados)

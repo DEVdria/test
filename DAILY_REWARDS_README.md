@@ -76,6 +76,10 @@ Controla toda la interfaz de usuario.
 
 ```
 StarterGui
+├─ PrincipalGui (ScreenGui) ← Tu GUI principal del juego
+│  └─ DailyRewardButton (ImageButton/TextButton) [OPCIONAL]
+│     ↑ Botón para abrir/cerrar el panel manualmente
+│
 └─ DailyRewardGui (ScreenGui)
    ├─ DailyRewardGui (LocalScript) ← EL SCRIPT VA AQUÍ
    ├─ DailyRewardFrame (Frame) ← Panel principal
@@ -118,6 +122,28 @@ Day1, Day2... (cada uno):
 ClaimButton:
   Size = {0.8, 0}, {0.2, 0}
 ```
+
+### **Botón de apertura manual (OPCIONAL):**
+
+Si quieres que el jugador pueda abrir el panel cuando quiera (no solo cuando hay recompensa):
+
+1. **Crea un botón** en tu GUI principal (ImageButton o TextButton)
+2. **Nómbralo** `DailyRewardButton`
+3. **Colócalo** en cualquier ScreenGui (ej: PrincipalGui)
+4. **El script lo detectará** automáticamente
+
+**Comportamiento:**
+- ✅ Si el botón existe → El jugador puede abrir/cerrar el panel haciendo clic
+- ✅ Si no existe → El panel solo se abre automáticamente cuando hay recompensa disponible
+- ✅ En ambos casos, el panel se auto-abre cuando hay recompensa
+
+**Ubicaciones válidas:**
+```
+PrincipalGui/DailyRewardButton  ← Recomendado
+Cualquier otro ScreenGui también funciona
+```
+
+El script buscará el botón con `FindFirstChild("DailyRewardButton", true)` en PrincipalGui.
 
 ---
 
