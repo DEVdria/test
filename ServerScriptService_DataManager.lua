@@ -42,6 +42,11 @@ local function getDefaultData()
 		EquippedTrail = "Fire",       -- Trail equipada actualmente
 		Wins = 0,                     -- Victorias en carreras
 		ChestCooldowns = {},          -- Cooldowns de cofres {[chestID] = timestamp}
+		DailyRewards = {              -- Sistema de recompensas diarias
+			CurrentDay = 1,           -- Día actual en el ciclo (1-7)
+			LastClaimTime = 0,        -- Timestamp de última reclamación
+			TotalClaimed = 0          -- Total de recompensas reclamadas
+		},
 		-- NOTA: PlayTime y ClaimedRewards NO se guardan - son solo por sesión
 		-- Se inicializan cuando el jugador entra al servidor
 		LastSave = os.time()
