@@ -38,6 +38,14 @@ if not ClaimRewardEvent then
 	ClaimRewardEvent.Parent = RemotesFolder
 end
 
+-- RemoteEvent para notificar que hay recompensa disponible (auto-abrir GUI)
+local RewardAvailableEvent = RemotesFolder:FindFirstChild("DailyRewardAvailable")
+if not RewardAvailableEvent then
+	RewardAvailableEvent = Instance.new("RemoteEvent")
+	RewardAvailableEvent.Name = "DailyRewardAvailable"
+	RewardAvailableEvent.Parent = RemotesFolder
+end
+
 print("[DailyRewardManager] ✅ RemoteEvents creados")
 
 -- ==================== FUNCIONES DE DATASTORE ====================
@@ -222,15 +230,13 @@ Players.PlayerAdded:Connect(function(player)
 	if dailyData and canClaimReward(dailyData) then
 		-- Enviar señal al cliente para abrir la GUI automáticamente
 		task.wait(1)  -- Esperar un poco más para que la GUI esté lista
-		local RewardAvailableEvent = RemotesFolder:FindFirstChild("DailyRewardAvailable")
-		if not RewardAvailableEvent then
-			RewardAvailableEvent = Instance.new("RemoteEvent")
-			RewardAvailableEvent.Name = "DailyRewardAvailable"
-			RewardAvailableEvent.Parent = RemotesFolder
-		end
-
 		RewardAvailableEvent:FireClient(player)
 		print(string.format("[DailyRewardManager] 🔔 Notificación de recompensa enviada a %s", player.Name))
+	else
+		print(string.format("[DailyRewardManager] ℹ️ %s no tiene recompensa disponible (Día %d, Cooldown: %s)",
+			player.Name,
+			dailyData and dailyData.CurrentDay or "?",
+			dailyData and not canClaimReward(dailyData) and "Activo" or "N/A"))
 	end
 end)
 

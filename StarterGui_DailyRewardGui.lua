@@ -431,6 +431,9 @@ if RewardAvailableEvent then
 		task.wait(1)
 		showPanel()
 	end)
+	print("[DailyRewardGui] ✅ Conectado al evento de auto-apertura")
+else
+	warn("[DailyRewardGui] ⚠️ No se encontró RewardAvailableEvent - El panel NO se abrirá automáticamente")
 end
 
 -- ==================== INICIALIZACIÓN ====================
