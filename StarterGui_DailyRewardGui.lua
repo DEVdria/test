@@ -191,6 +191,56 @@ local function updateAllDayButtons()
 	end
 end
 
+-- Actualiza el indicador de boost activo
+local function updateBoostIndicator()
+	if not boostIndicator then return end
+
+	local hasActiveBoost = activeBoosts.XP.Active or activeBoosts.Money.Active
+
+	if hasActiveBoost then
+		-- Construir texto del boost
+		local boostTexts = {}
+		if activeBoosts.XP.Active then
+			table.insert(boostTexts, string.format("🔥 x%.0f XP", activeBoosts.XP.Multiplier))
+		end
+		if activeBoosts.Money.Active then
+			table.insert(boostTexts, string.format("💵 x%.0f Money", activeBoosts.Money.Multiplier))
+		end
+
+		if boostText then
+			boostText.Text = table.concat(boostTexts, " + ")
+		end
+
+		-- Mostrar tiempo restante del boost más largo
+		local maxTime = math.max(activeBoosts.XP.TimeRemaining or 0, activeBoosts.Money.TimeRemaining or 0)
+		if boostTimer then
+			boostTimer.Text = DailyRewardConfig.FormatBoostTime(maxTime)
+		end
+
+		-- Mostrar indicador con animación
+		if not boostIndicator.Visible then
+			boostIndicator.Visible = true
+			boostIndicator.Position = UDim2.new(0.5, 0, -0.2, 0)  -- Fuera de pantalla arriba
+			local tween = TweenService:Create(boostIndicator, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				Position = UDim2.new(0.5, 0, 0.05, 0)
+			})
+			tween:Play()
+		end
+	else
+		-- Ocultar indicador
+		if boostIndicator.Visible then
+			local tween = TweenService:Create(boostIndicator, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+				Position = UDim2.new(0.5, 0, -0.2, 0)
+			})
+			tween:Play()
+
+			task.delay(0.3, function()
+				boostIndicator.Visible = false
+			end)
+		end
+	end
+end
+
 -- Solicita información actualizada del servidor
 local function requestRewardInfo()
 	local success, info = pcall(function()
@@ -241,56 +291,6 @@ local function hidePanel()
 	-- Simplemente ocultar sin animación de salida que cambie posición
 	mainFrame.Visible = false
 	print("[DailyRewardGui] 📋 Panel de recompensas cerrado")
-end
-
--- Actualiza el indicador de boost activo
-local function updateBoostIndicator()
-	if not boostIndicator then return end
-
-	local hasActiveBoost = activeBoosts.XP.Active or activeBoosts.Money.Active
-
-	if hasActiveBoost then
-		-- Construir texto del boost
-		local boostTexts = {}
-		if activeBoosts.XP.Active then
-			table.insert(boostTexts, string.format("🔥 x%.0f XP", activeBoosts.XP.Multiplier))
-		end
-		if activeBoosts.Money.Active then
-			table.insert(boostTexts, string.format("💵 x%.0f Money", activeBoosts.Money.Multiplier))
-		end
-
-		if boostText then
-			boostText.Text = table.concat(boostTexts, " + ")
-		end
-
-		-- Mostrar tiempo restante del boost más largo
-		local maxTime = math.max(activeBoosts.XP.TimeRemaining or 0, activeBoosts.Money.TimeRemaining or 0)
-		if boostTimer then
-			boostTimer.Text = DailyRewardConfig.FormatBoostTime(maxTime)
-		end
-
-		-- Mostrar indicador con animación
-		if not boostIndicator.Visible then
-			boostIndicator.Visible = true
-			boostIndicator.Position = UDim2.new(0.5, 0, -0.2, 0)  -- Fuera de pantalla arriba
-			local tween = TweenService:Create(boostIndicator, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-				Position = UDim2.new(0.5, 0, 0.05, 0)
-			})
-			tween:Play()
-		end
-	else
-		-- Ocultar indicador
-		if boostIndicator.Visible then
-			local tween = TweenService:Create(boostIndicator, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-				Position = UDim2.new(0.5, 0, -0.2, 0)
-			})
-			tween:Play()
-
-			task.delay(0.3, function()
-				boostIndicator.Visible = false
-			end)
-		end
-	end
 end
 
 -- ==================== CONECTAR BOTONES ====================
