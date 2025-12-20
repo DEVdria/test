@@ -314,10 +314,36 @@ end
 RequestZonePurchaseEvent.OnClientEvent:Connect(function(result)
 	if result.Success then
 		print(string.format("[ZoneClientManager] ✅ %s", result.Message))
+
+		-- Reproducir sonido de éxito al comprar zona
+		local purchaseSound = Instance.new("Sound")
+		purchaseSound.SoundId = "rbxassetid://9114221327"  -- Sonido de victoria
+		purchaseSound.Volume = 0.9
+		purchaseSound.Pitch = 1.2
+		purchaseSound.Parent = game:GetService("SoundService")
+		purchaseSound:Play()
+
+		-- Destruir el sonido después de que termine
+		task.delay(3, function()
+			purchaseSound:Destroy()
+		end)
+
 		-- La notificación la muestra ZoneCollisionGui para evitar duplicados
 		-- La actualización vendrá por UpdateZoneOwnershipEvent
 	else
 		warn(string.format("[ZoneClientManager] ❌ %s", result.Message))
+
+		-- Reproducir sonido de error
+		local errorSound = Instance.new("Sound")
+		errorSound.SoundId = "rbxassetid://4590662766"  -- Sonido de error
+		errorSound.Volume = 0.5
+		errorSound.Parent = game:GetService("SoundService")
+		errorSound:Play()
+
+		task.delay(2, function()
+			errorSound:Destroy()
+		end)
+
 		-- La notificación la muestra ZoneCollisionGui para evitar duplicados
 	end
 end)
