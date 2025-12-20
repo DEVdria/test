@@ -170,12 +170,22 @@ end
 
 -- Fuerza la actualización de todas las zonas (útil después de recibir datos del servidor)
 local function refreshAllZones()
-	local buyZones = Workspace:FindFirstChild("Buy Zones")
-	if not buyZones then return end
+	-- ARREGLO: Usar WaitForChild para asegurar que la carpeta esté replicada
+	local buyZones = Workspace:WaitForChild("Buy Zones", 10)
+	if not buyZones then
+		warn("[ZoneClientManager] ⚠️ Timeout esperando 'Buy Zones'")
+		return
+	end
 
 	print(string.format("[ZoneClientManager] 🔄 Refrescando todas las zonas... (Zonas poseídas: %d)", #ownedZones))
 
-	for _, zonePart in ipairs(buyZones:GetChildren()) do
+	-- Esperar un momento adicional para que los hijos se repliquen
+	task.wait(0.5)
+
+	local children = buyZones:GetChildren()
+	print(string.format("[ZoneClientManager] 📊 Zonas encontradas en workspace: %d", #children))
+
+	for _, zonePart in ipairs(children) do
 		if zonePart:IsA("BasePart") then
 			local zoneConfig = ZoneConfig.GetZone(zonePart.Name)
 			if zoneConfig then
@@ -188,24 +198,34 @@ end
 
 -- Inicializa todas las zonas
 local function initializeZones()
-	-- Buscar carpeta Buy Zones en Workspace
-	local buyZones = Workspace:FindFirstChild("Buy Zones")
+	-- ARREGLO: Usar WaitForChild con timeout para replicación
+	print("[ZoneClientManager] ⏳ Esperando carpeta 'Buy Zones'...")
+	local buyZones = Workspace:WaitForChild("Buy Zones", 15)
 	if not buyZones then
-		warn("[ZoneClientManager] ❌ No se encontró carpeta 'Buy Zones' en Workspace")
-		warn("[ZoneClientManager] 📘 Crea una carpeta llamada 'Buy Zones' en Workspace")
+		warn("[ZoneClientManager] ❌ Timeout esperando carpeta 'Buy Zones' en Workspace")
+		warn("[ZoneClientManager] 📘 Verifica que exista una carpeta llamada 'Buy Zones' en Workspace")
 		return
 	end
 
+	print("[ZoneClientManager] ✅ Carpeta 'Buy Zones' encontrada")
 	print(string.format("[ZoneClientManager] Inicializando zonas... (Zonas poseídas: %d)", #ownedZones))
 
+	-- ARREGLO: Esperar un momento para que los hijos de la carpeta se repliquen
+	task.wait(0.5)
+
 	-- Buscar todos los Parts en Buy Zones
-	for _, zonePart in ipairs(buyZones:GetChildren()) do
+	local children = buyZones:GetChildren()
+	print(string.format("[ZoneClientManager] 📊 Parts encontrados en 'Buy Zones': %d", #children))
+
+	local initializedCount = 0
+	for _, zonePart in ipairs(children) do
 		if zonePart:IsA("BasePart") then
 			local zoneConfig = ZoneConfig.GetZone(zonePart.Name)
 
 			if zoneConfig then
 				local isOwned = table.find(ownedZones, zonePart.Name) ~= nil
 				updateZoneSurfaceGui(zonePart, zoneConfig, isOwned)
+				initializedCount = initializedCount + 1
 			else
 				warn(string.format("[ZoneClientManager] ⚠️ Part '%s' no tiene configuración en ZoneConfig", zonePart.Name))
 			end
@@ -213,7 +233,7 @@ local function initializeZones()
 	end
 
 	isInitialized = true
-	print("[ZoneClientManager] ✅ Zonas inicializadas")
+	print(string.format("[ZoneClientManager] ✅ Zonas inicializadas: %d/%d", initializedCount, #children))
 end
 
 -- Actualiza el estado de una zona específica
@@ -264,13 +284,18 @@ local function updateZoneOwnership(zoneID, isOwned)
 
 	-- Si ya está inicializado, actualizar inmediatamente
 	if isInitialized then
-		-- Buscar el Part de la zona
-		local buyZones = Workspace:FindFirstChild("Buy Zones")
-		if not buyZones then return end
+		-- ARREGLO: Usar WaitForChild para asegurar replicación
+		local buyZones = Workspace:WaitForChild("Buy Zones", 5)
+		if not buyZones then
+			warn("[ZoneClientManager] ⚠️ Timeout esperando 'Buy Zones' al actualizar zona")
+			return
+		end
 
-		local zonePart = buyZones:FindFirstChild(zoneID)
+		-- ARREGLO: Usar WaitForChild con timeout corto para la zona específica
+		local zonePart = buyZones:WaitForChild(zoneID, 3)
 		if not zonePart then
-			-- No es error si no se encuentra, puede ser una zona que ya no existe
+			-- No es error si no se encuentra, puede ser una zona que ya no existe o aún no replicada
+			warn(string.format("[ZoneClientManager] ⚠️ Zona '%s' no encontrada en workspace", zoneID))
 			return
 		end
 

@@ -198,7 +198,8 @@ end
 
 -- Verifica si el jugador está tocando una zona
 local function checkZoneCollision()
-	local buyZones = Workspace:FindFirstChild("Buy Zones")
+	-- ARREGLO: Usar WaitForChild con timeout corto (no queremos pausar el loop)
+	local buyZones = Workspace:WaitForChild("Buy Zones", 1)
 	if not buyZones then return end
 
 	local touching = false
@@ -288,11 +289,26 @@ if UpdateZoneOwnershipEvent then
 	end)
 end
 
--- Loop de detección de colisión (cada 0.2 segundos)
-RunService.Heartbeat:Connect(function()
-	-- Solo verificar cada cierto tiempo para mejor performance
-	if tick() % 0.2 < 0.016 then  -- Aproximadamente cada 0.2 segundos
-		checkZoneCollision()
+-- ARREGLO: Esperar a que "Buy Zones" esté replicada antes de iniciar el bucle de colisión
+task.spawn(function()
+	print("[ZoneCollisionGui] ⏳ Esperando replicación de 'Buy Zones'...")
+	local buyZones = Workspace:WaitForChild("Buy Zones", 15)
+	if buyZones then
+		print("[ZoneCollisionGui] ✅ 'Buy Zones' encontrada, iniciando sistema de detección")
+		-- Esperar un momento adicional para que los hijos se repliquen
+		task.wait(1)
+
+		-- Loop de detección de colisión (cada 0.2 segundos)
+		RunService.Heartbeat:Connect(function()
+			-- Solo verificar cada cierto tiempo para mejor performance
+			if tick() % 0.2 < 0.016 then  -- Aproximadamente cada 0.2 segundos
+				checkZoneCollision()
+			end
+		end)
+
+		print("[ZoneCollisionGui] ✅ Sistema de GUI de colisión de zonas iniciado")
+	else
+		warn("[ZoneCollisionGui] ❌ Timeout esperando 'Buy Zones' - Sistema de colisión no iniciado")
 	end
 end)
 
@@ -302,8 +318,6 @@ player.CharacterAdded:Connect(function(newCharacter)
 	humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 	hideZoneGui()
 end)
-
-print("[ZoneCollisionGui] ✅ Sistema de GUI de colisión de zonas iniciado")
 
 -- ==================== NOTAS DE USO ====================
 --[[
