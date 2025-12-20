@@ -233,14 +233,17 @@ local function onStateChanged(_, newState)
 	end
 end
 
+-- -=/ACTIVAR RUNNING AUTOMÁTICAMENTE AL ENTRAR/=-
+task.spawn(function()
+	task.wait(1.5)  -- Esperar a que todo se cargue
+	if RootPart:GetAttribute("RunEnabled") and isOnGround then
+		Run()
+		print("[Running] ✅ Running activado automáticamente al entrar al juego")
+	end
+end)
+
 -- -=/HEARTBEAT LOOP/=-
 RunService.Heartbeat:Connect(function()
-
-	-- -=/AUTO-ACTIVAR RUNNING CUANDO EL JUGADOR SE MUEVE/=-
-	local isMoving = Humanoid.MoveDirection.Magnitude > 0.1
-	if isMoving and isOnGround and not RootPart:GetAttribute("IsRunning") and RootPart:GetAttribute("RunEnabled") then
-		Run()
-	end
 
 	-- -=/ACTUALIZAR VELOCIDAD SI ESTÁ CORRIENDO/=-
 	if RootPart:GetAttribute("IsRunning") then

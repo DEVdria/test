@@ -42,10 +42,17 @@ local function getPlayerRunSpeed()
 	return 24  -- Velocidad base si no se encuentra el nivel
 end
 
--- Cargar velocidad inicial
+-- Cargar velocidad inicial y activar running automáticamente al entrar
 task.spawn(function()
 	task.wait(1)  -- Esperar a que leaderstats se cree
 	currentRunSpeed = getPlayerRunSpeed()
+
+	-- Activar running automáticamente al entrar al juego
+	task.wait(0.5)  -- Pequeña espera adicional
+	if RootPart:GetAttribute("RunEnabled") and isOnGround then
+		Run()
+		print("[Running] ✅ Running activado automáticamente al entrar al juego")
+	end
 end)
 
 -- Escuchar cuando el jugador sube de nivel
@@ -266,12 +273,6 @@ end
 -- -=/HEARTBEAT LOOP/=-
 RunService.Heartbeat:Connect(function()
 
-	-- -=/AUTO-ACTIVAR RUNNING CUANDO EL JUGADOR SE MUEVE/=-
-	local isMoving = Humanoid.MoveDirection.Magnitude > 0.1
-	if isMoving and isOnGround and not RootPart:GetAttribute("IsRunning") and RootPart:GetAttribute("RunEnabled") then
-		Run()
-	end
-
 	-- -=/ACTUALIZAR VELOCIDAD SI ESTÁ CORRIENDO/=-
 	if RootPart:GetAttribute("IsRunning") then
 		-- Asegurarse de que la velocidad sea la correcta
@@ -280,11 +281,13 @@ RunService.Heartbeat:Connect(function()
 		end
 	end
 
-	-- -=/AUTO-DETENER RUNNING CUANDO EL JUGADOR SE DETIENE/=-
-	notMoving = Humanoid.MoveDirection.Magnitude < 0.1
-	if notMoving and RootPart:GetAttribute("IsRunning") then
-		Stop()
-	end
+	-- -=/NON-MOVEMENT CHECK (DESACTIVADO EN MODO TOGGLE)/=-
+	-- En modo toggle, el running NO se detiene automáticamente al detenerse
+	-- El jugador debe presionar la tecla/botón de nuevo para desactivarlo
+	-- notMoving = Humanoid.MoveDirection.Magnitude < 0.1
+	-- if notMoving and RootPart:GetAttribute("IsRunning") then
+	-- 	Stop()
+	-- end
 
 	-- -=/RUNNING ENABLED VALUE CHECK/=-
 	if RootPart:GetAttribute("IsRunning") and not RootPart:GetAttribute("RunEnabled") then
