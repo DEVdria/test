@@ -155,12 +155,6 @@ local function updateDayButton(dayNumber, currentDay, canClaim)
 			claimButton.Text = "RECLAMAR"
 			claimButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 			claimButton.Active = true
-
-			-- Animación de pulso para el botón disponible
-			local pulse = TweenService:Create(claimButton, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-				Size = UDim2.new(claimButton.Size.X.Scale * 1.1, 0, claimButton.Size.Y.Scale * 1.1, 0)
-			})
-			pulse:Play()
 		end
 
 	elseif isCurrentDay and not canClaim then
