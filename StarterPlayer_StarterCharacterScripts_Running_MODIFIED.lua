@@ -42,21 +42,10 @@ local function getPlayerRunSpeed()
 	return 24  -- Velocidad base si no se encuentra el nivel
 end
 
--- Cargar velocidad inicial y activar running automáticamente al entrar
+-- Cargar velocidad inicial
 task.spawn(function()
 	task.wait(1)  -- Esperar a que leaderstats se cree
 	currentRunSpeed = getPlayerRunSpeed()
-
-	-- Activar running automáticamente al entrar al juego
-	task.wait(0.5)  -- Pequeña espera adicional
-	if RootPart:GetAttribute("RunEnabled") then
-		-- Verificar que esté en el suelo antes de activar
-		local onGround = Humanoid.FloorMaterial ~= Enum.Material.Air
-		if onGround then
-			Run()
-			print("[Running] ✅ Running activado automáticamente al entrar al juego")
-		end
-	end
 end)
 
 -- Escuchar cuando el jugador sube de nivel
@@ -381,3 +370,16 @@ RunService.Heartbeat:Connect(function()
 end)
 
 Humanoid.StateChanged:Connect(onStateChanged)
+
+-- -=/ACTIVAR RUNNING AUTOMÁTICAMENTE AL ENTRAR/=-
+task.spawn(function()
+	task.wait(1.5)  -- Esperar a que todo se cargue
+	if RootPart:GetAttribute("RunEnabled") then
+		-- Verificar que esté en el suelo antes de activar
+		local onGround = Humanoid.FloorMaterial ~= Enum.Material.Air
+		if onGround then
+			Run()
+			print("[Running] ✅ Running activado automáticamente al entrar al juego")
+		end
+	end
+end)
