@@ -112,6 +112,43 @@ local function checkStarCollection()
 					-- Actualizar cooldown local
 					collectedStars[starID] = tick()
 
+					-- Efecto de fuego en el personaje (solo visible para el jugador)
+					task.spawn(function()
+						if character and character:FindFirstChild("HumanoidRootPart") then
+							local fires = {}
+
+							-- Crear efectos de fuego en las partes principales del personaje
+							for _, part in ipairs(character:GetChildren()) do
+								if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+									local fire = Instance.new("Fire")
+									fire.Size = 5
+									fire.Heat = 10
+									fire.Color = Color3.fromRGB(255, 170, 0)  -- Naranja/Dorado
+									fire.SecondaryColor = Color3.fromRGB(255, 85, 0)  -- Naranja oscuro
+									fire.Parent = part
+									table.insert(fires, fire)
+								end
+							end
+
+							-- También agregar fuego al HumanoidRootPart
+							local rootFire = Instance.new("Fire")
+							rootFire.Size = 8
+							rootFire.Heat = 15
+							rootFire.Color = Color3.fromRGB(255, 170, 0)
+							rootFire.SecondaryColor = Color3.fromRGB(255, 85, 0)
+							rootFire.Parent = character.HumanoidRootPart
+							table.insert(fires, rootFire)
+
+							-- Eliminar todos los efectos después de 4 segundos
+							task.wait(4)
+							for _, fire in ipairs(fires) do
+								if fire and fire.Parent then
+									fire:Destroy()
+								end
+							end
+						end
+					end)
+
 					-- Efecto visual de recolección (opcional)
 					task.spawn(function()
 						local originalSize = data.part.Size
