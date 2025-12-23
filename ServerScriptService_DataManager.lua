@@ -15,10 +15,19 @@ if not Modules then
 end
 
 local ZoneConfig = require(Modules:WaitForChild("ZoneConfig", 10))
-local LevelManager = require(Modules:WaitForChild("LevelManager", 10))
+local LevelManagerModule = Modules:WaitForChild("LevelManager", 10)
+if not LevelManagerModule then
+	warn("[DataManager] ❌ No se encontró módulo LevelManager")
+	return
+end
+local LevelManager = require(LevelManagerModule)
 
 -- Esperar RemoteEvents
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
+if not RemoteEvents then
+	warn("[DataManager] ❌ No se encontró carpeta RemoteEvents")
+	return
+end
 
 -- Funciones de rebirth (antes estaban en OrbConfig)
 local function CalculateRebirthCost(rebirths)
@@ -208,6 +217,20 @@ function DataManager.AddEXP(player, expAmount)
 	-- Añadir EXP
 	local newEXP = DataManager.IncrementValue(player, "CurrentEXP", expAmount)
 	if not newEXP then return nil end
+
+	-- Verificar que LevelManager esté disponible
+	if not LevelManager or not LevelManager.GetMaxLevel or not LevelManager.GetRequiredEXP or not LevelManager.GetRunSpeed then
+		warn("[DataManager] ⚠️ LevelManager no está disponible o no tiene las funciones necesarias")
+		-- Solo actualizar leaderstats sin procesar level ups
+		local leaderstats = player:FindFirstChild("leaderstats")
+		if leaderstats then
+			local expValue = leaderstats:FindFirstChild("CurrentEXP")
+			if expValue then
+				expValue.Value = newEXP
+			end
+		end
+		return newEXP
+	end
 
 	-- Verificar si debe subir de nivel
 	local currentLevel = data.Level
