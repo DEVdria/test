@@ -14,8 +14,19 @@ if not Modules then
 	return
 end
 
-local OrbConfig = require(Modules:WaitForChild("OrbConfig", 10))
 local ZoneConfig = require(Modules:WaitForChild("ZoneConfig", 10))
+
+-- Funciones de rebirth (antes estaban en OrbConfig)
+local function CalculateRebirthCost(rebirths)
+	-- Costo base: 1000, aumenta exponencialmente
+	local baseCost = 1000
+	return baseCost * (2 ^ rebirths)
+end
+
+local function CalculateEXPMultiplier(rebirths)
+	-- Cada rebirth da +10% de multiplicador
+	return 1 + (rebirths * 0.1)
+end
 local PlayerDataStore = DataStoreService:GetDataStore("PlayerData_V2")  -- Cambio a V2 para nueva estructura
 
 -- Almacenar funciones globalmente para que otros scripts puedan acceder
@@ -262,7 +273,7 @@ function DataManager.ProcessRebirth(player)
 	if not data then return false end
 
 	local currentRebirths = data.Rebirths
-	local cost = OrbConfig.CalculateRebirthCost(currentRebirths)
+	local cost = CalculateRebirthCost(currentRebirths)
 
 	-- Verificar si tiene suficiente dinero
 	if data.Money < cost then
@@ -274,7 +285,7 @@ function DataManager.ProcessRebirth(player)
 	data.Rebirths = data.Rebirths + 1
 	data.Level = 0                        -- Resetear nivel
 	data.CurrentEXP = 0                   -- Resetear EXP
-	data.EXPMultiplier = OrbConfig.CalculateEXPMultiplier(data.Rebirths)
+	data.EXPMultiplier = CalculateEXPMultiplier(data.Rebirths)
 	data.OwnedZones = ZoneConfig.GetDefaultZones()  -- Resetear zonas a las default
 
 	-- Actualizar leaderstats

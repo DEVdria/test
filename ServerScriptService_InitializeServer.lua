@@ -19,15 +19,6 @@ if not RemoteEvents then
 	return
 end
 
--- Verificar que los módulos existan
-local OrbConfig = Modules:WaitForChild("OrbConfig", 5)
-local OrbManager = Modules:WaitForChild("OrbManager", 5)
-
-if not OrbConfig or not OrbManager then
-	error("[InitializeServer] ❌ Módulos OrbConfig u OrbManager no encontrados")
-	return
-end
-
 print("[InitializeServer] ✅ Módulos cargados correctamente")
 
 -- Esperar a que todos los scripts estén cargados
