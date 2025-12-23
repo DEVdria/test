@@ -15,6 +15,10 @@ if not Modules then
 end
 
 local ZoneConfig = require(Modules:WaitForChild("ZoneConfig", 10))
+local LevelManager = require(Modules:WaitForChild("LevelManager", 10))
+
+-- Esperar RemoteEvents
+local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
 
 -- Funciones de rebirth (antes estaban en OrbConfig)
 local function CalculateRebirthCost(rebirths)
@@ -196,21 +200,79 @@ function DataManager.AddMoney(player, amount)
 	return false
 end
 
--- Añade EXP al jugador
+-- Añade EXP al jugador y procesa level ups automáticamente
 function DataManager.AddEXP(player, expAmount)
+	local data = playerData[player.UserId]
+	if not data then return nil end
+
+	-- Añadir EXP
 	local newEXP = DataManager.IncrementValue(player, "CurrentEXP", expAmount)
-	if newEXP then
-		-- Actualizar leaderstats
-		local leaderstats = player:FindFirstChild("leaderstats")
-		if leaderstats then
-			local expValue = leaderstats:FindFirstChild("CurrentEXP")
-			if expValue then
-				expValue.Value = newEXP
+	if not newEXP then return nil end
+
+	-- Verificar si debe subir de nivel
+	local currentLevel = data.Level
+	local currentRebirths = data.Rebirths
+	local maxLevel = LevelManager.GetMaxLevel(currentRebirths)
+
+	-- Procesar level ups mientras tenga suficiente EXP y no haya alcanzado el máximo
+	while currentLevel < maxLevel do
+		local requiredEXP = LevelManager.GetRequiredEXP(currentLevel)
+
+		if newEXP >= requiredEXP then
+			-- Suficiente EXP para subir de nivel
+			currentLevel = currentLevel + 1
+			newEXP = newEXP - requiredEXP
+
+			-- Actualizar datos
+			data.Level = currentLevel
+			data.CurrentEXP = newEXP
+
+			-- Actualizar leaderstats
+			local leaderstats = player:FindFirstChild("leaderstats")
+			if leaderstats then
+				local levelValue = leaderstats:FindFirstChild("Level")
+				if levelValue then
+					levelValue.Value = currentLevel
+				end
+				local expValue = leaderstats:FindFirstChild("CurrentEXP")
+				if expValue then
+					expValue.Value = newEXP
+				end
 			end
+
+			-- Enviar evento de level up
+			local LevelUpEvent = RemoteEvents:FindFirstChild("LevelUp")
+			if LevelUpEvent then
+				local newSpeed = LevelManager.GetRunSpeed(currentLevel)
+				LevelUpEvent:FireClient(player, currentLevel, newSpeed)
+			end
+
+			-- Verificar si alcanzó el nivel máximo
+			if currentLevel >= maxLevel then
+				local MaxLevelReachedEvent = RemoteEvents:FindFirstChild("MaxLevelReached")
+				if MaxLevelReachedEvent then
+					MaxLevelReachedEvent:FireClient(player, maxLevel)
+				end
+				break
+			end
+
+			print(string.format("[DataManager] ✅ %s subió al nivel %d!", player.Name, currentLevel))
+		else
+			-- No tiene suficiente EXP para subir más
+			break
 		end
-		return newEXP
 	end
-	return nil
+
+	-- Actualizar leaderstats con la EXP final
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if leaderstats then
+		local expValue = leaderstats:FindFirstChild("CurrentEXP")
+		if expValue then
+			expValue.Value = newEXP
+		end
+	end
+
+	return newEXP
 end
 
 -- Añade Wins (victorias en carreras) al jugador
