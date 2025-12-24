@@ -47,6 +47,7 @@ local function createRankTitle(character, rankInfo)
 	billboard.Size = RankConfig.Visual.Size
 	billboard.StudsOffset = Vector3.new(0, RankConfig.Visual.YOffset, 0)
 	billboard.AlwaysOnTop = true
+	billboard.MaxDistance = math.huge  -- Visible a cualquier distancia
 	billboard.Parent = head
 
 	-- Crear TextLabel
@@ -60,7 +61,7 @@ local function createRankTitle(character, rankInfo)
 	textLabel.TextColor3 = rankInfo.TextColor
 	textLabel.TextStrokeColor3 = rankInfo.TextStrokeColor
 	textLabel.TextStrokeTransparency = RankConfig.Visual.TextStrokeTransparency
-	textLabel.TextScaled = false
+	textLabel.TextScaled = true  -- Escala el texto para llenar el espacio disponible
 	textLabel.Parent = billboard
 
 	print(string.format("[RankTitleManager] 📝 Título creado: '%s' (Nivel %d)", rankInfo.Title, rankInfo.Level))

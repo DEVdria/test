@@ -156,8 +156,8 @@ RankConfig.Visual = {
     -- Fuente del texto (ya configurada: Fredoka One)
     Font = Enum.Font.FredokaOne,
 
-    -- Tamaño del texto
-    TextSize = 24,  -- Cambia este número para texto más grande/pequeño
+    -- Tamaño del texto (TextScaled está activado, así que esto es solo referencia)
+    TextSize = 24,
 
     -- Background transparency (1 = completamente transparente)
     BackgroundTransparency = 1,  -- Ya configurado
@@ -168,8 +168,9 @@ RankConfig.Visual = {
     -- Grosor del contorno del texto
     TextStrokeThickness = 2,  -- Más alto = contorno más grueso
 
-    -- Tamaño del BillboardGui
-    Size = UDim2.new(0, 200, 0, 50),  -- Ancho: 200px, Alto: 50px
+    -- Tamaño del BillboardGui (en píxeles absolutos)
+    -- IMPORTANTE: Usa solo valores offset (0, X, 0, Y) para tamaño consistente
+    Size = UDim2.new(0, 300, 0, 60),  -- Ancho: 300px, Alto: 60px
 
     -- Distancia sobre la cabeza (studs)
     YOffset = 3,  -- Más alto = más arriba de la cabeza
@@ -190,6 +191,30 @@ YOffset = 3,
 -- Más arriba
 YOffset = 4,
 ```
+
+## 🔧 Tamaño Constante (Importante)
+
+El sistema está configurado para mantener un **tamaño visual consistente** sin importar la distancia de la cámara:
+
+- ✅ **Size usa valores absolutos** (UDim2.new(0, 300, 0, 60)) - el `0` en scale mantiene el tamaño en píxeles
+- ✅ **TextScaled = true** - el texto siempre llena el espacio disponible
+- ✅ **MaxDistance = math.huge** - visible a cualquier distancia
+
+**Para ajustar el tamaño del título:**
+```lua
+-- Más grande
+Size = UDim2.new(0, 400, 0, 80),
+
+-- Tamaño normal (predeterminado)
+Size = UDim2.new(0, 300, 0, 60),
+
+-- Más pequeño
+Size = UDim2.new(0, 200, 0, 40),
+```
+
+**⚠️ IMPORTANTE:** Siempre usa `0` en los primeros valores (scale). Los segundos valores (offset) son píxeles absolutos.
+
+**Formato:** `UDim2.new(0, AnchoEnPíxeles, 0, AltoEnPíxeles)`
 
 ## 🎯 Ejemplos de Configuración
 

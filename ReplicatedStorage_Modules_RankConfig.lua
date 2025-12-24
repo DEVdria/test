@@ -93,8 +93,8 @@ RankConfig.Visual = {
 	-- Grosor del contorno del texto
 	TextStrokeThickness = 2,
 
-	-- Tamaño del BillboardGui
-	Size = UDim2.new(0, 200, 0, 50),
+	-- Tamaño del BillboardGui (en píxeles absolutos para tamaño consistente)
+	Size = UDim2.new(0, 300, 0, 60),
 
 	-- Distancia sobre la cabeza (studs)
 	YOffset = 3,
