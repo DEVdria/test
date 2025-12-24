@@ -77,12 +77,23 @@ local function giveStepEXP(player)
 		return false
 	end
 
-	-- Otorgar EXP
-	local success = DataManager.AddEXP(player, EXP_PER_STEP)
+	-- Obtener datos del jugador para aplicar multiplicador
+	local playerData = DataManager.GetData(player)
+	if not playerData then
+		return false
+	end
+
+	-- Obtener multiplicador de EXP (por rebirths)
+	local expMultiplier = playerData.EXPMultiplier or 1
+	local baseEXP = EXP_PER_STEP
+	local finalEXP = math.floor(baseEXP * expMultiplier)
+
+	-- Otorgar EXP MULTIPLICADO
+	local success = DataManager.AddEXP(player, finalEXP)
 
 	if success then
-		-- Enviar notificación al cliente
-		ShowStepNotificationEvent:FireClient(player, EXP_PER_STEP)
+		-- Enviar notificación al cliente con el EXP base, multiplicador y total
+		ShowStepNotificationEvent:FireClient(player, baseEXP, expMultiplier, finalEXP)
 		return true
 	end
 

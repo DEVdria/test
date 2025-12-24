@@ -74,7 +74,7 @@ local function getRandomPosition()
 end
 
 -- Muestra una nueva notificación con la animación personalizada
-local function showNotification(expAmount)
+local function showNotification(baseEXP, multiplier, finalEXP)
 	-- Clonar el template
 	local notification = notificationTemplate:Clone()
 	notification.Name = "StepNotification_" .. tick()
@@ -84,7 +84,13 @@ local function showNotification(expAmount)
 	-- Actualizar el texto de la notificación
 	local expLabel = notification:FindFirstChild("EXPLabel", true)
 	if expLabel and expLabel:IsA("TextLabel") then
-		expLabel.Text = string.format("+%d 👟", expAmount)
+		-- Si hay multiplicador mayor que 1, mostrar el multiplicador
+		if multiplier > 1 then
+			expLabel.Text = string.format("+%d 👟 (x%.1f = %d)", baseEXP, multiplier, finalEXP)
+		else
+			-- Sin multiplicador, mostrar solo el EXP normal
+			expLabel.Text = string.format("+%d 👟", finalEXP)
+		end
 	end
 
 	-- FASE 1: Posición inicial en el CENTRO de la pantalla
@@ -166,11 +172,12 @@ end
 -- ==================== ESCUCHAR EVENTOS ====================
 
 if ShowStepNotificationEvent then
-	ShowStepNotificationEvent.OnClientEvent:Connect(function(expAmount)
-		showNotification(expAmount)
+	ShowStepNotificationEvent.OnClientEvent:Connect(function(baseEXP, multiplier, finalEXP)
+		showNotification(baseEXP, multiplier, finalEXP)
 	end)
 	print("[StepNotificationManager] ✅ Sistema de notificaciones de pasos iniciado")
 	print("[StepNotificationManager] 📦 Usando template: " .. notificationTemplate.Name)
+	print("[StepNotificationManager] 🎯 Mostrará multiplicadores de rebirth en las notificaciones")
 else
 	warn("[StepNotificationManager] ❌ No se encontró el RemoteEvent ShowStepNotification")
 end
