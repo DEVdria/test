@@ -350,24 +350,42 @@ end
 
 -- Procesa un rebirth
 function DataManager.ProcessRebirth(player)
+	print(string.format("[DataManager] 🔄 ProcessRebirth iniciado para %s", player.Name))
+
 	local data = playerData[player.UserId]
-	if not data then return false end
+	if not data then
+		warn(string.format("[DataManager] ❌ No hay datos para %s", player.Name))
+		return false, "No hay datos del jugador"
+	end
 
 	local currentRebirths = data.Rebirths
 	local cost = RebirthConfig.GetRebirthCost(currentRebirths)
 
+	print(string.format("[DataManager] 💰 Money actual: %d, Costo: %d", data.Money, cost))
+
 	-- Verificar si tiene suficiente dinero
 	if data.Money < cost then
+		warn(string.format("[DataManager] ❌ Dinero insuficiente: %d < %d", data.Money, cost))
 		return false, "Dinero insuficiente"
 	end
 
 	-- Procesar rebirth
+	print(string.format("[DataManager] ⚙️ Procesando rebirth: Rebirths %d → %d", data.Rebirths, data.Rebirths + 1))
+
 	data.Money = 0                        -- Resetear dinero a 0
 	data.Rebirths = data.Rebirths + 1
 	data.Level = 0                        -- Resetear nivel
 	data.CurrentEXP = 0                   -- Resetear EXP
 	data.EXPMultiplier = RebirthConfig.GetEXPMultiplier(data.Rebirths)
-	data.OwnedZones = ZoneConfig.GetDefaultZones()  -- Resetear zonas a las default
+
+	print(string.format("[DataManager] 🔄 Obteniendo zonas default de ZoneConfig..."))
+	local defaultZones = ZoneConfig.GetDefaultZones()
+	if not defaultZones then
+		warn("[DataManager] ⚠️ ZoneConfig.GetDefaultZones() retornó nil, usando tabla vacía")
+		defaultZones = {}
+	end
+	data.OwnedZones = defaultZones
+	print(string.format("[DataManager] 🗺️ Zonas reseteadas: %d zonas", #defaultZones))
 
 	-- Actualizar leaderstats
 	local leaderstats = player:FindFirstChild("leaderstats")
@@ -390,6 +408,7 @@ function DataManager.ProcessRebirth(player)
 		end
 	end
 
+	print(string.format("[DataManager] ✅ ProcessRebirth completado exitosamente para %s", player.Name))
 	return true, "Rebirth exitoso"
 end
 

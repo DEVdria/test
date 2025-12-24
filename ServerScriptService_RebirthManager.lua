@@ -62,12 +62,16 @@ end
 
 -- Procesa una solicitud de rebirth
 local function processRebirthPurchase(player)
+	print(string.format("[RebirthManager] 🔄 Procesando rebirth para %s", player.Name))
+
 	-- Validaciones de seguridad
 	if not player or not player:IsDescendantOf(game.Players) then
+		warn("[RebirthManager] ❌ Jugador inválido")
 		return {Success = false, Message = "Jugador inválido"}
 	end
 
 	if not canPurchase(player) then
+		print(string.format("[RebirthManager] ⏳ %s en cooldown", player.Name))
 		return {Success = false, Message = "Espera antes de comprar otro rebirth"}
 	end
 
@@ -77,8 +81,11 @@ local function processRebirthPurchase(player)
 	-- Obtener datos del jugador
 	local playerData = DataManager.GetData(player)
 	if not playerData then
+		warn(string.format("[RebirthManager] ❌ No se pudo obtener datos de %s", player.Name))
 		return {Success = false, Message = "Error al cargar datos"}
 	end
+
+	print(string.format("[RebirthManager] 📊 Datos obtenidos: Money=%d, Rebirths=%d", playerData.Money, playerData.Rebirths))
 
 	-- Calcular costo, nuevo multiplicador y level caps
 	local currentRebirths = playerData.Rebirths
@@ -87,8 +94,11 @@ local function processRebirthPurchase(player)
 	local currentMaxLevel = LevelManager.GetMaxLevel(currentRebirths)
 	local nextMaxLevel = LevelManager.GetMaxLevel(currentRebirths + 1)
 
+	print(string.format("[RebirthManager] 💰 Costo del rebirth: %d", cost))
+
 	-- Verificar si tiene suficiente dinero
 	if playerData.Money < cost then
+		print(string.format("[RebirthManager] ❌ %s no tiene suficiente dinero", player.Name))
 		return {
 			Success = false,
 			Message = string.format("Necesitas $%s (Tienes: $%s)",
@@ -97,9 +107,19 @@ local function processRebirthPurchase(player)
 	end
 
 	-- Procesar el rebirth
-	local success, message = DataManager.ProcessRebirth(player)
+	print(string.format("[RebirthManager] ⚙️ Llamando a DataManager.ProcessRebirth..."))
+	local pcallSuccess, rebirthSuccess, rebirthMessage = pcall(function()
+		return DataManager.ProcessRebirth(player)
+	end)
 
-	if success then
+	if not pcallSuccess then
+		warn(string.format("[RebirthManager] ❌ Error crítico en ProcessRebirth: %s", tostring(rebirthSuccess)))
+		return {Success = false, Message = "Error al procesar rebirth"}
+	end
+
+	print(string.format("[RebirthManager] 📋 ProcessRebirth resultado: success=%s, message=%s", tostring(rebirthSuccess), tostring(rebirthMessage)))
+
+	if rebirthSuccess then
 		-- Resetear zonas en el cliente
 		if UpdateZoneOwnershipEvent then
 			-- Primero, limpiar todas las zonas (enviar señal de reset)
@@ -155,9 +175,12 @@ print("[RebirthManager] Inicializando...")
 
 -- Escuchar solicitudes de compra de rebirth
 RequestRebirthPurchaseEvent.OnServerEvent:Connect(function(player)
+	print(string.format("[RebirthManager] 📨 Recibida solicitud de rebirth de %s", player.Name))
 	local result = processRebirthPurchase(player)
+	print(string.format("[RebirthManager] 📤 Enviando resultado al cliente: Success=%s, Message=%s", tostring(result.Success), tostring(result.Message)))
 	-- Devolver resultado al cliente
 	RequestRebirthPurchaseEvent:FireClient(player, result)
+	print(string.format("[RebirthManager] ✅ Resultado enviado a %s", player.Name))
 end)
 
 -- Limpiar cooldowns al salir

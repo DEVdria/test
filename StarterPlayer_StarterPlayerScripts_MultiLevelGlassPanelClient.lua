@@ -293,43 +293,32 @@ local function activatePanel(panel, panelNumber, levelName, fallTime)
 end
 
 -- ═══════════════════════════════════════════════════════════
--- DETECCIÓN DE POSICIÓN DEL JUGADOR
+-- DETECCIÓN DE PANELES CON TOUCHED EVENTS (OPTIMIZADO)
 -- ═══════════════════════════════════════════════════════════
 
-local function isPlayerOnPanel(panel, character)
-	if not character or not character.Parent then
-		return false
+local function setupPanelTouchedEvents(panel, panelNumber, levelName, fallTime)
+	local function onPanelTouched(hit)
+		-- Verificar que es el HumanoidRootPart del jugador local
+		if hit.Name ~= "HumanoidRootPart" then return end
+
+		local hitCharacter = hit.Parent
+		if not hitCharacter or hitCharacter ~= player.Character then return end
+
+		-- Activar el panel
+		local data = panelData[panel]
+		if data and not data.isActive then
+			activatePanel(panel, panelNumber, levelName, fallTime)
+		end
 	end
 
-	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-	if not humanoidRootPart then
-		return false
+	-- Conectar Touched event
+	local touchedConnection = panel.Touched:Connect(onPanelTouched)
+
+	-- Guardar conexión para limpieza posterior si es necesario
+	if not panelData[panel] then
+		panelData[panel] = {}
 	end
-
-	local panelX = panel.Position.X
-	local panelZ = panel.Position.Z
-	local panelSizeX = panel.Size.X / 2
-	local panelSizeZ = panel.Size.Z / 2
-
-	local playerX = humanoidRootPart.Position.X
-	local playerZ = humanoidRootPart.Position.Z
-
-	local inXRange = playerX >= (panelX - panelSizeX) and playerX <= (panelX + panelSizeX)
-	local inZRange = playerZ >= (panelZ - panelSizeZ) and playerZ <= (panelZ + panelSizeZ)
-
-	if not (inXRange and inZRange) then
-		return false
-	end
-
-	local panelTop = panel.Position.Y + (panel.Size.Y / 2)
-	local playerPos = humanoidRootPart.Position.Y
-
-	local heightDiff = playerPos - panelTop
-	if heightDiff >= -1 and heightDiff <= 4 then
-		return true
-	end
-
-	return false
+	panelData[panel].touchedConnection = touchedConnection
 end
 
 -- ═══════════════════════════════════════════════════════════
@@ -535,9 +524,11 @@ local function initializeLevel(levelFolder)
 			originalCFrame = panel.CFrame,
 			isActive = false,
 			startTime = nil,
-			wasPlayerOn = false,
 			isLastPanel = isLastPanel,
 		}
+
+		-- 🚀 OPTIMIZACIÓN: Configurar Touched event en vez de Heartbeat loop
+		setupPanelTouchedEvents(panel, panelNumber, levelFolder.Name, fallTime)
 
 		table.insert(allPanels, panel)
 	end
@@ -565,36 +556,22 @@ end
 -- ═══════════════════════════════════════════════════════════
 
 local function startDetectionLoop()
+	-- 🚀 OPTIMIZACIÓN: Solo actualizar progress bar, no iterar sobre paneles
+	-- Los paneles ahora usan Touched events (configurados en setupPanelTouchedEvents)
 	RunService.Heartbeat:Connect(function()
 		local character = player.Character
 		if not character then return end
 
+		-- Actualizar progress bar si hay un nivel activo
 		if currentLevel then
 			updateProgressBar()
 		end
 
+		-- Detectar si el jugador está tocando una plataforma (para zonas)
 		detectPlatformTouch()
 
-		for _, panel in ipairs(allPanels) do
-			local success, err = pcall(function()
-				if panel and panel.Parent then
-					local data = panelData[panel]
-					if data then
-						local isOn = isPlayerOnPanel(panel, character)
-
-						if isOn and not data.wasPlayerOn then
-							activatePanel(panel, data.number, data.levelName, data.fallTime)
-						end
-
-						data.wasPlayerOn = isOn
-					end
-				end
-			end)
-
-			if not success then
-				warn("⚠️ Error en detección:", err)
-			end
-		end
+		-- ❌ REMOVIDO: Loop que iteraba sobre TODOS los paneles cada frame
+		-- Ahora los paneles usan Touched events individuales (mucho más eficiente)
 	end)
 
 	player.CharacterAdded:Connect(function(character)
