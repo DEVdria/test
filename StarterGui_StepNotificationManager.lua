@@ -84,13 +84,8 @@ local function showNotification(baseEXP, multiplier, finalEXP)
 	-- Actualizar el texto de la notificación
 	local expLabel = notification:FindFirstChild("EXPLabel", true)
 	if expLabel and expLabel:IsA("TextLabel") then
-		-- Si hay multiplicador mayor que 1, mostrar el multiplicador
-		if multiplier > 1 then
-			expLabel.Text = string.format("+%d 👟 (x%.1f = %d)", baseEXP, multiplier, finalEXP)
-		else
-			-- Sin multiplicador, mostrar solo el EXP normal
-			expLabel.Text = string.format("+%d 👟", finalEXP)
-		end
+		-- Mostrar solo el EXP final (sin mostrar el multiplicador)
+		expLabel.Text = string.format("+%d 👟", finalEXP)
 	end
 
 	-- FASE 1: Posición inicial en el CENTRO de la pantalla
@@ -177,7 +172,7 @@ if ShowStepNotificationEvent then
 	end)
 	print("[StepNotificationManager] ✅ Sistema de notificaciones de pasos iniciado")
 	print("[StepNotificationManager] 📦 Usando template: " .. notificationTemplate.Name)
-	print("[StepNotificationManager] 🎯 Mostrará multiplicadores de rebirth en las notificaciones")
+	print("[StepNotificationManager] 🎯 Mostrará solo el EXP final (con multiplicador aplicado)")
 else
 	warn("[StepNotificationManager] ❌ No se encontró el RemoteEvent ShowStepNotification")
 end
