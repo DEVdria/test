@@ -9,16 +9,8 @@ local player = Players.LocalPlayer
 
 local Modules = ReplicatedStorage:WaitForChild("Modules")
 local LevelManager = require(Modules:WaitForChild("LevelManager"))
+local RebirthConfig = require(Modules:WaitForChild("RebirthConfig"))
 
--- Funciones de rebirth (antes estaban en OrbConfig)
-local function CalculateRebirthCost(rebirths)
-	local baseCost = 1000
-	return baseCost * (2 ^ rebirths)
-end
-
-local function CalculateEXPMultiplier(rebirths)
-	return 1 + (rebirths * 0.1)
-end
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 local RequestRebirthPurchaseEvent = RemoteEvents:WaitForChild("RequestRebirthPurchase")
 
@@ -69,9 +61,9 @@ local function updateRebirthInfo()
 	local moneyValue = currentMoney.Value
 
 	-- Calcular información
-	local cost = CalculateRebirthCost(rebirthsValue)
-	local currentMultiplier = CalculateEXPMultiplier(rebirthsValue)
-	local nextMultiplier = CalculateEXPMultiplier(rebirthsValue + 1)
+	local cost = RebirthConfig.GetRebirthCost(rebirthsValue)
+	local currentMultiplier = RebirthConfig.GetEXPMultiplier(rebirthsValue)
+	local nextMultiplier = RebirthConfig.GetEXPMultiplier(rebirthsValue + 1)
 	local currentMaxLevel = LevelManager.GetMaxLevel(rebirthsValue)
 	local nextMaxLevel = LevelManager.GetMaxLevel(rebirthsValue + 1)
 
@@ -122,7 +114,7 @@ local function purchaseRebirth()
 
 	if not currentRebirths or not currentMoney then return end
 
-	local cost = CalculateRebirthCost(currentRebirths.Value)
+	local cost = RebirthConfig.GetRebirthCost(currentRebirths.Value)
 
 	-- Verificar si puede comprar
 	if currentMoney.Value < cost then

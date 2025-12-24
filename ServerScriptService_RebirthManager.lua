@@ -14,16 +14,7 @@ end
 
 local LevelManager = require(Modules:WaitForChild("LevelManager", 10))
 local ZoneConfig = require(Modules:WaitForChild("ZoneConfig", 10))
-
--- Funciones de rebirth (antes estaban en OrbConfig)
-local function CalculateRebirthCost(rebirths)
-	local baseCost = 1000
-	return baseCost * (2 ^ rebirths)
-end
-
-local function CalculateEXPMultiplier(rebirths)
-	return 1 + (rebirths * 0.1)
-end
+local RebirthConfig = require(Modules:WaitForChild("RebirthConfig", 10))
 
 -- Esperar RemoteEvents
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 10)
@@ -91,8 +82,8 @@ local function processRebirthPurchase(player)
 
 	-- Calcular costo, nuevo multiplicador y level caps
 	local currentRebirths = playerData.Rebirths
-	local cost = CalculateRebirthCost(currentRebirths)
-	local newMultiplier = CalculateEXPMultiplier(currentRebirths + 1)
+	local cost = RebirthConfig.GetRebirthCost(currentRebirths)
+	local newMultiplier = RebirthConfig.GetEXPMultiplier(currentRebirths + 1)
 	local currentMaxLevel = LevelManager.GetMaxLevel(currentRebirths)
 	local nextMaxLevel = LevelManager.GetMaxLevel(currentRebirths + 1)
 
