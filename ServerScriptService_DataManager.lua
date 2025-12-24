@@ -219,7 +219,7 @@ function DataManager.AddEXP(player, expAmount)
 	if not newEXP then return nil end
 
 	-- Verificar que LevelManager esté disponible
-	if not LevelManager or not LevelManager.GetMaxLevel or not LevelManager.GetRequiredEXP or not LevelManager.GetRunSpeed then
+	if not LevelManager or not LevelManager.GetMaxLevel or not LevelManager.GetXPRequired or not LevelManager.GetRunSpeed then
 		warn("[DataManager] ⚠️ LevelManager no está disponible o no tiene las funciones necesarias")
 		-- Solo actualizar leaderstats sin procesar level ups
 		local leaderstats = player:FindFirstChild("leaderstats")
@@ -239,7 +239,7 @@ function DataManager.AddEXP(player, expAmount)
 
 	-- Procesar level ups mientras tenga suficiente EXP y no haya alcanzado el máximo
 	while currentLevel < maxLevel do
-		local requiredEXP = LevelManager.GetRequiredEXP(currentLevel)
+		local requiredEXP = LevelManager.GetXPRequired(currentLevel)
 
 		if newEXP >= requiredEXP then
 			-- Suficiente EXP para subir de nivel
