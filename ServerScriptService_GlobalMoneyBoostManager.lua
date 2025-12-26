@@ -86,10 +86,20 @@ end
 local function getMoneyBoostStateData()
 	local availableBoost = GlobalMoneyBoostConfig.GetAvailableBoost(ServerMoneyBoostState.ActiveBoostID)
 
+	-- Calcular tiempo restante real basado en duración original
+	local timeRemaining = 0
+	if ServerMoneyBoostState.ActiveBoostID then
+		local boost = GlobalMoneyBoostConfig.GetBoostByID(ServerMoneyBoostState.ActiveBoostID)
+		if boost then
+			local elapsed = tick() - ServerMoneyBoostState.StartTime
+			timeRemaining = math.max(0, boost.Duration - elapsed)
+		end
+	end
+
 	return {
 		ActiveBoostID = ServerMoneyBoostState.ActiveBoostID,
 		Multiplier = ServerMoneyBoostState.Multiplier,
-		TimeRemaining = ServerMoneyBoostState.TimeRemaining,
+		TimeRemaining = timeRemaining,
 		PurchasedBy = ServerMoneyBoostState.PurchasedBy,
 		AvailableBoost = availableBoost and {
 			ID = availableBoost.ID,
@@ -171,16 +181,16 @@ task.spawn(function()
 		task.wait(1)
 
 		if ServerMoneyBoostState.ActiveBoostID then
-			-- Calcular tiempo restante
-			local elapsed = tick() - ServerMoneyBoostState.StartTime
-			local timeLeft = math.max(0, ServerMoneyBoostState.TimeRemaining - elapsed)
+			-- Calcular tiempo restante basado en el tiempo de inicio y duración
+			local boost = GlobalMoneyBoostConfig.GetBoostByID(ServerMoneyBoostState.ActiveBoostID)
+			if boost then
+				local elapsed = tick() - ServerMoneyBoostState.StartTime
+				local timeLeft = math.max(0, boost.Duration - elapsed)
 
-			-- Actualizar estado
-			ServerMoneyBoostState.TimeRemaining = timeLeft
-
-			-- Si el tiempo se acabó, desactivar boost
-			if timeLeft <= 0 then
-				deactivateMoneyBoost()
+				-- Si el tiempo se acabó, desactivar boost
+				if timeLeft <= 0 then
+					deactivateMoneyBoost()
+				end
 			end
 		end
 	end
