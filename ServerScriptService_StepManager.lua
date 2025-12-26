@@ -92,8 +92,14 @@ local function giveStepEXP(player)
 		globalXPMultiplier = _G.GetServerXPMultiplier()
 	end
 
-	-- Calcular multiplicador total (rebirth * global)
-	local totalMultiplier = rebirthMultiplier * globalXPMultiplier
+	-- Obtener multiplicador individual de XP por gamepass (si existe)
+	local individualXPMultiplier = 1
+	if _G.GetPlayerXPMultiplier then
+		individualXPMultiplier = _G.GetPlayerXPMultiplier(player)
+	end
+
+	-- Calcular multiplicador total (rebirth * global * individual)
+	local totalMultiplier = rebirthMultiplier * globalXPMultiplier * individualXPMultiplier
 
 	local baseEXP = EXP_PER_STEP
 	local finalEXP = math.floor(baseEXP * totalMultiplier)
