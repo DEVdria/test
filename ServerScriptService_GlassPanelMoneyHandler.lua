@@ -96,29 +96,43 @@ givePanelMoneyEvent.OnServerEvent:Connect(function(player, panel)
 	end
 
 	-- Leer el dinero del atributo del panel
-	local moneyReward = panel:GetAttribute("MoneyReward")
-	if not moneyReward or type(moneyReward) ~= "number" or moneyReward <= 0 then
+	local baseMoney = panel:GetAttribute("MoneyReward")
+	if not baseMoney or type(baseMoney) ~= "number" or baseMoney <= 0 then
 		warn("[GlassPanelMoneyHandler] ⚠️ MoneyReward inválido en panel:", panel:GetFullName())
 		return
 	end
 
 	-- Validar que no sea una cantidad ridícula (anti-exploit)
-	if moneyReward > 1000 then
-		warn("[GlassPanelMoneyHandler] 🚨 ANTI-EXPLOIT: Dinero sospechoso:", moneyReward, "de", player.Name)
+	if baseMoney > 1000 then
+		warn("[GlassPanelMoneyHandler] 🚨 ANTI-EXPLOIT: Dinero sospechoso:", baseMoney, "de", player.Name)
 		return
 	end
+
+	-- Aplicar multiplicador global de dinero (si existe)
+	local globalMoneyMultiplier = 1
+	if _G.GetServerMoneyMultiplier then
+		globalMoneyMultiplier = _G.GetServerMoneyMultiplier()
+	end
+
+	-- Calcular dinero final con multiplicador
+	local finalMoney = math.floor(baseMoney * globalMoneyMultiplier)
 
 	-- Obtener el nombre del nivel
 	local levelName = panel:GetAttribute("LevelName") or "Unknown"
 
 	-- Dar dinero usando DataManager
 	local success = pcall(function()
-		DataManager.AddMoney(player, moneyReward)
+		DataManager.AddMoney(player, finalMoney)
 	end)
 
 	if success then
-		print(string.format("[GlassPanelMoneyHandler] 💰 %s recibió %d de dinero (%s - %s)",
-			player.Name, moneyReward, levelName, panel.Name))
+		if globalMoneyMultiplier > 1 then
+			print(string.format("[GlassPanelMoneyHandler] 💰 %s recibió %d de dinero (base: %d, x%.1f global) (%s - %s)",
+				player.Name, finalMoney, baseMoney, globalMoneyMultiplier, levelName, panel.Name))
+		else
+			print(string.format("[GlassPanelMoneyHandler] 💰 %s recibió %d de dinero (%s - %s)",
+				player.Name, finalMoney, levelName, panel.Name))
+		end
 	else
 		warn(string.format("[GlassPanelMoneyHandler] ❌ Error al dar dinero a %s", player.Name))
 	end

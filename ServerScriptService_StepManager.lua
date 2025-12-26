@@ -83,17 +83,27 @@ local function giveStepEXP(player)
 		return false
 	end
 
-	-- Obtener multiplicador de EXP (por rebirths)
-	local expMultiplier = playerData.EXPMultiplier or 1
+	-- Obtener multiplicador de EXP por rebirths
+	local rebirthMultiplier = playerData.EXPMultiplier or 1
+
+	-- Obtener multiplicador global de XP (si existe)
+	local globalXPMultiplier = 1
+	if _G.GetServerXPMultiplier then
+		globalXPMultiplier = _G.GetServerXPMultiplier()
+	end
+
+	-- Calcular multiplicador total (rebirth * global)
+	local totalMultiplier = rebirthMultiplier * globalXPMultiplier
+
 	local baseEXP = EXP_PER_STEP
-	local finalEXP = math.floor(baseEXP * expMultiplier)
+	local finalEXP = math.floor(baseEXP * totalMultiplier)
 
 	-- Otorgar EXP MULTIPLICADO
 	local success = DataManager.AddEXP(player, finalEXP)
 
 	if success then
-		-- Enviar notificación al cliente con el EXP base, multiplicador y total
-		ShowStepNotificationEvent:FireClient(player, baseEXP, expMultiplier, finalEXP)
+		-- Enviar notificación al cliente con el EXP base, multiplicador total y final
+		ShowStepNotificationEvent:FireClient(player, baseEXP, totalMultiplier, finalEXP)
 		return true
 	end
 
