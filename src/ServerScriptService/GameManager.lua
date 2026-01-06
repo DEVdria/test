@@ -1,9 +1,11 @@
 --[[
-	GAME MANAGER - SERVIDOR
+	GAME MANAGER - SERVIDOR CON FILA FÍSICA
 	Este script maneja toda la lógica del juego de adivinanza en el servidor.
 	Responsabilidades:
 	- Generar el número secreto
 	- Gestionar la cola de turnos de jugadores
+	- Manejar la fila física en el mapa (LinePositions)
+	- Teletransportar jugadores con animaciones suaves
 	- Validar intentos y responder
 	- Manejar jugadores que entran/salen
 	- Reiniciar el juego cuando alguien gana
@@ -11,6 +13,8 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
 
 -- ============================================================================
 -- VARIABLES DEL JUEGO
@@ -18,7 +22,6 @@ local Players = game:GetService("Players")
 
 local secretNumber = 0          -- Número secreto actual
 local playerQueue = {}           -- Cola de jugadores en orden de turnos
-local currentTurnIndex = 1       -- Índice del jugador actual
 local totalAttempts = 0          -- Contador total de intentos en la ronda actual
 local gameActive = false         -- Si el juego está activo
 
@@ -26,6 +29,16 @@ local gameActive = false         -- Si el juego está activo
 local MIN_NUMBER = 1
 local MAX_NUMBER = 500
 local TURN_TIMEOUT = 30          -- Segundos por turno (opcional)
+
+-- Configuración de la fila física
+local LINE_POSITIONS_FOLDER_NAME = "LinePositions"
+local TWEEN_TIME = 0.8           -- Tiempo de animación del movimiento (segundos)
+local TWEEN_STYLE = Enum.EasingStyle.Quad
+local TWEEN_DIRECTION = Enum.EasingDirection.InOut
+
+-- Referencias
+local linePositionsFolder = Workspace:WaitForChild(LINE_POSITIONS_FOLDER_NAME)
+local linePositions = {}         -- Tabla ordenada de Parts de posiciones
 
 -- ============================================================================
 -- REMOTE EVENTS
@@ -48,12 +61,153 @@ local function generateSecretNumber()
 	return math.random(MIN_NUMBER, MAX_NUMBER)
 end
 
--- Obtiene el jugador actual según el índice de turno
+-- Obtiene el jugador actual según el índice de turno (siempre es el primero)
 local function getCurrentPlayer()
 	if #playerQueue == 0 then
 		return nil
 	end
-	return playerQueue[currentTurnIndex]
+	return playerQueue[1]  -- El primero siempre tiene el turno
+end
+
+-- ============================================================================
+-- SISTEMA DE POSICIONES FÍSICAS
+-- ============================================================================
+
+-- Inicializa y ordena las posiciones de la fila
+local function initializeLinePositions()
+	linePositions = {}
+
+	-- Obtener todas las Parts de la carpeta
+	local parts = linePositionsFolder:GetChildren()
+
+	-- Filtrar solo las BaseParts y ordenarlas por nombre
+	for _, part in ipairs(parts) do
+		if part:IsA("BasePart") then
+			table.insert(linePositions, part)
+		end
+	end
+
+	-- Ordenar por nombre (Part1, Part2, Part3, etc.)
+	table.sort(linePositions, function(a, b)
+		-- Extraer el número del nombre
+		local numA = tonumber(string.match(a.Name, "%d+")) or 0
+		local numB = tonumber(string.match(b.Name, "%d+")) or 0
+		return numA < numB
+	end)
+
+	print(string.format("[FILA] %d posiciones encontradas", #linePositions))
+	for i, part in ipairs(linePositions) do
+		print(string.format("  Posición %d: %s", i, part.Name))
+	end
+end
+
+-- Teletransporta a un jugador a una posición específica con animación
+local function teleportPlayerToPosition(player, positionIndex)
+	if not linePositions[positionIndex] then
+		warn(string.format("[FILA] Posición %d no existe", positionIndex))
+		return
+	end
+
+	local character = player.Character
+	if not character then
+		warn(string.format("[FILA] %s no tiene personaje", player.Name))
+		return
+	end
+
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then
+		warn(string.format("[FILA] %s no tiene HumanoidRootPart", player.Name))
+		return
+	end
+
+	local targetPosition = linePositions[positionIndex].Position + Vector3.new(0, 3, 0)
+
+	-- Crear Tween para movimiento suave
+	local tweenInfo = TweenInfo.new(
+		TWEEN_TIME,
+		TWEEN_STYLE,
+		TWEEN_DIRECTION
+	)
+
+	-- Usar CFrame para mantener la rotación
+	local goal = {CFrame = CFrame.new(targetPosition) * CFrame.Angles(0, math.rad(180), 0)}
+	local tween = TweenService:Create(humanoidRootPart, tweenInfo, goal)
+
+	tween:Play()
+
+	print(string.format("[FILA] %s → Posición %d (%s)",
+		player.Name, positionIndex, linePositions[positionIndex].Name))
+end
+
+-- Actualiza las posiciones físicas de todos los jugadores en la fila
+local function updatePhysicalLine()
+	for i, player in ipairs(playerQueue) do
+		-- Verificar que el jugador sigue conectado
+		if Players:FindFirstChild(player.Name) then
+			teleportPlayerToPosition(player, i)
+		end
+	end
+end
+
+-- Crea un indicador visual sobre el jugador que tiene el turno
+local function createTurnIndicator(player)
+	local character = player.Character
+	if not character then return end
+
+	local head = character:FindFirstChild("Head")
+	if not head then return end
+
+	-- Remover indicador anterior si existe
+	local oldIndicator = head:FindFirstChild("TurnIndicator")
+	if oldIndicator then
+		oldIndicator:Destroy()
+	end
+
+	-- Crear nuevo indicador (BillboardGui con flecha o texto)
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "TurnIndicator"
+	billboard.Size = UDim2.new(0, 100, 0, 50)
+	billboard.StudsOffset = Vector3.new(0, 3, 0)
+	billboard.AlwaysOnTop = true
+	billboard.Parent = head
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Size = UDim2.new(1, 0, 1, 0)
+	textLabel.BackgroundTransparency = 1
+	textLabel.Text = "▼ TU TURNO ▼"
+	textLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+	textLabel.TextScaled = true
+	textLabel.Font = Enum.Font.GothamBold
+	textLabel.TextStrokeTransparency = 0.5
+	textLabel.Parent = billboard
+end
+
+-- Remueve el indicador de turno de un jugador
+local function removeTurnIndicator(player)
+	local character = player.Character
+	if not character then return end
+
+	local head = character:FindFirstChild("Head")
+	if not head then return end
+
+	local indicator = head:FindFirstChild("TurnIndicator")
+	if indicator then
+		indicator:Destroy()
+	end
+end
+
+-- Actualiza los indicadores visuales de todos los jugadores
+local function updateTurnIndicators()
+	-- Remover todos los indicadores primero
+	for _, player in ipairs(playerQueue) do
+		removeTurnIndicator(player)
+	end
+
+	-- Crear indicador para el jugador actual
+	local currentPlayer = getCurrentPlayer()
+	if currentPlayer then
+		createTurnIndicator(currentPlayer)
+	end
 end
 
 -- Actualiza todos los clientes con información del turno actual
@@ -65,6 +219,9 @@ local function broadcastTurnUpdate()
 		local isYourTurn = (player == currentPlayer)
 		turnUpdateEvent:FireClient(player, currentPlayerName, isYourTurn, totalAttempts)
 	end
+
+	-- Actualizar indicadores visuales
+	updateTurnIndicators()
 end
 
 -- Actualiza todos los clientes con el estado del juego
@@ -74,17 +231,29 @@ local function broadcastGameState(message)
 	end
 end
 
--- Pasa al siguiente jugador en la cola
-local function nextTurn()
+-- Avanza la fila: el jugador actual va al final, todos avanzan una posición
+local function moveLineForward()
 	if #playerQueue == 0 then
 		return
 	end
 
-	currentTurnIndex = currentTurnIndex + 1
-	if currentTurnIndex > #playerQueue then
-		currentTurnIndex = 1
-	end
+	-- Tomar el primer jugador (el que acaba de jugar)
+	local playerWhoPlayed = table.remove(playerQueue, 1)
 
+	-- Ponerlo al final de la fila
+	table.insert(playerQueue, playerWhoPlayed)
+
+	print(string.format("[FILA] %s va al final. Nuevo turno: %s",
+		playerWhoPlayed.Name,
+		playerQueue[1] and playerQueue[1].Name or "Nadie"))
+
+	-- Actualizar posiciones físicas de todos
+	updatePhysicalLine()
+
+	-- Esperar a que termine la animación antes de actualizar UI
+	wait(TWEEN_TIME + 0.2)
+
+	-- Actualizar información de turno en clientes
 	broadcastTurnUpdate()
 end
 
@@ -96,7 +265,23 @@ local function addPlayerToQueue(player)
 		end
 	end
 
+	-- Agregar al final de la fila
 	table.insert(playerQueue, player)
+
+	print(string.format("[FILA] %s agregado a la fila (Posición %d)", player.Name, #playerQueue))
+
+	-- Esperar a que el personaje esté listo
+	local character = player.Character or player.CharacterAdded:Wait()
+	character:WaitForChild("HumanoidRootPart")
+
+	-- Posicionar físicamente al jugador
+	local positionIndex = #playerQueue
+	if positionIndex <= #linePositions then
+		teleportPlayerToPosition(player, positionIndex)
+	else
+		warn(string.format("[FILA] No hay suficientes posiciones para %d jugadores", #playerQueue))
+	end
+
 	return true
 end
 
@@ -104,14 +289,19 @@ end
 local function removePlayerFromQueue(player)
 	for i, p in ipairs(playerQueue) do
 		if p == player then
-			-- Ajustar el índice de turno si es necesario
-			if i < currentTurnIndex then
-				currentTurnIndex = currentTurnIndex - 1
-			elseif i == currentTurnIndex and currentTurnIndex > #playerQueue - 1 then
-				currentTurnIndex = 1
+			-- Remover indicador visual
+			removeTurnIndicator(player)
+
+			-- Remover de la tabla
+			table.remove(playerQueue, i)
+
+			print(string.format("[FILA] %s removido de la fila", player.Name))
+
+			-- Actualizar posiciones físicas de todos los jugadores restantes
+			if #playerQueue > 0 then
+				updatePhysicalLine()
 			end
 
-			table.remove(playerQueue, i)
 			return true
 		end
 	end
@@ -122,7 +312,6 @@ end
 local function resetGame()
 	secretNumber = generateSecretNumber()
 	totalAttempts = 0
-	currentTurnIndex = 1
 	gameActive = true
 
 	print("[SERVIDOR] Nuevo número secreto: " .. secretNumber)
@@ -190,12 +379,12 @@ submitGuessEvent.OnServerEvent:Connect(function(player, guessNumber)
 	elseif guessNumber < secretNumber then
 		-- Número muy bajo
 		guessResultEvent:FireClient(player, "Más alto ↑", "hint")
-		nextTurn()
+		moveLineForward()
 
 	else
 		-- Número muy alto
 		guessResultEvent:FireClient(player, "Más bajo ↓", "hint")
-		nextTurn()
+		moveLineForward()
 	end
 end)
 
@@ -249,15 +438,27 @@ print("=================================================")
 print("  JUEGO DE ADIVINANZA - SERVIDOR INICIADO")
 print("  Rango: " .. MIN_NUMBER .. " - " .. MAX_NUMBER)
 print("  Tiempo por turno: " .. TURN_TIMEOUT .. "s")
+print("  Sistema de fila física: ACTIVADO")
 print("=================================================")
+
+-- Inicializar las posiciones de la fila
+initializeLinePositions()
 
 -- Agregar jugadores que ya estén en el juego
 for _, player in ipairs(Players:GetPlayers()) do
-	addPlayerToQueue(player)
+	-- Esperar a que el personaje cargue
+	spawn(function()
+		if player.Character then
+			addPlayerToQueue(player)
+		else
+			player.CharacterAdded:Wait()
+			addPlayerToQueue(player)
+		end
+	end)
 end
 
--- Iniciar el juego si hay jugadores
+-- Iniciar el juego si hay jugadores (después de un pequeño delay)
+wait(3)
 if #playerQueue > 0 then
-	wait(2)
 	resetGame()
 end

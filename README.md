@@ -1,63 +1,117 @@
-# 🎮 Juego de Adivinanza - Roblox
+# 🎮 Juego de Adivinanza - Roblox (Con Fila Física)
 
-Un juego multijugador por turnos donde los jugadores deben adivinar un número secreto entre 1 y 500. El servidor responde con pistas "Más alto" o "Más bajo" hasta que alguien acierta.
+Un juego multijugador por turnos donde los jugadores deben adivinar un número secreto entre 1 y 500. **Los jugadores avanzan físicamente en una fila dentro del mapa**, y el servidor responde con pistas "Más alto" o "Más bajo" hasta que alguien acierta.
 
 ## 📋 Características
 
+### ⭐ Nuevas Características
+- ✅ **Fila física en el mapa**: Los jugadores se mueven realmente en el Workspace
+- ✅ **Animaciones suaves**: Tweens para movimiento fluido
+- ✅ **Indicador visual de turno**: Flecha verde sobre el jugador actual
+- ✅ **Teclado numérico**: Botones estilo calculadora (0-9)
+- ✅ **UI personalizable**: Solo código lógico, diseña tu propia interfaz
+
+### 🎯 Características Base
 - ✅ Sistema de turnos automático
 - ✅ Número secreto generado por el servidor (anti-trampas)
 - ✅ Validación de entrada del lado del servidor
-- ✅ Interfaz de usuario intuitiva y moderna
 - ✅ Manejo robusto de jugadores que entran/salen
 - ✅ Contador de intentos por ronda
 - ✅ Reinicio automático cuando alguien gana
-- ✅ Mensajes de retroalimentación visual
 
 ## 📁 Estructura del Proyecto
 
 ```
 src/
 ├── ServerScriptService/
-│   └── GameManager.lua          ← Script principal del servidor (Script)
+│   └── GameManager.lua          ← Servidor con sistema de fila física
 │
 ├── ReplicatedStorage/
-│   └── RemoteEvents.lua         ← Crea los RemoteEvents (Script)
+│   └── RemoteEvents.lua         ← Crea los RemoteEvents
 │
 └── StarterGui/
     └── GameGui/
-        └── GameUI.lua           ← Interfaz del cliente (LocalScript)
+        ├── GameUILogic.lua      ← Lógica de UI (sin crear elementos)
+        └── NumpadController.lua ← Controlador del teclado numérico
 ```
+
+## 🗺️ Configuración del Mapa
+
+### PASO 1: Crear la Fila Física
+
+**IMPORTANTE**: Antes de probar el juego, debes crear las posiciones de la fila.
+
+1. En **Workspace**, crea una **Folder** llamada `LinePositions`
+2. Dentro, crea **Parts** nombradas: `Part1`, `Part2`, `Part3`, etc.
+
+#### Método Rápido (Recomendado)
+
+Copia y pega esto en la **Command Bar** de Roblox Studio:
+
+```lua
+local folder = Instance.new("Folder")
+folder.Name = "LinePositions"
+folder.Parent = workspace
+
+for i = 1, 10 do
+    local part = Instance.new("Part")
+    part.Name = "Part" .. i
+    part.Size = Vector3.new(5, 1, 5)
+    part.Position = Vector3.new(i * 7, 3, 0)
+    part.Anchored = true
+    part.BrickColor = i == 1 and BrickColor.new("Lime green") or BrickColor.new("Deep blue")
+    part.Material = Enum.Material.Neon
+    part.Parent = folder
+end
+
+print("✓ Fila creada con 10 posiciones")
+```
+
+📖 **Para más detalles**: Consulta `ESTRUCTURA_MAPA.md`
 
 ## 🔧 Instalación en Roblox Studio
 
-Sigue estos pasos para instalar el juego en tu proyecto de Roblox:
-
 ### 1. Configurar RemoteEvents
 
-1. En **ReplicatedStorage**, crea un **Script** (NO LocalScript)
-2. Nómbralo `SetupRemoteEvents` o similar
+1. En **ReplicatedStorage**, crea un **Script**
+2. Nómbralo `SetupRemoteEvents`
 3. Copia el contenido de `src/ReplicatedStorage/RemoteEvents.lua`
-4. Pega el código en el script
+4. Pega el código
 
 ### 2. Configurar el Servidor
 
 1. En **ServerScriptService**, crea un **Script**
 2. Nómbralo `GameManager`
 3. Copia el contenido de `src/ServerScriptService/GameManager.lua`
-4. Pega el código en el script
+4. Pega el código
 
-### 3. Configurar la Interfaz
+### 3. Configurar la UI (OPCIONAL)
 
-1. En **StarterGui**, crea un **ScreenGui**
-2. Nómbralo `GuessingGameUI`
-3. Dentro del ScreenGui, crea un **LocalScript**
-4. Nómbralo `GameUI`
-5. Copia el contenido de `src/StarterGui/GameGui/GameUI.lua`
-6. Pega el código en el LocalScript
+**Nota**: Los scripts de UI son solo lógica. Diseña tu propia interfaz.
 
-### Estructura Final en Roblox Studio
+#### Si quieres usar el teclado numérico:
+
+1. Diseña tu UI con botones del 0-9
+2. En **StarterGui**, crea un **ScreenGui**
+3. Nómbralo `GuessingGameUI`
+4. Crea un **LocalScript** (ModuleScript recomendado)
+5. Copia el contenido de `src/StarterGui/GameGui/NumpadController.lua`
+
+#### Para la lógica general de UI:
+
+1. Crea otro **LocalScript**
+2. Copia el contenido de `src/StarterGui/GameGui/GameUILogic.lua`
+
+### Estructura Final
 
 ```
+Workspace/
+  └── 📁 LinePositions
+      ├── Part1
+      ├── Part2
+      ├── Part3
+      └── ...
+
 ServerScriptService/
   └── 📄 GameManager (Script)
 
@@ -65,8 +119,9 @@ ReplicatedStorage/
   └── 📄 SetupRemoteEvents (Script)
 
 StarterGui/
-  └── 📺 GuessingGameUI (ScreenGui)
-      └── 📄 GameUI (LocalScript)
+  └── 📺 GuessingGameUI (ScreenGui) [Tu diseño personalizado]
+      ├── 📄 GameUILogic (LocalScript)
+      └── 📄 NumpadController (LocalScript/ModuleScript)
 ```
 
 ## 🎯 Cómo Funciona
@@ -74,81 +129,131 @@ StarterGui/
 ### Flujo del Juego
 
 1. **Inicio**: El servidor genera un número secreto entre 1 y 500
-2. **Turnos**: Los jugadores se turnan en el orden en que se unieron
-3. **Adivinanza**: El jugador actual ingresa un número en el TextBox
-4. **Validación**: El servidor valida el intento y responde:
-   - "Más alto ↑" si el número es menor que el secreto
-   - "Más bajo ↓" si el número es mayor que el secreto
+2. **Posicionamiento**: Los jugadores se colocan automáticamente en la fila física
+3. **Turno**: El jugador en **Part1** (primera posición) tiene el turno
+4. **Adivinanza**: El jugador ingresa un número (TextBox o Teclado Numérico)
+5. **Validación**: El servidor responde:
+   - "Más alto ↑" si el número es menor
+   - "Más bajo ↓" si el número es mayor
    - "¡CORRECTO! ¡Ganaste! 🎉" si acierta
-5. **Siguiente turno**: El turno pasa automáticamente al siguiente jugador
-6. **Victoria**: Cuando alguien acierta, el juego se reinicia tras 5 segundos
+6. **Avance de fila**: 
+   - El jugador que jugó se teletransporta al final
+   - Todos avanzan una posición hacia adelante
+   - El siguiente jugador ahora está en Part1
+7. **Victoria**: Cuando alguien acierta, el juego se reinicia tras 5 segundos
+
+### Sistema de Fila Física
+
+```
+Antes del turno:
+[Jugador1] [Jugador2] [Jugador3] [Jugador4]
+   Part1      Part2      Part3      Part4
+   🎯 TURNO
+
+Jugador1 hace su intento → Fila avanza:
+[Jugador2] [Jugador3] [Jugador4] [Jugador1]
+   Part1      Part2      Part3      Part4
+   🎯 TURNO
+```
 
 ### Comunicación Cliente-Servidor
 
-El juego usa **RemoteEvents** para comunicación segura:
-
-#### RemoteEvents Creados
-
-| Nombre | Dirección | Propósito |
-|--------|-----------|-----------|
-| `SubmitGuess` | Cliente → Servidor | Enviar intento de adivinanza |
+| RemoteEvent | Dirección | Propósito |
+|------------|-----------|-----------|
+| `SubmitGuess` | Cliente → Servidor | Enviar intento |
 | `GuessResult` | Servidor → Cliente | Respuesta del intento |
-| `TurnUpdate` | Servidor → Cliente | Actualizar información de turno |
-| `GameState` | Servidor → Cliente | Mensajes generales del juego |
+| `TurnUpdate` | Servidor → Cliente | Actualizar turno |
+| `GameState` | Servidor → Cliente | Mensajes generales |
 
-## 🎨 Interfaz de Usuario
+## 🎨 Diseñar tu Propia UI
 
-La UI incluye:
+Los scripts proporcionados son **solo lógica**. Tú diseñas la UI como quieras.
 
-- **Título**: Nombre del juego
-- **Estado del juego**: Mensajes generales (ej: "Nuevo juego iniciado")
-- **Información de turno**: Muestra de quién es el turno
-- **Contador de intentos**: Total de intentos en la ronda actual
-- **Campo de entrada**: TextBox para escribir el número
-- **Botón de envío**: Botón para confirmar el intento
-- **Resultado**: Muestra la respuesta del servidor con colores:
-  - 🟢 Verde: Victoria
-  - 🔵 Azul: Pista (más alto/bajo)
-  - 🔴 Rojo: Error
-
-## 🔒 Seguridad Anti-Trampas
-
-El juego implementa varias medidas de seguridad:
-
-1. ✅ **Número secreto en servidor**: El cliente nunca conoce el número
-2. ✅ **Validación de turnos**: Solo el jugador actual puede enviar intentos
-3. ✅ **Validación de entrada**: Se valida que sea un número en rango válido
-4. ✅ **RemoteEvents seguros**: Toda la lógica crítica está en el servidor
-
-## ⚙️ Configuración
-
-Puedes personalizar estos valores en `GameManager.lua`:
+### GameUILogic.lua - Variables a configurar:
 
 ```lua
-local MIN_NUMBER = 1           -- Número mínimo
-local MAX_NUMBER = 500         -- Número máximo
-local TURN_TIMEOUT = 30        -- Segundos por turno (funcionalidad base)
+local SCREEN_GUI_NAME = "GuessingGameUI"
+local TURN_LABEL_NAME = "TurnLabel"           
+local GAME_STATE_LABEL_NAME = "GameStateLabel"
+local ATTEMPTS_LABEL_NAME = "AttemptsLabel"   
+local RESULT_LABEL_NAME = "ResultLabel"
 ```
+
+### NumpadController.lua - Variables a configurar:
+
+```lua
+local NUMPAD_FRAME_NAME = "NumpadFrame"
+local DISPLAY_LABEL_NAME = "DisplayLabel"
+
+-- Nombres de botones
+local BUTTON_NAMES = {
+    [0] = "Button0",
+    [1] = "Button1",
+    -- ... etc
+}
+```
+
+### Ejemplo de Estructura UI:
+
+```
+ScreenGui "GuessingGameUI"
+├── Frame "MainFrame"
+│   ├── TextLabel "TurnLabel"
+│   ├── TextLabel "GameStateLabel"
+│   ├── TextLabel "AttemptsLabel"
+│   └── TextLabel "ResultLabel"
+│
+└── Frame "NumpadFrame"
+    ├── TextLabel "DisplayLabel"
+    ├── TextButton "Button0"
+    ├── TextButton "Button1"
+    ├── ... (Button2-Button9)
+    ├── TextButton "ButtonClear"
+    └── TextButton "ButtonSubmit"
+```
+
+## ⚙️ Configuración Avanzada
+
+### GameManager.lua (Servidor)
+
+```lua
+-- Rango del número secreto
+local MIN_NUMBER = 1
+local MAX_NUMBER = 500
+
+-- Configuración de animación
+local TWEEN_TIME = 0.8              -- Tiempo de movimiento
+local TWEEN_STYLE = Enum.EasingStyle.Quad
+local TWEEN_DIRECTION = Enum.EasingDirection.InOut
+```
+
+### Características Opcionales
+
+El servidor incluye:
+- ✅ **Indicador visual**: BillboardGui "▼ TU TURNO ▼" sobre el jugador
+- ✅ **Logs detallados**: Seguimiento en Output console
+- ✅ **Manejo de errores**: Validación robusta
 
 ## 🐛 Solución de Problemas
 
-### El juego no inicia
+### "LinePositions not found"
+❌ **Problema**: No existe la carpeta en Workspace  
+✅ **Solución**: Crea `workspace.LinePositions` con Parts (ver arriba)
 
-- ✅ Verifica que `SetupRemoteEvents` sea un **Script** (no LocalScript)
-- ✅ Asegúrate de que esté en **ReplicatedStorage**
-- ✅ Revisa la consola de salida para errores
+### "No hay suficientes posiciones"
+❌ **Problema**: Más jugadores que posiciones  
+✅ **Solución**: Crea más Parts (10-20 recomendado)
 
-### No aparece la UI
+### "Los jugadores no se mueven"
+❌ **Problema**: Parts no ancladas o mal nombradas  
+✅ **Solución**: 
+- Verifica `part.Anchored = true`
+- Nombres exactos: `Part1`, `Part2`, etc.
+- Sin saltos en numeración
 
-- ✅ Verifica que `GameUI` sea un **LocalScript**
-- ✅ Debe estar dentro de un **ScreenGui** en **StarterGui**
-- ✅ Revisa la consola del cliente (F9 en prueba)
-
-### Los turnos no funcionan
-
-- ✅ Verifica que los RemoteEvents se hayan creado correctamente
-- ✅ Revisa la consola del servidor para mensajes de error
-- ✅ Asegúrate de que hay al menos 2 jugadores en el juego
+### "El teclado no funciona"
+❌ **Problema**: UI no coincide con nombres del script  
+✅ **Solución**: Actualiza los nombres en `NumpadController.lua`
 
 ## 📊 Arquitectura del Código
 
@@ -156,52 +261,65 @@ local TURN_TIMEOUT = 30        -- Segundos por turno (funcionalidad base)
 
 **Funciones principales:**
 
-- `generateSecretNumber()`: Genera número aleatorio
-- `getCurrentPlayer()`: Obtiene el jugador del turno actual
-- `broadcastTurnUpdate()`: Envía info de turno a todos los clientes
-- `nextTurn()`: Avanza al siguiente jugador
-- `addPlayerToQueue()`: Agrega jugador a la cola
-- `removePlayerFromQueue()`: Remueve jugador de la cola
-- `resetGame()`: Reinicia el juego con nuevo número
+- `initializeLinePositions()`: Carga y ordena las posiciones
+- `teleportPlayerToPosition(player, index)`: Mueve con Tween
+- `updatePhysicalLine()`: Actualiza posiciones de todos
+- `moveLineForward()`: Avanza la fila (primero→último)
+- `createTurnIndicator(player)`: Crea flecha visual
+- `addPlayerToQueue(player)`: Agrega y posiciona
+- `removePlayerFromQueue(player)`: Remueve y reorganiza
 
-### Cliente (GameUI.lua)
+### Cliente (NumpadController.lua)
 
 **Funciones principales:**
 
-- `updateButtonState()`: Actualiza UI según turno
-- `showResult()`: Muestra resultado con color apropiado
-- `submitGuess()`: Valida y envía intento al servidor
+- `addDigit(digit)`: Añade dígito al display
+- `clearAll()`: Borra el número
+- `submitNumber()`: Envía al servidor
+- `updateNumpadState(yourTurn)`: Habilita/deshabilita
+- `connectButtons()`: Conecta eventos de botones
 
 ## 🎓 Aprendizaje
 
-Este proyecto es excelente para aprender:
+Este proyecto enseña:
 
 - 📡 **RemoteEvents**: Comunicación cliente-servidor
-- 🎮 **Lógica de juego**: Sistemas de turnos
-- 🖼️ **UI en Roblox**: Creación de interfaces
-- 🔐 **Seguridad**: Validación del lado del servidor
-- 👥 **Multijugador**: Manejo de múltiples jugadores
+- 🎮 **Sistemas de turnos**: Gestión de colas
+- 🎨 **TweenService**: Animaciones suaves
+- 🗺️ **Manipulación del Workspace**: Posicionamiento dinámico
+- 🖼️ **UI dinámica**: Interfaces reactivas
+- 🔐 **Seguridad**: Validación servidor-side
+- 👥 **Multijugador**: Sincronización de estado
 
-## 📝 Notas Adicionales
+## 🚀 Mejoras Futuras Sugeridas
+
+- ⏱️ Temporizador por turno con barra de progreso
+- 🏆 Sistema de puntos basado en intentos
+- 📊 Tabla de clasificación persistente
+- 🎨 Efectos de partículas en las posiciones
+- 🔊 Sonidos de victoria/derrota
+- 💬 Emotes o reacciones de jugadores
+- 🌈 Temas visuales (día/noche, neón, etc.)
+- 🎯 Modos de juego especiales (tiempo límite, rangos variables)
+
+## 📝 Notas Importantes
 
 - El juego inicia automáticamente cuando el primer jugador se une
 - Se pausa si todos los jugadores salen
 - Los turnos se ajustan automáticamente cuando jugadores entran/salen
-- El contador de intentos se reinicia en cada ronda nueva
+- El movimiento de la fila espera a que termine la animación
+- El indicador visual solo aparece sobre el jugador del turno
 
-## 🚀 Mejoras Futuras Posibles
+## 📚 Documentación Adicional
 
-- ⏱️ Temporizador visible por turno
-- 🏆 Sistema de puntos/estadísticas
-- 💬 Chat de pistas entre jugadores
-- 🎨 Temas visuales personalizables
-- 📊 Tabla de clasificación
-- 🔊 Efectos de sonido
+- 📖 `ESTRUCTURA_MAPA.md` - Guía detallada del mapa y posiciones
+- 📖 `INSTALACION_RAPIDA.md` - Guía rápida de instalación
+- 💾 `src/` - Código fuente comentado
 
 ## 📄 Licencia
 
-Este código es libre de usar, modificar y distribuir para proyectos personales y educativos.
+Código libre para usar, modificar y distribuir en proyectos personales y educativos.
 
 ---
 
-**¡Diviértete jugando! 🎉**
+**¡Disfruta del juego! 🎉**
